@@ -1,3 +1,23 @@
+# Capy setup detection
+
+This backing repo is used by both normal Capy projects and filesystem-snapshot projects. Agents must detect whether dependencies are already preinstalled before doing heavy setup.
+
+Do not run heavy setup blindly at session start; it blocks jams. Run cheap probes first, then install only task-specific missing dependencies.
+
+Environment checklist:
+
+- Check tool versions: `node --version`, `yarn --version`, `go version`.
+- Check caches/dirs: `go env GOPATH`, `node_modules`, Yarn cache/install state, and Go module/build caches.
+- Run the cheap smoke command when relevant: `go test ./pkg/infra/log -run TestNew$ -count=1`.
+- If probes pass and dependency dirs/caches exist, treat the VM as snapshot-prepared and skip heavy setup.
+- If probes fail or dependencies are absent, use the minimal non-snapshot setup below.
+
+Minimal Grafana setup:
+
+- Before installing, check Node version, `yarn --version`, `go env GOPATH`, existing `node_modules`, and `go test ./pkg/infra/log -run TestNew$ -count=1`.
+- If dependencies are missing, run `corepack enable`, then `YARN_ENABLE_PROGRESS_BARS=false YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true CYPRESS_INSTALL_BINARY=0 YARN_NM_MODE=hardlinks-local yarn install --immutable --inline-builds`, then `go mod download`.
+- Avoid `make build-backend` unless the task needs a backend build.
+
 # AGENTS.md
 
 <!-- version: 2.0.0 -->
