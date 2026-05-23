@@ -383,19 +383,27 @@ describe('CompletionProvider', () => {
   );
 
   describe('Query hint autocompletion', () => {
-    it('suggests most_recent parameter inside with clause', async () => {
+    it('suggests supported parameters inside with clause', async () => {
       const { provider, model } = setup('{.foo=300} with(', 17);
       const result = await provider.provideCompletionItems(model, emptyPosition);
       const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
 
-      expect(suggestions).toEqual([
-        expect.objectContaining({
-          label: 'most_recent',
-          insertText: 'most_recent=$0',
-          detail: 'Get latest traces',
-          documentation: expect.stringContaining('Forces Tempo to return the most recent results'),
-        }),
-      ]);
+      expect(suggestions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            label: 'most_recent',
+            insertText: 'most_recent=$0',
+            detail: 'Get latest traces',
+            documentation: expect.stringContaining('Forces Tempo to return the most recent results'),
+          }),
+          expect.objectContaining({
+            label: 'exemplars',
+            insertText: 'exemplars=$0',
+            detail: 'Include exemplars',
+            documentation: expect.stringContaining('Includes exemplars in TraceQL metrics queries'),
+          }),
+        ])
+      );
     });
 
     it('suggests boolean values after most_recent parameter', async () => {
@@ -417,17 +425,23 @@ describe('CompletionProvider', () => {
       ]);
     });
 
-    it('suggests most_recent parameter with whitespace variations', async () => {
+    it('suggests supported parameters with whitespace variations', async () => {
       const { provider, model } = setup('{.foo=300} with( ', 18);
       const result = await provider.provideCompletionItems(model, emptyPosition);
       const suggestions = (result! as monacoTypes.languages.CompletionList).suggestions;
 
-      expect(suggestions).toEqual([
-        expect.objectContaining({
-          label: 'most_recent',
-          insertText: 'most_recent=$0',
-        }),
-      ]);
+      expect(suggestions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            label: 'most_recent',
+            insertText: 'most_recent=$0',
+          }),
+          expect.objectContaining({
+            label: 'exemplars',
+            insertText: 'exemplars=$0',
+          }),
+        ])
+      );
     });
 
     it('suggests boolean values with whitespace around equals', async () => {

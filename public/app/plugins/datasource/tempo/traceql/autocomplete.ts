@@ -379,7 +379,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       documentation:
         'Forces Tempo to return the most recent results ordered by time. Use most_recent=true to see the freshest data when troubleshooting incidents.',
     },
-    // Future parameters can be added here as simple objects
+    {
+      label: 'exemplars',
+      insertText: 'exemplars=$0',
+      detail: 'Include exemplars',
+      documentation:
+        'Includes exemplars in TraceQL metrics queries. Use exemplars=true when you want related traces attached to the returned time series.',
+    },
   ];
 
   static readonly withValues: MinimalCompletionItem[] = [

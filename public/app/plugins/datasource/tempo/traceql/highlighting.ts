@@ -27,6 +27,17 @@ import {
 } from '@grafana/lezer-traceql';
 import { type monacoTypes } from '@grafana/ui';
 
+const supportedParserHintClauses = [/\bwith\s*\(\s*exemplars\s*=\s*(true|false)\s*\)/g];
+
+const getSuppressedErrorRanges = (query: string) => {
+  return supportedParserHintClauses.flatMap((pattern) =>
+    Array.from(query.matchAll(pattern), (match) => ({
+      from: match.index ?? 0,
+      to: (match.index ?? 0) + match[0].length,
+    }))
+  );
+};
+
 /**
  * Given an error node, generate an error message to be displayed to the user.
  *
@@ -115,7 +126,12 @@ export const getErrorNodes = (query: string): SyntaxNode[] => {
     },
   });
 
-  return errorNodes;
+  const suppressedErrorRanges = getSuppressedErrorRanges(query);
+
+  return errorNodes.filter(
+    (errorNode) =>
+      !suppressedErrorRanges.some((range) => errorNode.from >= range.from && errorNode.to <= range.to)
+  );
 };
 
 /**
