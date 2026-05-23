@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { contentTypeOptions, type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Select, useStyles2 } from '@grafana/ui';
+import { Field, IconButton, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -16,6 +16,10 @@ interface Props {
 
 export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader = false }: Props) => {
   const styles = useStyles2(getStyles);
+  const keyInputId = useId();
+  const valueInputId = useId();
+  const contentTypeKeyInputId = useId();
+  const contentTypeValueInputId = useId();
 
   const headersContentType = value.find(([key, value]) => key === 'Content-Type');
 
@@ -75,20 +79,26 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
   return (
     <div>
       <Stack direction="row" key={entryKey}>
-        <SuggestionsInput
-          value={paramName}
-          onChange={changeParamName}
-          suggestions={suggestions}
-          placeholder={t('actions.params-editor.placeholder-key', 'Key')}
-          style={{ width: 332 }}
-        />
-        <SuggestionsInput
-          value={paramValue}
-          onChange={changeParamValue}
-          suggestions={suggestions}
-          placeholder={t('actions.params-editor.placeholder-value', 'Value')}
-          style={{ width: 332 }}
-        />
+        <Field label={t('actions.params-editor.placeholder-key', 'Key')} htmlFor={keyInputId} noMargin>
+          <SuggestionsInput
+            id={keyInputId}
+            value={paramName}
+            onChange={changeParamName}
+            suggestions={suggestions}
+            placeholder={t('actions.params-editor.placeholder-key', 'Key')}
+            style={{ width: 332 }}
+          />
+        </Field>
+        <Field label={t('actions.params-editor.placeholder-value', 'Value')} htmlFor={valueInputId} noMargin>
+          <SuggestionsInput
+            id={valueInputId}
+            value={paramValue}
+            onChange={changeParamValue}
+            suggestions={suggestions}
+            placeholder={t('actions.params-editor.placeholder-value', 'Value')}
+            style={{ width: 332 }}
+          />
+        </Field>
         <IconButton
           aria-label={t('actions.params-editor.aria-label-add', 'Add')}
           name="plus-circle"
@@ -114,12 +124,26 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
       {contentTypeHeader && (
         <div className={styles.extraHeader}>
           <Stack direction="row">
-            <Input value={'Content-Type'} disabled />
-            <Select
-              onChange={(select) => changeContentTypeParamValue(select.value as string)}
-              options={contentTypeOptions}
-              value={contentTypeParamValue}
-            />
+            <Field
+              label={t('actions.params-editor.content-type-label', 'Content-Type')}
+              htmlFor={contentTypeKeyInputId}
+              noMargin
+            >
+              <Input id={contentTypeKeyInputId} value={'Content-Type'} disabled />
+            </Field>
+            <Field
+              label={t('actions.params-editor.placeholder-value', 'Value')}
+              htmlFor={contentTypeValueInputId}
+              noMargin
+            >
+              <Select
+                inputId={contentTypeValueInputId}
+                aria-label={t('actions.params-editor.content-type-value-label', 'Content-Type')}
+                onChange={(select) => changeContentTypeParamValue(select.value as string)}
+                options={contentTypeOptions}
+                value={contentTypeParamValue}
+              />
+            </Field>
           </Stack>
         </div>
       )}

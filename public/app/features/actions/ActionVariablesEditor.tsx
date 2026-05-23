@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { type ActionVariable, ActionVariableType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Combobox, type ComboboxOption } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field, IconButton, Input, Stack } from '@grafana/ui';
 
 interface Props {
   onChange: (v: ActionVariable[]) => void;
@@ -13,6 +13,9 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
   const [key, setKey] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState<ActionVariableType>(ActionVariableType.String);
+  const keyInputId = useId();
+  const nameInputId = useId();
+  const typeInputId = useId();
 
   const changeKey = (key: string) => {
     setKey(key);
@@ -63,27 +66,36 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
   return (
     <div>
       <Stack direction="row">
-        <Input
-          value={key}
-          onChange={(e) => changeKey(e.currentTarget.value)}
-          placeholder={t('actions.params-editor.placeholder-key', 'Key')}
-          width={300}
-        />
-        <Input
-          value={name}
-          onChange={(e) => changeName(e.currentTarget.value)}
-          placeholder={t('actions.params-editor.placeholder-name', 'Name')}
-          width={300}
-        />
-        <Combobox
-          value={type}
-          onChange={changeType}
-          placeholder={t('actions.variables-editor.placeholder-type', 'Type')}
-          options={variableTypeOptions}
-          maxWidth={100}
-          minWidth={10}
-          width={'auto'}
-        />
+        <Field label={t('actions.params-editor.placeholder-key', 'Key')} htmlFor={keyInputId} noMargin>
+          <Input
+            id={keyInputId}
+            value={key}
+            onChange={(e) => changeKey(e.currentTarget.value)}
+            placeholder={t('actions.params-editor.placeholder-key', 'Key')}
+            width={300}
+          />
+        </Field>
+        <Field label={t('actions.params-editor.placeholder-name', 'Name')} htmlFor={nameInputId} noMargin>
+          <Input
+            id={nameInputId}
+            value={name}
+            onChange={(e) => changeName(e.currentTarget.value)}
+            placeholder={t('actions.params-editor.placeholder-name', 'Name')}
+            width={300}
+          />
+        </Field>
+        <Field label={t('actions.variables-editor.placeholder-type', 'Type')} htmlFor={typeInputId} noMargin>
+          <Combobox
+            inputId={typeInputId}
+            value={type}
+            onChange={changeType}
+            placeholder={t('actions.variables-editor.placeholder-type', 'Type')}
+            options={variableTypeOptions}
+            maxWidth={100}
+            minWidth={10}
+            width={'auto'}
+          />
+        </Field>
         <IconButton
           aria-label={t('actions.params-editor.aria-label-add', 'Add')}
           name="plus-circle"

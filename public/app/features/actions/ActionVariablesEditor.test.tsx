@@ -15,6 +15,9 @@ describe('ActionVariablesEditor', () => {
   it('renders empty state correctly', () => {
     render(<ActionVariablesEditor value={[]} onChange={mockOnChange} />);
 
+    expect(screen.getByLabelText('Key')).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Type')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Key')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Name')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Type')).toBeInTheDocument();
