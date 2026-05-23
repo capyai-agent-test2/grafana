@@ -48,6 +48,42 @@ describe('mergePanelAndDashboardData', () => {
 
       scheduler.flush();
     });
+
+    it('then fields missing from the first annotation should be preserved', () => {
+      const { panelData, scheduler } = getTestContext();
+
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('a', { a: panelData });
+        const dashObservable = cold('a', {
+          a: {
+            annotations: [
+              { id: 'withoutTags', text: 'first' },
+              { id: 'withTags', text: 'second', tags: ['tag-a', 'tag-b'] },
+            ],
+          },
+        });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('a', {
+          a: expect.objectContaining({
+            annotations: [
+              toAnnotationFrame([{ id: 'panelData' }]),
+              expect.objectContaining({
+                fields: expect.arrayContaining([
+                  expect.objectContaining({
+                    name: 'tags',
+                    values: [undefined, ['tag-a', 'tag-b']],
+                  }),
+                ]),
+              }),
+            ],
+          }),
+        });
+      });
+
+      scheduler.flush();
+    });
   });
 
   describe('when called and dashboard data contains alert states', () => {
