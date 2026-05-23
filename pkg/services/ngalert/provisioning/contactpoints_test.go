@@ -895,6 +895,24 @@ func TestIntegrationAuthorization(t *testing.T) {
 			require.NoError(t, err)
 			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 		})
+		t.Run("returns conflict when receiver is used by imported route", func(t *testing.T) {
+			secretService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+			extraConfig := &v1.ExtraConfiguration{
+				Identifier: "imported",
+				AlertmanagerConfig: `
+route:
+  receiver: grafana-default-email
+receivers:
+  - name: imported-receiver
+`,
+			}
+			cfg := createEncryptedConfigWithExtraConfig(t, defaultAlertmanagerConfigJSON, extraConfig, secretService)
+			store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+			sut := createContactPointServiceSutWithConfigStore(t, secretService, store)
+
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, "UID1")
+			require.ErrorIs(t, err, ErrContactPointReferenced)
+		})
 	})
 }
 
@@ -983,12 +1001,24 @@ func cpsQueryWithName(orgID int64, name string) ContactPointQuery {
 func createEncryptedConfig(t *testing.T,
 	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) string {
-	c, err := notifier.Load([]byte(defaultAlertmanagerConfigJSON))
+	return createEncryptedConfigWithExtraConfig(t, defaultAlertmanagerConfigJSON, nil, secretService)
+}
+
+func createEncryptedConfigWithExtraConfig(t *testing.T,
+	config string,
+	extraConfig *v1.ExtraConfiguration,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) string {
+	c, err := notifier.Load([]byte(config))
 	require.NoError(t, err)
 	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
+	if extraConfig != nil {
+		c.ExtraConfigs = append(c.ExtraConfigs, *extraConfig)
+		require.NoError(t, notifier.NewExtraConfigsCrypto(secretService).EncryptExtraConfigs(context.Background(), c))
+	}
 	bytes, err := legacy_storage.SerializeAlertmanagerConfig(*c)
 	require.NoError(t, err)
 	return string(bytes)
