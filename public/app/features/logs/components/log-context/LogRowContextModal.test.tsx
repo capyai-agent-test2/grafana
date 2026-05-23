@@ -590,4 +590,36 @@ describe('LogRowContextModal', () => {
       expect(rows).not.toHaveStyle('position: sticky');
     });
   });
+
+  it('should render datasource error message when loading more logs fails', async () => {
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+      if (options.direction === LogRowContextQueryDirection.Forward) {
+        throw new Error('Context loading is only supported in Query Builder');
+      }
+
+      return {
+        data: [
+          {
+            refId: 'refid_success',
+            ...dfAfter,
+          },
+        ],
+      };
+    });
+
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Error loading more logs: Context loading is only supported in Query Builder')).toBeVisible();
+    });
+  });
 });

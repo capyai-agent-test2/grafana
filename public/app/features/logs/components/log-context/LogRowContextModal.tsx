@@ -140,6 +140,7 @@ interface LogRowContextModalProps {
 type Section = {
   loadingState: LoadingState;
   rows: LogRowModel[];
+  errorMessage?: string;
 };
 type Place = 'above' | 'below';
 type Context = Record<Place, Section>;
@@ -188,6 +189,18 @@ const normalizeLogRowRefId = (row: LogRowModel, counter: LoadCounter): LogRowMod
 
 const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
   return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
+};
+
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  return undefined;
 };
 
 const PAGE_SIZE = 100;
@@ -353,6 +366,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
     setSection(place, (section) => ({
       ...section,
+      errorMessage: undefined,
       loadingState: LoadingState.Loading,
     }));
 
@@ -380,6 +394,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           return {
             above: {
               rows: sortedNewAbove,
+              errorMessage: place === 'above' ? undefined : c.above.errorMessage,
               loadingState:
                 place === 'above'
                   ? newRows.length === 0
@@ -389,6 +404,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
             },
             below: {
               rows: sortedNewBelow,
+              errorMessage: place === 'below' ? undefined : c.below.errorMessage,
               loadingState:
                 place === 'below'
                   ? newRows.length === 0
@@ -399,9 +415,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           };
         });
       }
-    } catch {
+    } catch (error) {
       setSection(place, (section) => ({
         rows: section.rows,
+        errorMessage: getErrorMessage(error),
         loadingState: LoadingState.Error,
       }));
     }
@@ -489,6 +506,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const loadingStateAbove = context.above.loadingState;
   const loadingStateBelow = context.below.loadingState;
+  const loadingErrorAbove = context.above.errorMessage;
+  const loadingErrorBelow = context.below.errorMessage;
   const timeRange = getFullTimeRange();
 
   return (
@@ -521,9 +540,16 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 )}
                 {loadingStateAbove === LoadingState.Error && (
                   <div>
-                    <Trans i18nKey="logs.log-row-context-modal.error-loading-log-more-logs">
-                      Error loading more logs.
-                    </Trans>
+                    {loadingErrorAbove ? (
+                      t('logs.log-row-context-modal.error-loading-log-more-logs-with-reason', {
+                        message: loadingErrorAbove,
+                        defaultValue: 'Error loading more logs: {{message}}',
+                      })
+                    ) : (
+                      <Trans i18nKey="logs.log-row-context-modal.error-loading-log-more-logs">
+                        Error loading more logs.
+                      </Trans>
+                    )}
                   </div>
                 )}
                 {loadingStateAbove === LoadingState.Done && (
@@ -606,9 +632,16 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 )}
                 {loadingStateBelow === LoadingState.Error && (
                   <div>
-                    <Trans i18nKey="logs.log-row-context-modal.error-loading-log-more-logs">
-                      Error loading more logs.
-                    </Trans>
+                    {loadingErrorBelow ? (
+                      t('logs.log-row-context-modal.error-loading-log-more-logs-with-reason', {
+                        message: loadingErrorBelow,
+                        defaultValue: 'Error loading more logs: {{message}}',
+                      })
+                    ) : (
+                      <Trans i18nKey="logs.log-row-context-modal.error-loading-log-more-logs">
+                        Error loading more logs.
+                      </Trans>
+                    )}
                   </div>
                 )}
                 {loadingStateBelow === LoadingState.Done && (
