@@ -14,6 +14,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { ScaleDistribution } from '@grafana/schema';
 import { LegendDisplayMode, TooltipDisplayMode, type UPlotConfigBuilder, type VizLegendOptions } from '@grafana/ui';
 
 import { getBucketSize, Histogram, type HistogramProps } from './Histogram';
@@ -327,6 +328,45 @@ describe('Histogram', () => {
       const result = invokeXScaleRange(config, [0.001, 0.0011, 0.00121], 0.001, 0.002);
       expect(result[0]).toBe(0.001);
       expect(result[1]).toBeCloseTo(0.002 * 1.1);
+    });
+
+    it('uses configured log distribution for the y axis', () => {
+      const frame = stampFrameWithDisplay(
+        createDataFrame({
+          fields: [
+            { name: 'xMin', type: FieldType.number, values: [1, 2, 3] },
+            { name: 'xMax', type: FieldType.number, values: [2, 3, 4] },
+            {
+              name: 'count',
+              type: FieldType.number,
+              values: [10, 100, 1000],
+              config: {
+                custom: {
+                  scaleDistribution: { type: ScaleDistribution.Log, log: 10 },
+                },
+              },
+            },
+          ],
+        })
+      );
+
+      let configBuilder: UPlotConfigBuilder | undefined;
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+          children: (builder) => {
+            configBuilder = builder;
+            return null;
+          },
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      const yScale = configBuilder!.getConfig().scales?.y;
+      expect(yScale?.distr).toBe(3);
+      expect(yScale?.log).toBe(10);
     });
 
     /**
