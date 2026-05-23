@@ -65,6 +65,49 @@ describe('DataSourcePicker', () => {
     });
   });
 
+  it('marks the current datasource as selected when its uid differs from its name', async () => {
+    const user = userEvent.setup();
+    const currentUid = 'grafanacloud-prom';
+    const mockDs: DataSourceInstanceSettings = {
+      uid: currentUid,
+      name: 'grafanacloud-demokitcloudamersandbox-prom',
+      type: 'prometheus',
+      meta: {
+        id: 'prometheus',
+        name: 'Prometheus',
+        type: 'datasource',
+        info: {
+          logos: {
+            small: 'prometheus_logo.svg',
+            large: 'prometheus_logo.svg',
+          },
+          author: { name: 'Grafana Labs' },
+          description: 'Prometheus data source',
+          links: [],
+          screenshots: [],
+          updated: '2021-01-01',
+          version: '1.0.0',
+        },
+        module: 'core:plugin/prometheus',
+        baseUrl: '',
+      } as DataSourcePluginMeta,
+      readOnly: false,
+      jsonData: {},
+      access: 'proxy',
+    };
+
+    mockGetInstanceSettings.mockImplementation((value) => (value === currentUid ? mockDs : undefined));
+    mockGetList.mockReturnValue([mockDs]);
+
+    render(<DataSourcePicker current={currentUid} onChange={jest.fn()} />);
+
+    await user.click(screen.getByLabelText('Select a data source'));
+
+    const [selectedOption] = await screen.findAllByRole('option');
+    expect(selectedOption).toHaveAttribute('aria-selected', 'true');
+    expect(selectedOption).toHaveTextContent(mockDs.name);
+  });
+
   describe('onClear', () => {
     it('should call onClear when function is passed', async () => {
       const onClear = jest.fn();
