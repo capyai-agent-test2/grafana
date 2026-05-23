@@ -67,6 +67,30 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result?.extraFields).toStrictEqual([]);
   });
 
+  it('should treat duplicate timestamp fields as extra fields without warning', () => {
+    const time = makeTime('timestamp', [1687185711795, 1687185711995]);
+    const body = makeString('body', ['line1', 'line2']);
+    const parsedTimestamp = makeString('timestamp', ['2023-06-19T09:35:11.795Z', '2023-06-19T09:35:11.995Z']);
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const result = parseLogsFrame({
+      meta: {
+        type: DataFrameType.LogLines,
+      },
+      fields: [time, body, parsedTimestamp],
+      length: 2,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.timeField.values[0]).toBe(time.values[0]);
+    expect(result!.bodyField.values[0]).toBe(body.values[0]);
+    expect(result?.extraFields.map((field) => field.name)).toStrictEqual(['timestamp']);
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
   it('should parse old Loki-style (grafana8.x) frames ( multi-frame, but here we only parse a single frame )', () => {
     const time = makeTime('ts', [1687185711795, 1687185711995]);
     const line = makeString('line', ['line1', 'line2'], { counter: '34543', lable: 'val3', level: 'info' });

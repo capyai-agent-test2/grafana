@@ -1,4 +1,4 @@
-import { type DataFrame, FieldCache, FieldType, type FieldWithIndex, DataFrameType, type Labels } from '@grafana/data';
+import { type DataFrame, FieldType, type FieldWithIndex, DataFrameType, type Labels } from '@grafana/data';
 
 import { parseLegacyLogsFrame } from './legacyLogsFrame';
 
@@ -20,13 +20,16 @@ export type LogsFrame = {
   extraFields: FieldWithIndex[];
 };
 
-function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldWithIndex | undefined {
-  const field = cache.getFieldByName(name);
-  if (field === undefined) {
+function getFrameField(frame: DataFrame, name: string, fieldType: FieldType): FieldWithIndex | undefined {
+  const index = frame.fields.findIndex((field) => field.name === name && field.type === fieldType);
+  if (index === -1) {
     return undefined;
   }
 
-  return field.type === fieldType ? field : undefined;
+  return {
+    ...frame.fields[index],
+    index,
+  };
 }
 
 export const LOGS_DATAPLANE_TIMESTAMP_NAME = 'timestamp';
@@ -65,30 +68,30 @@ export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
 }
 
 export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
-  const cache = new FieldCache(frame);
-
-  const timestampField = getField(cache, LOGS_DATAPLANE_TIMESTAMP_NAME, FieldType.time);
-  const bodyField = getField(cache, LOGS_DATAPLANE_BODY_NAME, FieldType.string);
+  const timestampField = getFrameField(frame, LOGS_DATAPLANE_TIMESTAMP_NAME, FieldType.time);
+  const bodyField = getFrameField(frame, LOGS_DATAPLANE_BODY_NAME, FieldType.string);
 
   // these two are mandatory
   if (timestampField === undefined || bodyField === undefined) {
     return null;
   }
 
-  const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
-  const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
-  const labelsField = getField(cache, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
+  const severityField = getFrameField(frame, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
+  const idField = getFrameField(frame, DATAPLANE_ID_NAME, FieldType.string) ?? null;
+  const labelsField = getFrameField(frame, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
 
   const labels = labelsField === null ? null : labelsField.values;
 
-  const extraFields = cache.fields.filter(
-    (_, i) =>
-      i !== timestampField.index &&
-      i !== bodyField.index &&
-      i !== severityField?.index &&
-      i !== idField?.index &&
-      i !== labelsField?.index
-  );
+  const extraFields = frame.fields
+    .map((field, index) => ({ ...field, index }))
+    .filter(
+      ({ index }) =>
+        index !== timestampField.index &&
+        index !== bodyField.index &&
+        index !== severityField?.index &&
+        index !== idField?.index &&
+        index !== labelsField?.index
+    );
 
   return {
     timeField: timestampField,
