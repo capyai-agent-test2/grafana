@@ -36,7 +36,6 @@ test.describe(
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=14' }, // bar chart
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=26' }, // heatmap
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=34' }, // text
-        { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=12' }, // news
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=8' }, // dashboard list
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=6' }, // alert list
         { url: '/d/n1jR8vnnz/panel-tests-all-panels?editPanel=10' }, // annotation list

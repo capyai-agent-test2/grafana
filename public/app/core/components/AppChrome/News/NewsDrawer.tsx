@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Drawer, useStyles2, Text } from '@grafana/ui';
-import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
+import { DEFAULT_FEED_URL } from './constants';
 import grotNewsSvg from 'img/grot-news.svg';
 
 import { NewsWrapper } from './NewsWrapper';

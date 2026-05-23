@@ -787,46 +787,6 @@ export const panels: PanelPluginMetas = structuredClone({
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,
   },
-  news: {
-    id: 'news',
-    name: 'News',
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: 'RSS feed reader',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-        {
-          name: 'Documentation',
-          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/news/img/news.svg',
-        large: 'app/plugins/panel/news/img/news.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: false,
-    sort: 17,
-    skipDataQuery: true,
-    state: PluginState.beta,
-    baseUrl: 'app/plugins/panel/news',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/news',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
   nodeGraph: {
     id: 'nodeGraph',
     name: 'Node Graph',
