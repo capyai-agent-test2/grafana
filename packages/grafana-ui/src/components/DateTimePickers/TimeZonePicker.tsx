@@ -12,6 +12,7 @@ import {
 import { t } from '@grafana/i18n';
 
 import { Select } from '../Select/Select';
+import type { SelectFilterOption } from '../Select/types';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
@@ -159,7 +160,7 @@ const isInternal = (timeZone: TimeZone): boolean => {
 };
 
 const useFilterBySearchIndex = () => {
-  return useCallback((option: SelectableValue, searchQuery: string) => {
+  return useCallback<SelectFilterOption<string>>((option, searchQuery) => {
     if (!searchQuery || !option.data || !option.data.searchIndex) {
       return true;
     }

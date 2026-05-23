@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import {
   type ActionMeta as SelectActionMeta,
   type CommonProps as ReactSelectCommonProps,
+  type FilterOptionOption,
   type GroupBase,
   type OptionsOrGroups,
 } from 'react-select';
@@ -15,6 +16,7 @@ export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
 export type LoadOptionsCallback<T> = (options: Array<SelectableValue<T>>) => void;
+export type SelectFilterOption<T> = (option: FilterOptionOption<SelectableValue<T>>, searchQuery: string) => boolean;
 
 export enum ToggleAllState {
   allSelected = 'allSelected',
@@ -41,7 +43,7 @@ export interface SelectCommonProps<T> {
   createOptionPosition?: 'first' | 'last';
   defaultValue?: any;
   disabled?: boolean;
-  filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
+  filterOption?: SelectFilterOption<T>;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => React.ReactNode;
