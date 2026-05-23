@@ -88,6 +88,33 @@ export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
 const defaultHistogramWidth = 264;
 const defaultHistogramHeight = 64;
 
+const getLinksFieldForYValue = (series: Field[] | undefined, yValueIdx: number) => {
+  if (series == null) {
+    return undefined;
+  }
+
+  const numericFields = series.filter((field, idx) => idx > 0 && field.type === FieldType.number);
+  const hoveredField = numericFields[yValueIdx];
+
+  if (hoveredField == null) {
+    return undefined;
+  }
+
+  const firstFieldName = numericFields[0]?.name;
+
+  if (firstFieldName == null) {
+    return hoveredField;
+  }
+
+  const groupSize = numericFields.findIndex((field, idx) => idx > 0 && field.name === firstFieldName);
+
+  if (groupSize <= 0 || numericFields.length % groupSize !== 0) {
+    return hoveredField;
+  }
+
+  return numericFields[Math.floor(yValueIdx / groupSize) * groupSize] ?? hoveredField;
+};
+
 const HeatmapHoverCell = ({
   dataIdxs,
   dataRef,
@@ -318,7 +345,7 @@ const HeatmapHoverCell = ({
     let links: Array<LinkModel<Field>> = [];
     let actions: Array<ActionModel<Field>> = [];
 
-    const linksField = data.series?.fields[yValueIdx + 1];
+    const linksField = getLinksFieldForYValue(data.series?.fields, yValueIdx);
 
     if (linksField != null) {
       const visible = !Boolean(linksField.config.custom?.hideFrom?.tooltip);

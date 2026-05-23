@@ -4,6 +4,7 @@ import {
   createDataFrame,
   createTheme,
   DataFrameType,
+  dateTime,
   FieldType,
   getDefaultTimeRange,
   getDisplayProcessor,
@@ -14,6 +15,8 @@ import { HeatmapCellLayout, TooltipDisplayMode } from '@grafana/schema';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
 import { type HeatmapData } from './fields';
+import { prepareHeatmapData } from './fields';
+import { type Options } from './panelcfg.gen';
 
 const theme = createTheme();
 
@@ -169,6 +172,51 @@ function createHeatmapDataWithInterval(overrides?: Partial<HeatmapData>): Heatma
     data.heatmap.fields[0].config = { ...data.heatmap.fields[0].config, interval: 1000 };
   }
   return data;
+}
+
+function createPreparedMultiFrameHeatmapData(): HeatmapData {
+  const link = {
+    title: 'View',
+    url: '/d/?var-host=${__field.labels.host}&from=${__data.fields["prev_bucket_ms"]}&to=${__value.time}',
+  };
+  const frames = [
+    createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [10, 20],
+          labels: { host: 'a' },
+          config: { links: [link] },
+        },
+        { name: 'prev_bucket_ms', type: FieldType.number, values: [0, 1000], labels: { host: 'a' } },
+      ],
+    }),
+    createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [30, 40],
+          labels: { host: 'b' },
+          config: { links: [link] },
+        },
+        { name: 'prev_bucket_ms', type: FieldType.number, values: [100, 1100], labels: { host: 'b' } },
+      ],
+    }),
+  ];
+
+  return prepareHeatmapData({
+    frames,
+    annotations: [],
+    options: { color: {} } as Options,
+    palette: [],
+    theme,
+    replaceVariables: (v) => v,
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+  });
 }
 
 describe('HeatmapTooltip', () => {
@@ -564,6 +612,22 @@ describe('HeatmapTooltip', () => {
       );
 
       expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
+    });
+
+    it('uses the source value field for links on multi-frame transformed rows', () => {
+      const dataRef = { current: createPreparedMultiFrameHeatmapData() };
+
+      render(
+        <HeatmapTooltip
+          {...defaultProps}
+          dataRef={dataRef}
+          isPinned={true}
+          dataIdxs={[0, 1, 0]}
+          replaceVariables={(v) => v}
+        />
+      );
+
+      expect(screen.getByRole('link', { name: 'View' })).toBeVisible();
     });
   });
 });
