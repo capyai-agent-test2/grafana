@@ -35,6 +35,14 @@ describe('normalizeTransformation', () => {
       spec: { options: {} },
     });
   });
+
+  it('uses spec.id for malformed v2-like transformations missing group', () => {
+    expect(normalizeTransformation({ kind: 'Transformation', spec: { id: 'merge', options: {} } })).toEqual({
+      kind: 'Transformation',
+      group: 'merge',
+      spec: { options: {} },
+    });
+  });
 });
 
 describe('toWireTransformation', () => {
