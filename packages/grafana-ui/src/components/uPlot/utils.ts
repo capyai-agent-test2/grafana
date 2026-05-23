@@ -136,7 +136,9 @@ export function getStackingGroups(frame: DataFrame) {
           ? custom.lineInterpolation
           : null;
 
-    let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
+    let stackDirKey = drawStyle === GraphDrawStyle.Bars ? 'bars' : stackDir;
+
+    let stackKey = `${stackDirKey}|${stackingMode}|${stackingGroup}|${buildScaleKey(
       config,
       type
     )}|${drawStyle}|${drawStyle2}`;
@@ -171,7 +173,9 @@ export function preparePlotData2(
   let dataLen = frame.length;
   let zeroArr = stacksQty > 0 ? Array(dataLen).fill(0) : [];
   let falseArr = stacksQty > 0 ? Array(dataLen).fill(false) : [];
-  let accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+  let totalAccums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+  let posAccums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+  let negAccums = Array.from({ length: stacksQty }, () => zeroArr.slice());
 
   let anyValsAtX = Array.from({ length: stacksQty }, () => falseArr.slice());
 
@@ -235,17 +239,30 @@ export function preparePlotData2(
     } else {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
-      let accum = accums[stackIdx];
+      let totalAccum = totalAccums[stackIdx];
+      let posAccum = posAccums[stackIdx];
+      let negAccum = negAccums[stackIdx];
       let groupValsAtX = anyValsAtX[stackIdx];
       let stacked = (data[i] = Array(dataLen));
+      let useSplitSignAccums = custom.drawStyle === GraphDrawStyle.Bars;
 
       for (let i = 0; i < dataLen; i++) {
         let v = vals[i];
 
         if (v != null) {
-          stacked[i] = accum[i] += v;
+          if (useSplitSignAccums && (v < 0 || Object.is(v, -0))) {
+            stacked[i] = negAccum[i] += v;
+          } else if (useSplitSignAccums) {
+            stacked[i] = posAccum[i] += v;
+          } else {
+            stacked[i] = totalAccum[i] += v;
+          }
+
+          if (useSplitSignAccums) {
+            totalAccum[i] = posAccum[i] + negAccum[i];
+          }
         } else {
-          stacked[i] = groupValsAtX[i] ? accum[i] : v;
+          stacked[i] = groupValsAtX[i] ? totalAccum[i] : v;
         }
       }
     }
@@ -254,7 +271,7 @@ export function preparePlotData2(
   if (onStackMeta) {
     let accumsBySeriesIdx = data.map((vals, i) => {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
-      return stackIdx !== -1 ? accums[stackIdx] : vals;
+      return stackIdx !== -1 ? totalAccums[stackIdx] : vals;
     });
 
     onStackMeta({
@@ -272,17 +289,27 @@ export function preparePlotData2(
 
     if (stackingMode === StackingMode.Percent) {
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
-      let accum = accums[stackIdx];
+      let posAccum = posAccums[stackIdx];
+      let negAccum = negAccums[stackIdx];
+      let totalAccum = totalAccums[stackIdx];
       let group = stackingGroups[stackIdx];
 
       let stacked = data[i];
+      let useSplitSignAccums = field.config.custom?.drawStyle === GraphDrawStyle.Bars;
 
       for (let i = 0; i < dataLen; i++) {
         let v = stacked[i];
 
         if (v != null) {
-          // v / accum will always be pos, so properly (re)sign by group stacking dir
-          stacked[i] = accum[i] === 0 ? 0 : group.dir * (v / accum[i]);
+          if (useSplitSignAccums) {
+            let accum = v < 0 || Object.is(v, -0) ? negAccum[i] : posAccum[i];
+
+            // v / accum will always be pos, so properly (re)sign by the stacked point itself
+            stacked[i] = accum === 0 ? 0 : Math.sign(v || group.dir) * (v / accum);
+          } else {
+            // v / accum will always be pos, so properly (re)sign by group stacking dir
+            stacked[i] = totalAccum[i] === 0 ? 0 : group.dir * (v / totalAccum[i]);
+          }
         }
       }
     }
