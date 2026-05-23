@@ -477,7 +477,7 @@ For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqli
 
 #### `query_retries`
 
-This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
+This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `5`.
 
 #### `transaction_retries`
 
