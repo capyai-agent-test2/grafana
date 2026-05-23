@@ -39,7 +39,7 @@ export function LokiQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource, showExplain, timeRange } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
-    visQuery: query.visualQuery ?? getInitialVisualQuery(query.expr),
+    visQuery: getVisualQueryForExpr(query.expr, query.visualQuery),
   });
 
   // Only rebuild visual query if expr changes from outside
@@ -85,21 +85,19 @@ const stateSlice = createSlice({
     },
     queryChanged: (state, action: PayloadAction<QueryStatePayload>) => {
       const { expr, visualQuery } = action.payload;
-      if (visualQuery) {
-        state.expr = expr;
-        state.visQuery = visualQuery;
-        return;
-      }
       if (!state.visQuery || state.expr !== expr) {
         state.expr = expr;
-        const parseResult = buildVisualQueryFromString(expr);
-        state.visQuery = parseResult.query;
+        state.visQuery = getVisualQueryForExpr(expr, visualQuery);
       }
     },
   },
 });
 
-function getInitialVisualQuery(expr: string) {
+function getVisualQueryForExpr(expr: string, visualQuery?: LokiVisualQuery) {
+  if (visualQuery && lokiQueryModeller.renderQuery(visualQuery) === expr) {
+    return visualQuery;
+  }
+
   if (expr === '') {
     return {
       labels: [],
@@ -107,7 +105,8 @@ function getInitialVisualQuery(expr: string) {
     };
   }
 
-  return undefined;
+  const parseResult = buildVisualQueryFromString(expr);
+  return parseResult.query;
 }
 
 const { visualQueryChange, queryChanged } = stateSlice.actions;

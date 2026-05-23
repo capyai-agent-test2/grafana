@@ -160,6 +160,29 @@ describe('LokiQueryBuilderContainer', () => {
     expect(screen.getByTitle('Enable operation')).toBeInTheDocument();
   });
 
+  it('rebuilds from expr when persisted visual query is stale', async () => {
+    const props = {
+      query: {
+        expr: '{job="grafana"} | logfmt',
+        refId: 'A',
+        visualQuery: {
+          labels: [{ op: '=', label: 'job', value: 'grafana' }],
+          operations: [{ id: LokiOperationId.Logfmt, params: [false, false], disabled: true }],
+        },
+      },
+      datasource: createLokiDatasource(),
+      onChange: jest.fn(),
+      onRunQuery: () => {},
+      showExplain: false,
+    };
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    render(<LokiQueryBuilderContainer {...props} />);
+
+    expect(await screen.findByText('Logfmt')).toBeInTheDocument();
+    expect(screen.getByTitle('Disable operation')).toBeInTheDocument();
+  });
+
   it('uses <expr> as placeholder for query in explain section', async () => {
     const props = {
       query: {
