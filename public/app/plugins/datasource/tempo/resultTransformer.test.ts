@@ -108,6 +108,37 @@ describe('transformFromOTLP()', () => {
     });
   });
 
+  test('extracts instrumentation scope attributes into instrumentationLibraryTags', () => {
+    const batchesWithInstrumentationAttributes = [
+      {
+        ...otlpResponse.batches[0],
+        instrumentationLibrarySpans: [
+          {
+            ...otlpResponse.batches[0].instrumentationLibrarySpans[0],
+            instrumentationLibrary: {
+              ...otlpResponse.batches[0].instrumentationLibrarySpans[0].instrumentationLibrary,
+              attributes: [
+                { key: 'tailsampling.policy', value: { stringValue: 'policy-a' } },
+                { key: 'scope.enabled', value: { boolValue: true } },
+              ],
+            },
+          },
+        ],
+      },
+    ];
+
+    const res = transformFromOTLP(
+      batchesWithInstrumentationAttributes as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      false
+    );
+    const instrumentationTagsField = res.data[0].fields.find((f: Field) => f.name === 'instrumentationLibraryTags');
+    expect(instrumentationTagsField).toBeDefined();
+    expect(instrumentationTagsField!.values[0]).toEqual([
+      { key: 'tailsampling.policy', value: 'policy-a' },
+      { key: 'scope.enabled', value: true },
+    ]);
+  });
+
   test('extracts service.namespace from resource attributes into serviceNamespace column', () => {
     const batchesWithNamespace = [
       {
