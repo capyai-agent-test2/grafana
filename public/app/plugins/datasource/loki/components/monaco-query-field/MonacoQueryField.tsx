@@ -189,7 +189,8 @@ const MonacoQueryField = ({
         }}
         onMount={(editor, monaco) => {
           // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
-          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
+          const editorFocusContext = 'isEditorFocused' + id;
+          const isEditorFocused = editor.createContextKey<boolean>(editorFocusContext, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
             isEditorFocused.set(false);
@@ -278,6 +279,7 @@ const MonacoQueryField = ({
           monaco.editor.addKeybindingRule({
             keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
             command: null,
+            when: editorFocusContext,
           });
 
           editor.onDidFocusEditorText(() => {
