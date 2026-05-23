@@ -173,7 +173,7 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
   const valuesByGroupKey = new Map<string, FieldMap>();
 
   for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-    const groupKey = String(groupByFields.map((field) => field.values[rowIndex]));
+    const groupKey = String(groupByFields.map((field) => getGroupByValue(field, rowIndex)));
     const valuesByField = valuesByGroupKey.get(groupKey) ?? {};
 
     if (!valuesByGroupKey.has(groupKey)) {
@@ -198,6 +198,16 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
   }
 
   return valuesByGroupKey;
+}
+
+function getGroupByValue(field: Field, rowIndex: number) {
+  const value = field.values[rowIndex];
+
+  if (!field.config.mappings?.length || !field.display) {
+    return value;
+  }
+
+  return field.display(value).text;
 }
 
 /**

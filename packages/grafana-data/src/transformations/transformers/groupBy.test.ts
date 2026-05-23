@@ -1,6 +1,9 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { getDisplayProcessor } from '../../field/displayProcessor';
+import { createTheme } from '../../themes/createTheme';
 import { FieldType, type Field } from '../../types/dataFrame';
 import { type DataTransformerConfig } from '../../types/transformations';
+import { MappingType } from '../../types/valueMapping';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
@@ -539,6 +542,60 @@ describe('GroupBy transformer', () => {
           config: {},
         },
       ];
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+
+  it('should group by mapped display values when a grouped field has value mappings', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'line',
+          type: FieldType.string,
+          values: [
+            'ts=1 caller=auth msg=one',
+            'ts=2 caller=auth msg=two',
+            'ts=3 caller=billing msg=three',
+            'ts=4 caller=auth msg=four',
+          ],
+          config: {
+            mappings: [
+              {
+                type: MappingType.RegexToText,
+                options: { pattern: '.*caller=([^\\s]*).*', result: { text: '$1' } },
+              },
+            ],
+          },
+        },
+        { name: 'time', type: FieldType.time, values: [1, 2, 3, 4] },
+      ],
+    });
+
+    testSeries.fields[0].display = getDisplayProcessor({
+      field: testSeries.fields[0],
+      theme: createTheme(),
+    });
+
+    const cfg = getSimpleGroupByConfig('line', 'time', ReducerID.count);
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'line',
+          type: FieldType.string,
+          values: ['ts=1 caller=auth msg=one', 'ts=3 caller=billing msg=three'],
+          config: testSeries.fields[0].config,
+        },
+        {
+          name: 'time (count)',
+          type: FieldType.number,
+          values: [3, 1],
+          config: {},
+        },
+      ];
+
       expect(result[0].fields).toEqual(expected);
     });
   });
