@@ -451,6 +451,33 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          adhocFilters: [{ key: 'tagKey1', operator: '=~', value: '[' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          adhocFilters: [{ key: 'tagKey1', operator: '!~', value: '[' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '!~', value: '[' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([]));
   });
 
   it("should not return spans whose tags' kv.key match a filter but kv.value/operator does not match", () => {

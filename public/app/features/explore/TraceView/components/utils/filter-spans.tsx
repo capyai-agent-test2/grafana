@@ -88,7 +88,7 @@ const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<Selectabl
         return operator === '=' ? matches : !matches;
       } else if (operator === '=~' || operator === '!~') {
         const matches = checkKeyValConditionForRegex(tagFilter, span);
-        return operator === '=~' ? matches : !matches;
+        return operator === '=~' ? matches === true : matches === false;
       }
 
       return false;
@@ -96,11 +96,11 @@ const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<Selectabl
   });
 };
 
-const regexMatches = (pattern: string, value: string): boolean => {
+const regexMatches = (pattern: string, value: string): boolean | undefined => {
   try {
     return new RegExp(pattern).test(value);
   } catch {
-    return false;
+    return undefined;
   }
 };
 
@@ -113,9 +113,9 @@ const matchField = (fieldValue: string, operator: string, expectedValue: string)
   } else if (operator === '!=') {
     return fieldValue !== expectedValue;
   } else if (operator === '=~') {
-    return regexMatches(expectedValue, fieldValue);
+    return regexMatches(expectedValue, fieldValue) ?? false;
   } else if (operator === '!~') {
-    return !regexMatches(expectedValue, fieldValue);
+    return regexMatches(expectedValue, fieldValue) === false;
   }
   return false;
 };
@@ -294,11 +294,13 @@ const getTagMatches = (spans: TraceSpan[], tags: TraceSearchTag[]) => {
       // match against every tag filter
       return tags.every((tag: TraceSearchTag) => {
         if (tag.key && tag.value) {
+          const regexMatch = (tag.operator === '=~' || tag.operator === '!~') ? checkKeyValConditionForRegex(tag, span) : undefined;
+
           if (
             (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) ||
-            (tag.operator === '=~' && checkKeyValConditionForRegex(tag, span)) ||
+            (tag.operator === '=~' && regexMatch === true) ||
             (tag.operator === '!=' && !checkKeyValConditionForMatch(tag, span)) ||
-            (tag.operator === '!~' && !checkKeyValConditionForRegex(tag, span))
+            (tag.operator === '!~' && regexMatch === false)
           ) {
             return true;
           }
@@ -327,25 +329,26 @@ const getTagMatches = (spans: TraceSpan[], tags: TraceSearchTag[]) => {
   return undefined;
 };
 
-const checkKeyValConditionForRegex = (tag: TraceSearchTag, span: TraceSpan) => {
-  return (
-    span.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
-    span.process.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
-    (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForRegex(tag, kv)))) ||
-    (span.kind && tag.key === KIND && regexMatches(tag.value || '', span.kind)) ||
-    (span.statusCode !== undefined &&
-      tag.key === STATUS &&
-      regexMatches(tag.value || '', SpanStatusCode[span.statusCode].toLowerCase())) ||
-    (span.statusMessage && tag.key === STATUS_MESSAGE && regexMatches(tag.value || '', span.statusMessage)) ||
-    (span.instrumentationLibraryName &&
-      tag.key === LIBRARY_NAME &&
-      regexMatches(tag.value || '', span.instrumentationLibraryName)) ||
-    (span.instrumentationLibraryVersion &&
-      tag.key === LIBRARY_VERSION &&
-      regexMatches(tag.value || '', span.instrumentationLibraryVersion)) ||
-    (span.traceState && tag.key === TRACE_STATE && regexMatches(tag.value || '', span.traceState)) ||
-    (tag.key === ID && regexMatches(tag.value || '', span.spanID))
-  );
+const checkKeyValConditionForRegex = (tag: TraceSearchTag, span: TraceSpan): boolean | undefined => {
+  const pattern = tag.value || '';
+  try {
+    const regex = new RegExp(pattern);
+
+    return (
+      span.tags.some((kv) => checkKeyAndValueForRegex(tag, kv, regex)) ||
+      span.process.tags.some((kv) => checkKeyAndValueForRegex(tag, kv, regex)) ||
+      (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForRegex(tag, kv, regex)))) ||
+      (span.kind && tag.key === KIND && regex.test(span.kind)) ||
+      (span.statusCode !== undefined && tag.key === STATUS && regex.test(SpanStatusCode[span.statusCode].toLowerCase())) ||
+      (span.statusMessage && tag.key === STATUS_MESSAGE && regex.test(span.statusMessage)) ||
+      (span.instrumentationLibraryName && tag.key === LIBRARY_NAME && regex.test(span.instrumentationLibraryName)) ||
+      (span.instrumentationLibraryVersion && tag.key === LIBRARY_VERSION && regex.test(span.instrumentationLibraryVersion)) ||
+      (span.traceState && tag.key === TRACE_STATE && regex.test(span.traceState)) ||
+      (tag.key === ID && regex.test(span.spanID))
+    );
+  } catch {
+    return undefined;
+  }
 };
 
 const checkKeyValConditionForMatch = (tag: TraceSearchTag, span: TraceSpan) => {
@@ -375,8 +378,8 @@ const checkKeyAndValueForMatch = (tag: TraceSearchTag, kv: TraceKeyValuePair) =>
   return tag.key === kv.key && tag.value === getStringValue(kv.value);
 };
 
-const checkKeyAndValueForRegex = (tag: TraceSearchTag, kv: TraceKeyValuePair) => {
-  return kv.key === tag.key && regexMatches(tag.value || '', getStringValue(kv.value));
+const checkKeyAndValueForRegex = (tag: TraceSearchTag, kv: TraceKeyValuePair, regex: RegExp) => {
+  return kv.key === tag.key && regex.test(getStringValue(kv.value));
 };
 
 const getStringValue = (value: string | number | boolean | undefined) => {
