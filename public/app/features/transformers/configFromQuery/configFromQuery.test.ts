@@ -1,4 +1,4 @@
-import { toDataFrame, FieldType, ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
+import { toDataFrame, FieldType, ReducerID, DataTransformerID, ThresholdsMode, transformDataFrame } from '@grafana/data';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
 
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
@@ -112,6 +112,37 @@ describe('config from data', () => {
     expect(thresholdConfig).toBeDefined();
     expect(thresholdConfig?.color).toBe('orange');
     expect(thresholdConfig?.value).toBe(50);
+  });
+
+  it('With thresholds built from all values and matching colors', () => {
+    const thresholdConfigFrame = toDataFrame({
+      fields: [
+        { name: 'threshold', type: FieldType.number, values: [0, 5, 10, 20] },
+        { name: 'color', type: FieldType.string, values: ['red', 'yellow', 'orange', 'red'] },
+      ],
+      refId: 'B',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'B',
+      mappings: [
+        { fieldName: 'threshold', handlerKey: 'threshold1', reducerId: ReducerID.allValues },
+        { fieldName: 'color', handlerKey: 'color', reducerId: ReducerID.allValues },
+      ],
+    };
+
+    const results = extractConfigFromQuery(options, [seriesA, thresholdConfigFrame]);
+    expect(results).toHaveLength(1);
+    expect(results[0].fields[1].config.color).toBeUndefined();
+    expect(results[0].fields[1].config.thresholds).toEqual({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: 0, color: 'red' },
+        { value: 5, color: 'yellow' },
+        { value: 10, color: 'orange' },
+        { value: 20, color: 'red' },
+      ],
+    });
   });
 
   it('With custom matcher and displayName mapping', () => {
