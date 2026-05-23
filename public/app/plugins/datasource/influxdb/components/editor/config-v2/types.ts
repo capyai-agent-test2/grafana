@@ -19,4 +19,6 @@ type InfluxSecureBasicAuthData = {
 export type Props = DataSourcePluginOptionsEditorProps<
   InfluxOptions & InfluxBasicAuthData,
   InfluxSecureJsonData & InfluxSecureBasicAuthData
->;
+> & {
+  pdcInjected?: boolean;
+};

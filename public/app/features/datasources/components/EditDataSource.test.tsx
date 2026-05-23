@@ -463,4 +463,59 @@ describe('<EditDataSource>', () => {
       secureJsonData: { test: 'test' },
     });
   });
+
+  it('should not persist pdcInjected into datasource jsonData', () => {
+    const ConfigEditor = jest.fn(
+      ({ options, onOptionsChange }: { options: ReturnType<typeof getMockDataSource>; onOptionsChange: typeof onOptionsChange }) => {
+        useEffect(() => {
+          onOptionsChange({
+            ...options,
+            jsonData: { ...options.jsonData, test: 'test' },
+          });
+        }, [onOptionsChange, options]);
+
+        return null;
+      }
+    );
+
+    setPluginComponentsHook(
+      jest.fn().mockReturnValue({
+        isLoading: false,
+        components: [
+          createComponentWithMeta(
+            {
+              pluginId: 'grafana-pdc-app',
+              title: 'Example component',
+              description: 'Example description',
+              component: () => null,
+            },
+            '1'
+          ),
+        ],
+      })
+    );
+
+    setup({
+      dataSourceSettings: getMockDataSourceSettingsState({
+        plugin: {
+          meta: getMockDataSourceMeta(),
+          components: { ConfigEditor },
+        },
+      }),
+    });
+
+    expect(ConfigEditor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pdcInjected: true,
+        options: expect.objectContaining({
+          jsonData: expect.not.objectContaining({ pdcInjected: expect.anything() }),
+        }),
+      }),
+      expect.anything()
+    );
+    expect(onOptionsChange).toHaveBeenCalledWith({
+      ...getMockDataSource(),
+      jsonData: { ...getMockDataSource().jsonData, test: 'test' },
+    });
+  });
 });

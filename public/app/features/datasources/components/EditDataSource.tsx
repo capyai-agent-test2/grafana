@@ -166,14 +166,6 @@ export function EditDataSourceView({
 
   const isPDCInjected = components.some((component) => component.meta.pluginId === 'grafana-pdc-app');
 
-  const dataSourceWithIsPDCInjected = {
-    ...dataSource,
-    jsonData: {
-      ...dataSource.jsonData,
-      pdcInjected: isPDCInjected,
-    },
-  };
-
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
   const onSubmit = useCallback(
@@ -245,9 +237,10 @@ export function EditDataSourceView({
         <DataSourcePluginContextProvider instanceSettings={dsi}>
           <DataSourcePluginSettings
             plugin={plugin}
-            dataSource={dataSourceWithIsPDCInjected}
+            dataSource={dataSource}
             dataSourceMeta={dataSourceMeta}
             onModelChange={onOptionsChange}
+            pdcInjected={isPDCInjected}
             validation={validation}
           />
         </DataSourcePluginContextProvider>

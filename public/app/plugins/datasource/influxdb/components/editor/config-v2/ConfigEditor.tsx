@@ -12,7 +12,7 @@ import { CONTAINER_MIN_WIDTH } from './constants';
 import { type Props } from './types';
 
 export const ConfigEditor: React.FC<Props> = (props: Props) => {
-  const { onOptionsChange, options } = props;
+  const { onOptionsChange, options, pdcInjected = false } = props;
   const styles = useStyles2(getStyles);
 
   // Only activate validation when the feature toggle is enabled. When disabled,
@@ -25,7 +25,7 @@ export const ConfigEditor: React.FC<Props> = (props: Props) => {
     <Stack justifyContent="space-between">
       <div className={`${styles.hideOnSmallScreen} ${styles.leftSticky}`}>
         <Box width="100%" flex="1 1 auto">
-          <LeftSideBar pdcInjected={options?.jsonData?.pdcInjected!!} />
+          <LeftSideBar pdcInjected={pdcInjected} />
         </Box>
       </div>
       <Box width="60%" flex="1 1 auto" minWidth={CONTAINER_MIN_WIDTH}>
