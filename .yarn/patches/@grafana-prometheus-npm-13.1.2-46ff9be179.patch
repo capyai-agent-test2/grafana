@@ -1,0 +1,381 @@
+diff --git a/dist/cjs/components/metrics-browser/MetricsBrowserContext.cjs b/dist/cjs/components/metrics-browser/MetricsBrowserContext.cjs
+index 5d75b79ad5c675add98999bc355c1275e947186c..16eb7cc28d022e081bd53e90f9e8e3057abb7580 100644
+--- a/dist/cjs/components/metrics-browser/MetricsBrowserContext.cjs
++++ b/dist/cjs/components/metrics-browser/MetricsBrowserContext.cjs
+@@ -28,6 +28,7 @@ function MetricsBrowserProvider({
+     isLoadingLabelKeys,
+     isLoadingLabelValues,
+     labelValues,
++    labelValueCounts,
+     selectedMetric,
+     selectedLabelKeys,
+     selectedLabelValues,
+@@ -57,6 +58,7 @@ function MetricsBrowserProvider({
+       isLoadingLabelKeys,
+       isLoadingLabelValues,
+       labelValues,
++      labelValueCounts,
+       selectedMetric,
+       selectedLabelKeys,
+       selectedLabelValues,
+@@ -81,6 +83,7 @@ function MetricsBrowserProvider({
+       isLoadingLabelKeys,
+       isLoadingLabelValues,
+       labelValues,
++      labelValueCounts,
+       selectedMetric,
+       selectedLabelKeys,
+       selectedLabelValues,
+diff --git a/dist/cjs/components/metrics-browser/ValueSelector.cjs b/dist/cjs/components/metrics-browser/ValueSelector.cjs
+index 119beada8807b80f8f91f555fc085535653fafb2..662ea68839cc2f9649841223d0050a3f3602075a 100644
+--- a/dist/cjs/components/metrics-browser/ValueSelector.cjs
++++ b/dist/cjs/components/metrics-browser/ValueSelector.cjs
+@@ -17,7 +17,7 @@ function ValueSelector() {
+   const styles$1 = ui.useStyles2(styles.getStylesValueSelector);
+   const sharedStyles = ui.useStyles2(styles.getStylesMetricsBrowser);
+   const [valueSearchTerm, setValueSearchTerm] = React.useState("");
+-  const { labelValues, selectedLabelValues, isLoadingLabelValues, onLabelValueClick, onLabelKeyClick } = MetricsBrowserContext.useMetricsBrowser();
++  const { labelValues, labelValueCounts, selectedLabelValues, isLoadingLabelValues, onLabelValueClick, onLabelKeyClick } = MetricsBrowserContext.useMetricsBrowser();
+   const [filteredLabelValues, setFilteredLabelValues] = React.useState({ ...labelValues });
+   React.useEffect(() => {
+     const filtered = {};
+@@ -68,7 +68,7 @@ function ValueSelector() {
+           ),
+           className: styles$1.valueListWrapper,
+           children: [
+-            /* @__PURE__ */ jsxRuntime.jsx("div", { className: styles$1.valueTitle, children: /* @__PURE__ */ jsxRuntime.jsx(ui.BrowserLabel, { name: lk, active: true, hidden: false, facets: lv.length, onClick: onLabelKeyClick }) }),
++            /* @__PURE__ */ jsxRuntime.jsx("div", { className: styles$1.valueTitle, children: /* @__PURE__ */ jsxRuntime.jsx(ui.BrowserLabel, { name: lk, active: true, hidden: false, facets: labelValueCounts[lk] ?? lv.length, onClick: onLabelKeyClick }) }),
+             /* @__PURE__ */ jsxRuntime.jsx(
+               reactWindow.FixedSizeList,
+               {
+diff --git a/dist/cjs/components/metrics-browser/useMetricsLabelsValues.cjs b/dist/cjs/components/metrics-browser/useMetricsLabelsValues.cjs
+index 030a683470a9826ad036a23c7cb22f88152bd736..64b51e68d0203baaa7779edc57df9626eb4f4456 100644
+--- a/dist/cjs/components/metrics-browser/useMetricsLabelsValues.cjs
++++ b/dist/cjs/components/metrics-browser/useMetricsLabelsValues.cjs
+@@ -22,6 +22,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+   const [selectedLabelKeys, setSelectedLabelKeys] = React.useState([]);
+   const [lastSelectedLabelKey, setLastSelectedLabelKey] = React.useState("");
+   const [labelValues, setLabelValues] = React.useState({});
++  const [labelValueCounts, setLabelValueCounts] = React.useState({});
+   const [selectedLabelValues, setSelectedLabelValues] = React.useState({});
+   const [isLoadingLabelKeys, setIsLoadingLabelKeys] = React.useState(false);
+   const [isLoadingLabelValues, setIsLoadingLabelValues] = React.useState(false);
+@@ -98,6 +99,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+   const fetchLabelValues = React.useCallback(
+     async (labelKeys2, safeSelector) => {
+       const transformedLabelValues = {};
++      const transformedLabelValueCounts = {};
+       const newSelectedLabelValues = {};
+       for (const lk of labelKeys2) {
+         try {
+@@ -108,6 +110,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+             effectiveLimit
+           );
+           transformedLabelValues[lk] = values;
++          transformedLabelValueCounts[lk] = values.length;
+           if (selectedLabelValues[lk]) {
+             newSelectedLabelValues[lk] = [...selectedLabelValues[lk]];
+           }
+@@ -116,7 +119,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+           handleError(e, "Error fetching label values");
+         }
+       }
+-      return [transformedLabelValues, newSelectedLabelValues];
++      return [transformedLabelValues, transformedLabelValueCounts, newSelectedLabelValues];
+     },
+     [handleError, languageProvider, selectedLabelValues, effectiveLimit]
+   );
+@@ -129,12 +132,13 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+       setIsLoadingLabelValues(true);
+       const transformedLabelKeys = await fetchLabelKeys(safeSelector);
+       const labelKeysInLocalStorage = loadSelectedLabelsFromStorage(transformedLabelKeys);
+-      const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
++      const [transformedLabelValues, transformedLabelValueCounts] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
+       setMetrics(transformedMetrics);
+       setLabelKeys(transformedLabelKeys);
+       setIsLoadingLabelKeys(false);
+       setSelectedLabelKeys(labelKeysInLocalStorage);
+       setLabelValues(transformedLabelValues);
++      setLabelValueCounts(transformedLabelValueCounts);
+       setIsLoadingLabelValues(false);
+     },
+     [fetchLabelKeys, fetchLabelValues, fetchMetrics, loadSelectedLabelsFromStorage]
+@@ -162,7 +166,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+       const fetchedLabelKeys = await fetchLabelKeys(selector);
+       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
+       setIsLoadingLabelValues(true);
+-      const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(
++      const [transformedLabelValues, transformedLabelValueCounts, newSelectedLabelValues] = await fetchLabelValues(
+         newSelectedLabelKeys,
+         newSelectedMetric === "" ? void 0 : selector
+       );
+@@ -172,6 +176,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+       setIsLoadingLabelKeys(false);
+       setSelectedLabelKeys(newSelectedLabelKeys);
+       setLabelValues(transformedLabelValues);
++      setLabelValueCounts(transformedLabelValueCounts);
+       setIsLoadingLabelValues(false);
+       setSelectedLabelValues(newSelectedLabelValues);
+     } catch (e) {
+@@ -182,16 +187,19 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     const newSelectedLabelKeys = [...selectedLabelKeys];
+     const lkIdx = newSelectedLabelKeys.indexOf(labelKey);
+     const newLabelValues = { ...labelValues };
++    const newLabelValueCounts = { ...labelValueCounts };
+     const newSelectedLabelValues = { ...selectedLabelValues };
+     if (lkIdx === -1) {
+       newSelectedLabelKeys.push(labelKey);
+       const safeSelector = buildSafeSelector(selectedMetric, selectedLabelValues);
+       setIsLoadingLabelValues(true);
+-      const [values] = await fetchLabelValues([labelKey], safeSelector);
++      const [values, valueCounts] = await fetchLabelValues([labelKey], safeSelector);
+       newLabelValues[labelKey] = values[labelKey];
++      newLabelValueCounts[labelKey] = valueCounts[labelKey];
+     } else {
+       newSelectedLabelKeys.splice(lkIdx, 1);
+       delete newLabelValues[labelKey];
++      delete newLabelValueCounts[labelKey];
+       delete newSelectedLabelValues[labelKey];
+     }
+     localStorage.setItem(constants.LAST_USED_LABELS_KEY, JSON.stringify(newSelectedLabelKeys));
+@@ -220,6 +228,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     }
+     let safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
+     let newLabelValues = {};
++    let newLabelValueCounts = {};
+     if (selectedLabelKeys.length !== 0) {
+       setIsLoadingLabelValues(true);
+       for (const lk of selectedLabelKeys) {
+@@ -232,8 +241,10 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+           );
+           if (newLastSelectedLabelKey === lk) {
+             newLabelValues[lk] = Array.from(/* @__PURE__ */ new Set([...labelValues[lk], ...fetchedLabelValues]));
++            newLabelValueCounts[lk] = fetchedLabelValues.length;
+           } else {
+             newLabelValues[lk] = fetchedLabelValues;
++            newLabelValueCounts[lk] = fetchedLabelValues.length;
+             newSelectedLabelValues[lk] = ((_a = newSelectedLabelValues[lk]) != null ? _a : []).filter(
+               (item) => fetchedLabelValues.includes(item)
+             );
+@@ -261,6 +272,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     setSelectedLabelKeys(newSelectedLabelKeys);
+     setLastSelectedLabelKey(newLastSelectedLabelKey);
+     setLabelValues(newLabelValues);
++    setLabelValueCounts(newLabelValueCounts);
+     setIsLoadingLabelValues(false);
+     setSelectedLabelValues(newSelectedLabelValues);
+   };
+@@ -297,6 +309,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     metrics,
+     labelKeys,
+     labelValues,
++    labelValueCounts,
+     isLoadingLabelKeys,
+     isLoadingLabelValues,
+     selectedMetric,
+diff --git a/dist/esm/components/metrics-browser/MetricsBrowserContext.mjs b/dist/esm/components/metrics-browser/MetricsBrowserContext.mjs
+index bc3b247351f3d959cde3ac589de1177cddce71e8..2f708f540b270810e9441bc0d63644a6168a4eee 100644
+--- a/dist/esm/components/metrics-browser/MetricsBrowserContext.mjs
++++ b/dist/esm/components/metrics-browser/MetricsBrowserContext.mjs
+@@ -24,6 +24,7 @@ function MetricsBrowserProvider({
+     isLoadingLabelKeys,
+     isLoadingLabelValues,
+     labelValues,
++    labelValueCounts,
+     selectedMetric,
+     selectedLabelKeys,
+     selectedLabelValues,
+@@ -53,6 +54,7 @@ function MetricsBrowserProvider({
+       isLoadingLabelKeys,
+       isLoadingLabelValues,
+       labelValues,
++      labelValueCounts,
+       selectedMetric,
+       selectedLabelKeys,
+       selectedLabelValues,
+@@ -77,6 +79,7 @@ function MetricsBrowserProvider({
+       isLoadingLabelKeys,
+       isLoadingLabelValues,
+       labelValues,
++      labelValueCounts,
+       selectedMetric,
+       selectedLabelKeys,
+       selectedLabelValues,
+diff --git a/dist/esm/components/metrics-browser/ValueSelector.mjs b/dist/esm/components/metrics-browser/ValueSelector.mjs
+index 056133c8600c37916c318127f0cb442d6f65a343..8e6b136ec32a8ba17eb744e75b181a5066b33016 100644
+--- a/dist/esm/components/metrics-browser/ValueSelector.mjs
++++ b/dist/esm/components/metrics-browser/ValueSelector.mjs
+@@ -13,7 +13,7 @@ function ValueSelector() {
+   const styles = useStyles2(getStylesValueSelector);
+   const sharedStyles = useStyles2(getStylesMetricsBrowser);
+   const [valueSearchTerm, setValueSearchTerm] = useState("");
+-  const { labelValues, selectedLabelValues, isLoadingLabelValues, onLabelValueClick, onLabelKeyClick } = useMetricsBrowser();
++  const { labelValues, labelValueCounts, selectedLabelValues, isLoadingLabelValues, onLabelValueClick, onLabelKeyClick } = useMetricsBrowser();
+   const [filteredLabelValues, setFilteredLabelValues] = useState({ ...labelValues });
+   useEffect(() => {
+     const filtered = {};
+@@ -64,7 +64,7 @@ function ValueSelector() {
+           ),
+           className: styles.valueListWrapper,
+           children: [
+-            /* @__PURE__ */ jsx("div", { className: styles.valueTitle, children: /* @__PURE__ */ jsx(BrowserLabel, { name: lk, active: true, hidden: false, facets: lv.length, onClick: onLabelKeyClick }) }),
++            /* @__PURE__ */ jsx("div", { className: styles.valueTitle, children: /* @__PURE__ */ jsx(BrowserLabel, { name: lk, active: true, hidden: false, facets: labelValueCounts[lk] ?? lv.length, onClick: onLabelKeyClick }) }),
+             /* @__PURE__ */ jsx(
+               FixedSizeList,
+               {
+diff --git a/dist/esm/components/metrics-browser/useMetricsLabelsValues.mjs b/dist/esm/components/metrics-browser/useMetricsLabelsValues.mjs
+index 9b09c2f30bf74e6354de4109d9886824701441f7..e0ad2794906161625a4d60b9188ec8255deacfd5 100644
+--- a/dist/esm/components/metrics-browser/useMetricsLabelsValues.mjs
++++ b/dist/esm/components/metrics-browser/useMetricsLabelsValues.mjs
+@@ -18,6 +18,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+   const [selectedLabelKeys, setSelectedLabelKeys] = useState([]);
+   const [lastSelectedLabelKey, setLastSelectedLabelKey] = useState("");
+   const [labelValues, setLabelValues] = useState({});
++  const [labelValueCounts, setLabelValueCounts] = useState({});
+   const [selectedLabelValues, setSelectedLabelValues] = useState({});
+   const [isLoadingLabelKeys, setIsLoadingLabelKeys] = useState(false);
+   const [isLoadingLabelValues, setIsLoadingLabelValues] = useState(false);
+@@ -94,6 +95,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+   const fetchLabelValues = useCallback(
+     async (labelKeys2, safeSelector) => {
+       const transformedLabelValues = {};
++      const transformedLabelValueCounts = {};
+       const newSelectedLabelValues = {};
+       for (const lk of labelKeys2) {
+         try {
+@@ -104,6 +106,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+             effectiveLimit
+           );
+           transformedLabelValues[lk] = values;
++          transformedLabelValueCounts[lk] = values.length;
+           if (selectedLabelValues[lk]) {
+             newSelectedLabelValues[lk] = [...selectedLabelValues[lk]];
+           }
+@@ -112,7 +115,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+           handleError(e, "Error fetching label values");
+         }
+       }
+-      return [transformedLabelValues, newSelectedLabelValues];
++      return [transformedLabelValues, transformedLabelValueCounts, newSelectedLabelValues];
+     },
+     [handleError, languageProvider, selectedLabelValues, effectiveLimit]
+   );
+@@ -125,12 +128,13 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+       setIsLoadingLabelValues(true);
+       const transformedLabelKeys = await fetchLabelKeys(safeSelector);
+       const labelKeysInLocalStorage = loadSelectedLabelsFromStorage(transformedLabelKeys);
+-      const [transformedLabelValues] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
++      const [transformedLabelValues, transformedLabelValueCounts] = await fetchLabelValues(labelKeysInLocalStorage, safeSelector);
+       setMetrics(transformedMetrics);
+       setLabelKeys(transformedLabelKeys);
+       setIsLoadingLabelKeys(false);
+       setSelectedLabelKeys(labelKeysInLocalStorage);
+       setLabelValues(transformedLabelValues);
++      setLabelValueCounts(transformedLabelValueCounts);
+       setIsLoadingLabelValues(false);
+     },
+     [fetchLabelKeys, fetchLabelValues, fetchMetrics, loadSelectedLabelsFromStorage]
+@@ -158,7 +162,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+       const fetchedLabelKeys = await fetchLabelKeys(selector);
+       const newSelectedLabelKeys = selectedLabelKeys.filter((slk) => fetchedLabelKeys.includes(slk));
+       setIsLoadingLabelValues(true);
+-      const [transformedLabelValues, newSelectedLabelValues] = await fetchLabelValues(
++      const [transformedLabelValues, transformedLabelValueCounts, newSelectedLabelValues] = await fetchLabelValues(
+         newSelectedLabelKeys,
+         newSelectedMetric === "" ? void 0 : selector
+       );
+@@ -168,6 +172,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+       setIsLoadingLabelKeys(false);
+       setSelectedLabelKeys(newSelectedLabelKeys);
+       setLabelValues(transformedLabelValues);
++      setLabelValueCounts(transformedLabelValueCounts);
+       setIsLoadingLabelValues(false);
+       setSelectedLabelValues(newSelectedLabelValues);
+     } catch (e) {
+@@ -178,16 +183,19 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     const newSelectedLabelKeys = [...selectedLabelKeys];
+     const lkIdx = newSelectedLabelKeys.indexOf(labelKey);
+     const newLabelValues = { ...labelValues };
++    const newLabelValueCounts = { ...labelValueCounts };
+     const newSelectedLabelValues = { ...selectedLabelValues };
+     if (lkIdx === -1) {
+       newSelectedLabelKeys.push(labelKey);
+       const safeSelector = buildSafeSelector(selectedMetric, selectedLabelValues);
+       setIsLoadingLabelValues(true);
+-      const [values] = await fetchLabelValues([labelKey], safeSelector);
++      const [values, valueCounts] = await fetchLabelValues([labelKey], safeSelector);
+       newLabelValues[labelKey] = values[labelKey];
++      newLabelValueCounts[labelKey] = valueCounts[labelKey];
+     } else {
+       newSelectedLabelKeys.splice(lkIdx, 1);
+       delete newLabelValues[labelKey];
++      delete newLabelValueCounts[labelKey];
+       delete newSelectedLabelValues[labelKey];
+     }
+     localStorage.setItem(LAST_USED_LABELS_KEY, JSON.stringify(newSelectedLabelKeys));
+@@ -216,6 +224,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     }
+     let safeSelector = buildSafeSelector(selectedMetric, newSelectedLabelValues);
+     let newLabelValues = {};
++    let newLabelValueCounts = {};
+     if (selectedLabelKeys.length !== 0) {
+       setIsLoadingLabelValues(true);
+       for (const lk of selectedLabelKeys) {
+@@ -228,8 +237,10 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+           );
+           if (newLastSelectedLabelKey === lk) {
+             newLabelValues[lk] = Array.from(/* @__PURE__ */ new Set([...labelValues[lk], ...fetchedLabelValues]));
++            newLabelValueCounts[lk] = fetchedLabelValues.length;
+           } else {
+             newLabelValues[lk] = fetchedLabelValues;
++            newLabelValueCounts[lk] = fetchedLabelValues.length;
+             newSelectedLabelValues[lk] = ((_a = newSelectedLabelValues[lk]) != null ? _a : []).filter(
+               (item) => fetchedLabelValues.includes(item)
+             );
+@@ -257,6 +268,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     setSelectedLabelKeys(newSelectedLabelKeys);
+     setLastSelectedLabelKey(newLastSelectedLabelKey);
+     setLabelValues(newLabelValues);
++    setLabelValueCounts(newLabelValueCounts);
+     setIsLoadingLabelValues(false);
+     setSelectedLabelValues(newSelectedLabelValues);
+   };
+@@ -293,6 +305,7 @@ const useMetricsLabelsValues = (timeRange, languageProvider) => {
+     metrics,
+     labelKeys,
+     labelValues,
++    labelValueCounts,
+     isLoadingLabelKeys,
+     isLoadingLabelValues,
+     selectedMetric,
+diff --git a/dist/types/components/metrics-browser/MetricsBrowserContext.d.ts b/dist/types/components/metrics-browser/MetricsBrowserContext.d.ts
+index 3871d45ac49da5be75ce3d2c3b9cc8a57a5ddbff..ebcfd2edad99d77239b84c71565e40dec8650e63 100644
+--- a/dist/types/components/metrics-browser/MetricsBrowserContext.d.ts
++++ b/dist/types/components/metrics-browser/MetricsBrowserContext.d.ts
+@@ -22,6 +22,7 @@ interface MetricsBrowserContextType {
+     isLoadingLabelKeys: boolean;
+     isLoadingLabelValues: boolean;
+     labelValues: Record<string, string[]>;
++    labelValueCounts: Record<string, number>;
+     selectedMetric: string;
+     selectedLabelKeys: string[];
+     selectedLabelValues: Record<string, string[]>;
+diff --git a/dist/types/components/metrics-browser/useMetricsLabelsValues.d.ts b/dist/types/components/metrics-browser/useMetricsLabelsValues.d.ts
+index 67aa16b8f7b454555589ab6fa7cd39944eae5fc4..22ed30c23644f0a3abcd7a96cf1d0f070a35a99e 100644
+--- a/dist/types/components/metrics-browser/useMetricsLabelsValues.d.ts
++++ b/dist/types/components/metrics-browser/useMetricsLabelsValues.d.ts
+@@ -12,6 +12,7 @@ export declare const useMetricsLabelsValues: (timeRange: TimeRange, languageProv
+     metrics: Metric[];
+     labelKeys: string[];
+     labelValues: Record<string, string[]>;
++    labelValueCounts: Record<string, number>;
+     isLoadingLabelKeys: boolean;
+     isLoadingLabelValues: boolean;
+     selectedMetric: string;
+@@ -29,5 +30,5 @@ export declare const useMetricsLabelsValues: (timeRange: TimeRange, languageProv
+         details: string | undefined;
+     }[]>;
+     fetchLabelKeys: (safeSelector?: string) => Promise<string[]>;
+-    fetchLabelValues: (labelKeys: string[], safeSelector?: string) => Promise<Record<string, string[]>[]>;
++    fetchLabelValues: (labelKeys: string[], safeSelector?: string) => Promise<[Record<string, string[]>, Record<string, number>, Record<string, string[]>]>;
+ };
