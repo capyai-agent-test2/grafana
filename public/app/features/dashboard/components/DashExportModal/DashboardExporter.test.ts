@@ -429,6 +429,42 @@ describe('given dashboard with repeated panels', () => {
     expect(exported.__inputs[0].type).toBe('datasource');
   });
 
+  it('should not mutate repeated panel positions on the source dashboard', async () => {
+    const dashboard = {
+      panels: [{ id: 1, type: 'graph', repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 0, w: 8, h: 2 } }],
+      templating: {
+        list: [
+          {
+            name: 'app',
+            type: 'custom',
+            current: { text: 'a + b', value: ['a', 'b'] },
+            options: [
+              { text: 'a', value: 'a', selected: true },
+              { text: 'b', value: 'b', selected: true },
+            ],
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const dashboardModel = new DashboardModel(dashboard, undefined, {
+      getVariablesFromState: () => dashboard.templating.list as TypedVariableModel[],
+    });
+
+    dashboardModel.processRepeats();
+
+    dashboardModel.panels[0].gridPos = { x: 0, y: 0, w: 4, h: 2 };
+    dashboardModel.panels[1].gridPos = { x: 8, y: 0, w: 4, h: 2 };
+
+    const before = dashboardModel.panels.map((panel) => ({ id: panel.id, gridPos: { ...panel.gridPos } }));
+
+    const exporter = new DashboardExporter();
+    await exporter.makeExportable(dashboardModel);
+
+    const after = dashboardModel.panels.map((panel) => ({ id: panel.id, gridPos: { ...panel.gridPos } }));
+    expect(after).toEqual(before);
+  });
+
   it('should add datasource to required', () => {
     const require = find(exported.__requires, { name: 'TestDB' });
     expect(require.name).toBe('TestDB');

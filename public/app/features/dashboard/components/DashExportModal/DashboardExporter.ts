@@ -1,4 +1,4 @@
-import { defaults, each, sortBy } from 'lodash';
+import { cloneDeep, defaults, each, sortBy } from 'lodash';
 
 import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -12,7 +12,7 @@ import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { type DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
-import { type DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state/DashboardModel';
 import { type GridPos } from '../../state/PanelModel';
 
 export interface InputUsage {
@@ -79,18 +79,43 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
+function getPanelsWithNestedRows(panels: PanelModel[]): PanelModel[] {
+  return panels.flatMap((panel) => (panel.panels ? [panel, ...getPanelsWithNestedRows(panel.panels)] : [panel]));
+}
+
+function cloneDashboardForExport(dashboard: DashboardModel): DashboardModel {
+  const dashboardSaveModel = dashboard.getSaveModelClone();
+  let exportModel!: DashboardModel;
+  exportModel = new DashboardModel(dashboardSaveModel, dashboard.meta, {
+    getVariablesFromState: () => exportModel.templating.list,
+  });
+
+  const sourcePanels = new Map(getPanelsWithNestedRows(dashboard.panels).map((panel) => [panel.id, panel]));
+
+  for (const panel of getPanelsWithNestedRows(exportModel.panels)) {
+    const sourcePanel = sourcePanels.get(panel.id);
+    if (sourcePanel?.libraryPanel?.model) {
+      panel.initLibraryPanel(cloneDeep(sourcePanel.libraryPanel));
+    }
+  }
+
+  return exportModel;
+}
+
 export class DashboardExporter {
   async makeExportable(dashboard: DashboardModel) {
+    const exportModel = cloneDashboardForExport(dashboard);
+
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
     // so we need to undo this
     // this is pretty hacky and needs to be changed
-    dashboard.cleanUpRepeats();
+    exportModel.cleanUpRepeats();
 
-    const saveModel = dashboard.getSaveModelCloneOld();
+    const saveModel = exportModel.getSaveModelCloneOld();
 
     // undo repeat cleanup
-    dashboard.processRepeats();
+    exportModel.processRepeats();
 
     const inputs: Input[] = [];
     const requires: Requires = {};
