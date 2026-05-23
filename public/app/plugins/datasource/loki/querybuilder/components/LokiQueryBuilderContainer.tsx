@@ -27,6 +27,11 @@ export interface State {
   expr: string;
 }
 
+interface QueryStatePayload {
+  expr: string;
+  visualQuery?: LokiVisualQuery;
+}
+
 /**
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
@@ -34,25 +39,18 @@ export function LokiQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource, showExplain, timeRange } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
-    // Use initial visual query only if query.expr is empty string
-    visQuery:
-      query.expr === ''
-        ? {
-            labels: [],
-            operations: [{ id: '__line_contains', params: [''] }],
-          }
-        : undefined,
+    visQuery: query.visualQuery ?? getInitialVisualQuery(query.expr),
   });
 
   // Only rebuild visual query if expr changes from outside
   useEffect(() => {
-    dispatch(exprChanged(query.expr));
-  }, [query.expr]);
+    dispatch(queryChanged({ expr: query.expr, visualQuery: query.visualQuery }));
+  }, [query.expr, query.visualQuery]);
 
   const onVisQueryChange = (visQuery: LokiVisualQuery) => {
     const expr = lokiQueryModeller.renderQuery(visQuery);
     dispatch(visualQueryChange({ visQuery, expr }));
-    onChange({ ...props.query, expr: expr });
+    onChange({ ...props.query, expr, visualQuery: visQuery });
   };
 
   if (!state.visQuery) {
@@ -85,14 +83,31 @@ const stateSlice = createSlice({
       state.expr = action.payload.expr;
       state.visQuery = action.payload.visQuery;
     },
-    exprChanged: (state, action: PayloadAction<string>) => {
-      if (!state.visQuery || state.expr !== action.payload) {
-        state.expr = action.payload;
-        const parseResult = buildVisualQueryFromString(action.payload);
+    queryChanged: (state, action: PayloadAction<QueryStatePayload>) => {
+      const { expr, visualQuery } = action.payload;
+      if (visualQuery) {
+        state.expr = expr;
+        state.visQuery = visualQuery;
+        return;
+      }
+      if (!state.visQuery || state.expr !== expr) {
+        state.expr = expr;
+        const parseResult = buildVisualQueryFromString(expr);
         state.visQuery = parseResult.query;
       }
     },
   },
 });
 
-const { visualQueryChange, exprChanged } = stateSlice.actions;
+function getInitialVisualQuery(expr: string) {
+  if (expr === '') {
+    return {
+      labels: [],
+      operations: [{ id: '__line_contains', params: [''] }],
+    };
+  }
+
+  return undefined;
+}
+
+const { visualQueryChange, queryChanged } = stateSlice.actions;

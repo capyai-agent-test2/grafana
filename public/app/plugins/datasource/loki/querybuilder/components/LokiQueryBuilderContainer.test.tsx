@@ -1,6 +1,7 @@
 import { render, screen, waitFor, findAllByRole, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { LokiOperationId } from '../types';
 import { createLokiDatasource } from '../../mocks/datasource';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
@@ -29,6 +30,10 @@ describe('LokiQueryBuilderContainer', () => {
     expect(props.onChange).toBeCalledWith({
       expr: 'rate({job="testjob"} [$__auto])',
       refId: 'A',
+      visualQuery: {
+        labels: [{ op: '=', label: 'job', value: 'testjob' }],
+        operations: [{ id: LokiOperationId.Rate, params: ['$__auto'] }],
+      },
     });
   });
   it('uses | to separate multiple values in label filters', async () => {
@@ -66,7 +71,17 @@ describe('LokiQueryBuilderContainer', () => {
     await userEvent.click(await screen.findByText('loki'));
 
     await waitFor(() => {
-      expect(props.onChange).toBeCalledWith({ expr: '{app="app1", job=~"grafana|loki"}', refId: 'A' });
+      expect(props.onChange).toBeCalledWith({
+        expr: '{app="app1", job=~"grafana|loki"}',
+        refId: 'A',
+        visualQuery: {
+          labels: [
+            { op: '=', label: 'app', value: 'app1' },
+            { op: '=~', label: 'job', value: 'grafana|loki' },
+          ],
+          operations: [],
+        },
+      });
     });
   });
 
@@ -108,6 +123,41 @@ describe('LokiQueryBuilderContainer', () => {
       render(<LokiQueryBuilderContainer {...props} />);
     });
     expect(screen.getAllByText('You have conflicting label filters')).toHaveLength(2);
+  });
+
+  it('keeps disabled operations when the builder remounts with persisted visual query state', async () => {
+    const props = {
+      query: {
+        expr: '{job="grafana"}',
+        refId: 'A',
+      },
+      datasource: createLokiDatasource(),
+      onChange: jest.fn(),
+      onRunQuery: () => {},
+      showExplain: false,
+    };
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+    const { rerender, unmount } = render(<LokiQueryBuilderContainer {...props} />);
+
+    await addOperation('Formats', 'Logfmt');
+    await userEvent.click(await screen.findByTitle('Disable operation'));
+
+    const updatedQuery = props.onChange.mock.calls.at(-1)?.[0];
+    expect(updatedQuery).toEqual({
+      expr: '{job="grafana"}',
+      refId: 'A',
+      visualQuery: {
+        labels: [{ op: '=', label: 'job', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [false, false], disabled: true }],
+      },
+    });
+
+    rerender(<LokiQueryBuilderContainer {...props} query={updatedQuery} />);
+    unmount();
+    render(<LokiQueryBuilderContainer {...props} query={updatedQuery} />);
+
+    expect(await screen.findByText('Logfmt')).toBeInTheDocument();
+    expect(screen.getByTitle('Enable operation')).toBeInTheDocument();
   });
 
   it('uses <expr> as placeholder for query in explain section', async () => {

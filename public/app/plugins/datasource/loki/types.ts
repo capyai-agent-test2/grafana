@@ -6,6 +6,7 @@ import {
   type SupportingQueryType,
   type LokiQueryDirection,
 } from './dataquery.gen';
+import { type LokiVisualQuery } from './querybuilder/types';
 
 // @todo import from core
 export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
@@ -31,6 +32,7 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
+  visualQuery?: LokiVisualQuery;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
