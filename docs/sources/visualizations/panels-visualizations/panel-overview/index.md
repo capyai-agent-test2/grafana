@@ -100,6 +100,8 @@ By hovering over a panel with the mouse you can use some shortcuts that will tar
 
 {{< docs/public-preview product="Panel time settings" featureFlag="`panelTimeSettings`" >}}
 
+To use panel time settings and time comparison in self-managed Grafana, enable both `panelTimeSettings` and `timeComparison` in the [`[feature_toggles]` section of your Grafana configuration](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
+
 You can configure the following settings to control the time range for a panel:
 
 | Option                | Description                                                                                                                              |
