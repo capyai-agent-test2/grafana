@@ -1198,20 +1198,23 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
   }
 }
 
-// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
-// The bugs were later fixed in Safari 26.2.
+// Safari 26 still has sticky/frozen-column rendering bugs which require us to disable several
+// table features and apply wrapper workarounds across the whole major version.
+export function isSafari26(userAgent: string): boolean {
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)(?:\.(\d+))?/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+
+  return Number(safariVersionMatch[1]) === 26;
+}
+
 export const IS_SAFARI_26 = (() => {
   if (navigator == null) {
     return false;
   }
-  const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
-  if (!safariVersionMatch) {
-    return false;
-  }
-  const majorVersion = +safariVersionMatch[1];
-  const minorVersion = +safariVersionMatch[2];
-  return majorVersion === 26 && minorVersion <= 1;
+
+  return isSafari26(navigator.userAgent);
 })();
 
 export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
