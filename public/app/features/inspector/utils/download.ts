@@ -4,8 +4,10 @@ import {
   type CSVConfig,
   type DataFrame,
   DataTransformerID,
+  dataFrameToJSON,
   dateTime,
   dateTimeFormat,
+  isDataFrame,
   type LogsModel,
   MutableDataFrame,
   toCSV,
@@ -95,12 +97,24 @@ export function downloadDataFrameAsCsv(
  * @param {string} title
  */
 export function downloadAsJson(json: unknown, title: string) {
-  const blob = new Blob([JSON.stringify(json)], {
+  const blob = new Blob([JSON.stringify(getSerializableJson(json))], {
     type: 'application/json',
   });
 
   const fileName = `${title}-${dateTimeFormat(new Date())}.json`;
   saveAs(blob, fileName);
+}
+
+function getSerializableJson(json: unknown): unknown {
+  if (Array.isArray(json) && json.every((value) => isDataFrame(value))) {
+    return json.map((frame) => dataFrameToJSON(frame));
+  }
+
+  if (isDataFrame(json)) {
+    return dataFrameToJSON(json);
+  }
+
+  return json;
 }
 
 /**

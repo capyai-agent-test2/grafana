@@ -4,6 +4,7 @@ import {
   dataFrameFromJSON,
   type DataFrameJSON,
   dateTimeFormat,
+  type DataFrame,
   FieldType,
   type LogRowModel,
   LogsMetaKind,
@@ -85,6 +86,35 @@ describe('inspector download', () => {
 
       expect(text).toEqual(expected);
       expect(filename).toEqual(`${title}-${dateTimeFormat(1400000000000)}.json`);
+    });
+
+    it('serializes data frames without circular field state references', async () => {
+      const frame = {
+        name: 'Nodes',
+        fields: [{ name: 'id', type: FieldType.string, values: ['frontend'], config: {} }],
+        length: 1,
+        meta: { preferredVisualisationType: 'nodeGraph' },
+      } as unknown as DataFrame;
+
+      frame.fields[0].state = {
+        scopedVars: {
+          __dataContext: {
+            value: {
+              frame,
+            },
+          },
+        },
+      };
+
+      downloadAsJson([frame], 'test');
+
+      const call = jest.mocked(saveAs).mock.calls[0];
+      const blob = call[0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toEqual(
+        '[{"schema":{"meta":{"preferredVisualisationType":"nodeGraph"},"name":"Nodes","fields":[{"name":"id","type":"string","config":{}}]},"data":{"values":[["frontend"]]}}]'
+      );
     });
   });
 
