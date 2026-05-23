@@ -446,6 +446,15 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")
 	}
+	if fullRemoval && name != "" {
+		imported, err := revision.Imported()
+		if err != nil {
+			return err
+		}
+		if imported.ReceiverUseByName()[name] > 0 {
+			return ErrContactPointReferenced.Errorf("")
+		}
+	}
 
 	if fullRemoval {
 		if err := ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(name)); err != nil {
