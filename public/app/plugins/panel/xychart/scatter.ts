@@ -186,7 +186,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
               }
 
               lastPointWasPlottable = true;
-            } else {
+            } else if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) {
               lastPointWasPlottable = false;
             }
           }
