@@ -1,5 +1,5 @@
 import { capitalize } from 'lodash';
-import { map, type Observable, scan, takeWhile } from 'rxjs';
+import { filter, map, type Observable, scan, takeWhile } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -11,6 +11,8 @@ import {
   type DataSourceInstanceSettings,
   FieldCache,
   FieldType,
+  isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
   LiveChannelScope,
   LoadingState,
   type MutableDataFrame,
@@ -60,49 +62,52 @@ export function doTempoSearchStreaming(
       },
     })
     .pipe(
+      map((evt) => {
+        if (isLiveChannelStatusEvent(evt) && evt.error) {
+          throw evt.error instanceof Error ? evt.error : new Error(String(evt.error));
+        }
+        return evt;
+      }),
+      filter(isLiveChannelMessageEvent),
       takeWhile((evt) => {
-        if ('message' in evt && evt?.message) {
-          const frameState: SearchStreamingState = evt.message.data.values[2][0];
-          if (frameState === SearchStreamingState.Done || frameState === SearchStreamingState.Error) {
-            return false;
-          }
+        const frameState: SearchStreamingState = evt.message.data.values[2][0];
+        if (frameState === SearchStreamingState.Done || frameState === SearchStreamingState.Error) {
+          return false;
         }
         return true;
       }, true)
     )
     .pipe(
       map((evt) => {
-        if ('message' in evt && evt?.message) {
-          const currentTime = performance.now();
-          const elapsedTime = currentTime - requestTime;
+        const currentTime = performance.now();
+        const elapsedTime = currentTime - requestTime;
 
-          const messageFrame = dataFrameFromJSON(evt.message);
-          const fieldCache = new FieldCache(messageFrame);
+        const messageFrame = dataFrameFromJSON(evt.message);
+        const fieldCache = new FieldCache(messageFrame);
 
-          const traces = fieldCache.getFieldByName('result')?.values[0];
-          const metrics = fieldCache.getFieldByName('metrics')?.values[0];
-          const frameState = fieldCache.getFieldByName('state')?.values[0];
-          const error = fieldCache.getFieldByName('error')?.values[0];
+        const traces = fieldCache.getFieldByName('result')?.values[0];
+        const metrics = fieldCache.getFieldByName('metrics')?.values[0];
+        const frameState = fieldCache.getFieldByName('state')?.values[0];
+        const error = fieldCache.getFieldByName('error')?.values[0];
 
-          switch (frameState) {
-            case SearchStreamingState.Done:
-              state = LoadingState.Done;
-              break;
-            case SearchStreamingState.Streaming:
-              state = LoadingState.Streaming;
-              break;
-            case SearchStreamingState.Error:
-              throw new Error(error);
-          }
-
-          // The order of the frames is important. The metrics frame should always be the last frame.
-          // This is because the metrics frame is used to display the progress of the streaming query
-          // and we would like to display the results first.
-          frames = [
-            ...formatTraceQLResponse(traces, instanceSettings, query.tableType),
-            metricsDataFrame(metrics, frameState, elapsedTime),
-          ];
+        switch (frameState) {
+          case SearchStreamingState.Done:
+            state = LoadingState.Done;
+            break;
+          case SearchStreamingState.Streaming:
+            state = LoadingState.Streaming;
+            break;
+          case SearchStreamingState.Error:
+            throw new Error(error);
         }
+
+        // The order of the frames is important. The metrics frame should always be the last frame.
+        // This is because the metrics frame is used to display the progress of the streaming query
+        // and we would like to display the results first.
+        frames = [
+          ...formatTraceQLResponse(traces, instanceSettings, query.tableType),
+          metricsDataFrame(metrics, frameState, elapsedTime),
+        ];
         return {
           data: frames || [],
           state,
@@ -137,49 +142,52 @@ export function doTempoMetricsStreaming(
       },
     })
     .pipe(
+      map((evt) => {
+        if (isLiveChannelStatusEvent(evt) && evt.error) {
+          throw evt.error instanceof Error ? evt.error : new Error(String(evt.error));
+        }
+        return evt;
+      }),
+      filter(isLiveChannelMessageEvent),
       takeWhile((evt) => {
-        if ('message' in evt && evt?.message) {
-          const frameState: SearchStreamingState = evt.message.data.values[2][0];
-          if (frameState === SearchStreamingState.Done || frameState === SearchStreamingState.Error) {
-            return false;
-          }
+        const frameState: SearchStreamingState = evt.message.data.values[2][0];
+        if (frameState === SearchStreamingState.Done || frameState === SearchStreamingState.Error) {
+          return false;
         }
         return true;
       }, true),
       map((evt) => {
         let newResult: DataQueryResponse = { data: [], state: LoadingState.NotStarted };
-        if ('message' in evt && evt?.message) {
-          const messageFrame = dataFrameFromJSON(evt.message);
-          const fieldCache = new FieldCache(messageFrame);
+        const messageFrame = dataFrameFromJSON(evt.message);
+        const fieldCache = new FieldCache(messageFrame);
 
-          const data = fieldCache.getFieldByName('result')?.values[0];
-          const frameState = fieldCache.getFieldByName('state')?.values[0];
-          const error = fieldCache.getFieldByName('error')?.values[0];
+        const data = fieldCache.getFieldByName('result')?.values[0];
+        const frameState = fieldCache.getFieldByName('state')?.values[0];
+        const error = fieldCache.getFieldByName('error')?.values[0];
 
-          switch (frameState) {
-            case SearchStreamingState.Done:
-              state = LoadingState.Done;
-              break;
-            case SearchStreamingState.Streaming:
-              state = LoadingState.Streaming;
-              break;
-            case SearchStreamingState.Error:
-              throw new Error(error);
-          }
-
-          newResult = {
-            data:
-              data?.map((frame: DataFrameJSON) => {
-                const df = dataFrameFromJSON(frame);
-                // preserve the query's refId to prevent conflation of series from different queries
-                if (query.refId) {
-                  df.refId = query.refId;
-                }
-                return df;
-              }) ?? [],
-            state,
-          };
+        switch (frameState) {
+          case SearchStreamingState.Done:
+            state = LoadingState.Done;
+            break;
+          case SearchStreamingState.Streaming:
+            state = LoadingState.Streaming;
+            break;
+          case SearchStreamingState.Error:
+            throw new Error(error);
         }
+
+        newResult = {
+          data:
+            data?.map((frame: DataFrameJSON) => {
+              const df = dataFrameFromJSON(frame);
+              // preserve the query's refId to prevent conflation of series from different queries
+              if (query.refId) {
+                df.refId = query.refId;
+              }
+              return df;
+            }) ?? [],
+          state,
+        };
 
         return newResult;
       }),
