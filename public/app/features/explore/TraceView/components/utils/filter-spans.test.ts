@@ -394,6 +394,63 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set([]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '=~', value: 'tagValue.+' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '=~', value: 'tagValue[12]' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+  });
+
+  it('should apply regex operators to adhoc filters', () => {
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          adhocFilters: [{ key: 'tagKey1', operator: '=~', value: 'tagValue.+' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          adhocFilters: [{ key: 'service.name', operator: '=~', value: 'serviceName[02]' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          adhocFilters: [{ key: 'tagKey1', operator: '=~', value: '.+' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpans(
+        {
+          ...DEFAULT_SPAN_FILTERS,
+          adhocFilters: [{ key: 'tagKey1', operator: '!~', value: 'tagValue1' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
   });
 
   it("should not return spans whose tags' kv.key match a filter but kv.value/operator does not match", () => {

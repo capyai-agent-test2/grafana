@@ -96,6 +96,14 @@ const getAdhocFilterMatches = (spans: TraceSpan[], adhocFilters: Array<Selectabl
   });
 };
 
+const regexMatches = (pattern: string, value: string): boolean => {
+  try {
+    return new RegExp(pattern).test(value);
+  } catch {
+    return false;
+  }
+};
+
 /**
  * Match a field value against an operator and expected value.
  */
@@ -105,9 +113,9 @@ const matchField = (fieldValue: string, operator: string, expectedValue: string)
   } else if (operator === '!=') {
     return fieldValue !== expectedValue;
   } else if (operator === '=~') {
-    return fieldValue.includes(expectedValue);
+    return regexMatches(expectedValue, fieldValue);
   } else if (operator === '!~') {
-    return !fieldValue.includes(expectedValue);
+    return !regexMatches(expectedValue, fieldValue);
   }
   return false;
 };
@@ -324,19 +332,19 @@ const checkKeyValConditionForRegex = (tag: TraceSearchTag, span: TraceSpan) => {
     span.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
     span.process.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
     (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForRegex(tag, kv)))) ||
-    (span.kind && tag.key === KIND && tag.value?.includes(span.kind)) ||
+    (span.kind && tag.key === KIND && regexMatches(tag.value || '', span.kind)) ||
     (span.statusCode !== undefined &&
       tag.key === STATUS &&
-      tag.value?.includes(SpanStatusCode[span.statusCode].toLowerCase())) ||
-    (span.statusMessage && tag.key === STATUS_MESSAGE && tag.value?.includes(span.statusMessage)) ||
+      regexMatches(tag.value || '', SpanStatusCode[span.statusCode].toLowerCase())) ||
+    (span.statusMessage && tag.key === STATUS_MESSAGE && regexMatches(tag.value || '', span.statusMessage)) ||
     (span.instrumentationLibraryName &&
       tag.key === LIBRARY_NAME &&
-      tag.value?.includes(span.instrumentationLibraryName)) ||
+      regexMatches(tag.value || '', span.instrumentationLibraryName)) ||
     (span.instrumentationLibraryVersion &&
       tag.key === LIBRARY_VERSION &&
-      tag.value?.includes(span.instrumentationLibraryVersion)) ||
-    (span.traceState && tag.key === TRACE_STATE && tag.value?.includes(span.traceState)) ||
-    (tag.key === ID && tag.value?.includes(span.spanID))
+      regexMatches(tag.value || '', span.instrumentationLibraryVersion)) ||
+    (span.traceState && tag.key === TRACE_STATE && regexMatches(tag.value || '', span.traceState)) ||
+    (tag.key === ID && regexMatches(tag.value || '', span.spanID))
   );
 };
 
@@ -368,7 +376,7 @@ const checkKeyAndValueForMatch = (tag: TraceSearchTag, kv: TraceKeyValuePair) =>
 };
 
 const checkKeyAndValueForRegex = (tag: TraceSearchTag, kv: TraceKeyValuePair) => {
-  return kv.key.includes(tag.key || '') && getStringValue(kv.value).includes(tag.value || '');
+  return kv.key === tag.key && regexMatches(tag.value || '', getStringValue(kv.value));
 };
 
 const getStringValue = (value: string | number | boolean | undefined) => {
