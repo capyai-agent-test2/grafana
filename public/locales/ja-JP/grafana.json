@@ -9393,21 +9393,6 @@
     "requires-license": "Grafana Enterpriseライセンスが必要です",
     "title": "エンタープライズ"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完了",
-      "learn-how": "ドキュメントで学習"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "高度なチュートリアルへ",
-      "aria-label-to-basic-tutorials": "基本チュートリアルへ",
-      "checking-completed-setup-steps": "完了したセットアップ手順を確認中",
-      "remove-this-panel": "このパネルを削除"
-    },
-    "tutorial-card": {
-      "complete": "完了"
-    }
-  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "設定を読み込み中..."

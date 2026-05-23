@@ -9537,21 +9537,6 @@
     "requires-license": "Требуется лицензия Grafana Enterprise",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "завершить",
-      "learn-how": "Подробнее — в документации"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "К расширенным руководствам",
-      "aria-label-to-basic-tutorials": "К базовым руководствам",
-      "checking-completed-setup-steps": "Проверка завершенных этапов настройки",
-      "remove-this-panel": "Удалить панель"
-    },
-    "tutorial-card": {
-      "complete": "завершить"
-    }
-  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Загрузка конфигурации...."

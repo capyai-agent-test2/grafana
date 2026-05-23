@@ -9441,21 +9441,6 @@
     "requires-license": "Grafana Enterprise lisansı gerektirir",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "tamamlandı",
-      "learn-how": "Belgelerden nasıl yapılacağını öğrenin"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Gelişmiş öğreticilere",
-      "aria-label-to-basic-tutorials": "Temel öğreticilere",
-      "checking-completed-setup-steps": "Tamamlanan kurulum adımları kontrol ediliyor",
-      "remove-this-panel": "Bu paneli kaldır"
-    },
-    "tutorial-card": {
-      "complete": "tamamlandı"
-    }
-  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Yapılandırma yükleniyor..."

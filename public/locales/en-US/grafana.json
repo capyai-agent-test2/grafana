@@ -9455,21 +9455,6 @@
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "complete",
-      "learn-how": "Learn how in the docs"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "To advanced tutorials",
-      "aria-label-to-basic-tutorials": "To basic tutorials",
-      "checking-completed-setup-steps": "Checking completed setup steps",
-      "remove-this-panel": "Remove this panel"
-    },
-    "tutorial-card": {
-      "complete": "complete"
-    }
-  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Loading configuration...."

@@ -9441,21 +9441,6 @@
     "requires-license": "Vereist een Grafana Enterprise-licentie",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "voltooid",
-      "learn-how": "Ontdek hoe in de documenten"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Naar geavanceerde tutorials",
-      "aria-label-to-basic-tutorials": "Naar basistutorials",
-      "checking-completed-setup-steps": "Voltooide installatiestappen controleren",
-      "remove-this-panel": "Dit paneel verwijderen"
-    },
-    "tutorial-card": {
-      "complete": "voltooid"
-    }
-  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "Configuratie laden...."
