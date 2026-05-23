@@ -36,7 +36,7 @@ const theme = createTheme();
 
 function makeField(opts: {
   name: string;
-  values: number[];
+  values: Array<number | null>;
   type?: FieldType;
   config?: Record<string, unknown>;
 }): Field {
@@ -133,6 +133,22 @@ describe('prepData', () => {
     const data = prepData!([series]);
     const entry = data[1] as unknown[][];
     expect(entry[3]).toEqual(['#00ff00', '#00ff00', '#00ff00']);
+  });
+
+  it('converts null plot coordinates to NaN so they are not rendered as zeroes', () => {
+    const series = makeSeries({
+      x: { field: makeField({ name: 'x', values: [1, null, 3] }) },
+      y: { field: makeField({ name: 'y', values: [10, 20, null], config: { unit: 'y' } }) },
+    });
+    const { prepData } = prepConfig([series], theme);
+    const entry = prepData!([series])[1] as unknown[][];
+
+    expect(entry[0][0]).toBe(1);
+    expect(Number.isNaN(entry[0][1] as number)).toBe(true);
+    expect(entry[0][2]).toBe(3);
+    expect(entry[1][0]).toBe(10);
+    expect(entry[1][1]).toBe(20);
+    expect(Number.isNaN(entry[1][2] as number)).toBe(true);
   });
 
   it('scales diameters by area (not linearly) when a size field is mapped', () => {

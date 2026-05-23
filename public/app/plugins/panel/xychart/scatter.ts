@@ -121,17 +121,23 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
           let curColorIdx = -1;
 
+          let lastPointWasPlottable = false;
+
           for (let i = 0; i < d[0].length; i++) {
             let xVal = d[0][i];
             let yVal = d[1][i];
 
-            if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
+            if (Number.isFinite(xVal) && Number.isFinite(yVal) && xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
               let size = Math.round(sizes[i] * pxRatio);
               let cx = valToPosX(xVal, scaleX, xDim, xOff);
               let cy = valToPosY(yVal, scaleY, yDim, yOff);
 
               if (showLine) {
-                linePath!.lineTo(cx, cy);
+                if (lastPointWasPlottable) {
+                  linePath!.lineTo(cx, cy);
+                } else {
+                  linePath!.moveTo(cx, cy);
+                }
               }
 
               if (showPoints) {
@@ -178,6 +184,10 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                   size + strokeWidth
                 );
               }
+
+              lastPointWasPlottable = true;
+            } else {
+              lastPointWasPlottable = false;
             }
           }
 
@@ -498,8 +508,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
         }
 
         return [
-          s.x.field.values, // X
-          s.y.field.values, // Y
+          sanitizePlotValues(s.x.field.values), // X
+          sanitizePlotValues(s.y.field.values), // Y
           diams,
           Array(len).fill(s.color.fixed!), // TODO: fails for by value
         ];
@@ -511,6 +521,10 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 };
 
 export type PrepData = (xySeries: XYSeries[]) => FacetedData;
+
+function sanitizePlotValues(values: Array<number | null | undefined>) {
+  return values.map((value) => (Number.isFinite(value) ? value : NaN));
+}
 
 const getGlobalRanges = (xySeries: XYSeries[]) => {
   const ranges = {
