@@ -181,7 +181,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 
 	// If we fix the configuration, it becomes ready.
 	{
-		mam.configStore.(*fakeConfigStore).configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
+		delete(mam.configStore.(*fakeConfigStore).configs, orgWithBadConfig) // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
 		require.True(t, mam.alertmanagers[1].Ready())
@@ -195,6 +195,38 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 			require.NotEqual(t, 0, len(configs))
 		}
 	}
+}
+
+func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs_DoesNotOverwriteReadyConfigWhenStoreTemporarilyMissesIt(t *testing.T) {
+	mam := setupMam(t, nil)
+	ctx := context.Background()
+
+	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+	require.True(t, mam.alertmanagers[1].Ready())
+
+	cfgs, err := mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
+	originalConfig := cfgs[1].AlertmanagerConfiguration
+	appliedConfigsBefore, err := mam.configStore.GetAppliedConfigurations(ctx, 1, 10)
+	require.NoError(t, err)
+
+	delete(mam.configStore.(*fakeConfigStore).configs, 1)
+
+	require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+	require.True(t, mam.alertmanagers[1].Ready())
+
+	_, err = mam.configStore.GetLatestAlertmanagerConfiguration(ctx, 1)
+	require.ErrorIs(t, err, store.ErrNoAlertmanagerConfiguration)
+
+	appliedConfigsAfter, err := mam.configStore.GetAppliedConfigurations(ctx, 1, 10)
+	require.NoError(t, err)
+	require.Len(t, appliedConfigsAfter, len(appliedConfigsBefore))
+
+	cfgs, err = mam.getLatestConfigs(ctx)
+	require.NoError(t, err)
+	_, exists := cfgs[1]
+	require.False(t, exists)
+	require.Equal(t, defaultConfig, originalConfig)
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {

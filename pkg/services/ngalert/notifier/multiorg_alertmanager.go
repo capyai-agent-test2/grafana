@@ -500,7 +500,17 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		dbConfig, cfgFound := dbConfigs[orgID]
 		if !cfgFound {
 			if found {
-				// This means that the configuration is gone but the organization, as well as the Alertmanager, exists.
+				if alertmanager.Ready() {
+					// A ready Alertmanager losing its DB row mid-flight is more likely a transient store
+					// problem than a real request to discard contact points and policies. Keep serving the
+					// last applied in-memory config instead of overwriting it with the default one.
+					moa.logger.Error("Alertmanager exists for org but the configuration is gone. Keeping the last applied configuration", "org", orgID)
+					moa.alertmanagers[orgID] = alertmanager
+					continue
+				}
+
+				// The Alertmanager exists but has never become ready, so falling back to the default
+				// configuration is still the safest way to initialize or recover it.
 				moa.logger.Warn("Alertmanager exists for org but the configuration is gone. Applying the default configuration", "org", orgID)
 			}
 			err := moa.saveAndApplyDefaultConfig(ctx, orgID, alertmanager)
