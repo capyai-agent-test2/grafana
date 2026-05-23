@@ -14,6 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type marshaledNestedFrame struct {
+	Schema struct {
+		Fields []struct {
+			Name string `json:"name"`
+		} `json:"fields"`
+	} `json:"schema"`
+}
+
 func TestCreateSearchRequest(t *testing.T) {
 	datasource := &DatasourceInfo{URL: "http://localhost:3200"}
 	var qstring = "{service.name=\"svc\"}"
@@ -175,6 +183,85 @@ func TestTransformTraceSearchResponse_UsesSpanSetsWhenSpanSetMissing(t *testing.
 	assert.Len(t, nestedFrames, 2)
 }
 
+func TestTransformTraceSearchResponse_UsesUnifiedNestedSpanSchemaAcrossSpanSets(t *testing.T) {
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
+		TraceID:           "test-trace-id",
+		RootServiceName:   "svc",
+		RootTraceName:     "root",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+		SpanSets: []*tempopb.SpanSet{
+			{
+				Attributes: []*v1.KeyValue{
+					{Key: "service.name", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "svc"}}},
+				},
+				Spans: []*tempopb.Span{
+					{
+						SpanID:            "span-1",
+						Name:              "op-1",
+						StartTimeUnixNano: 1000000,
+						DurationNanos:     1000,
+						Attributes: []*v1.KeyValue{
+							{Key: "http.method", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "GET"}}},
+						},
+					},
+				},
+			},
+			{
+				Spans: []*tempopb.Span{
+					{
+						SpanID:            "span-2",
+						StartTimeUnixNano: 1001000,
+						DurationNanos:     2000,
+						Attributes: []*v1.KeyValue{
+							{Key: "db.system", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "postgres"}}},
+						},
+					},
+				},
+			},
+		},
+	}}}
+
+	frames, err := transformTraceSearchResponse(pCtx, resp)
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+
+	var nestedFrames []json.RawMessage
+	require.NoError(t, json.Unmarshal(frames[0].Fields[5].At(0).(json.RawMessage), &nestedFrames))
+	require.Len(t, nestedFrames, 2)
+
+	var first marshaledNestedFrame
+	var second marshaledNestedFrame
+	require.NoError(t, json.Unmarshal(nestedFrames[0], &first))
+	require.NoError(t, json.Unmarshal(nestedFrames[1], &second))
+
+	require.Len(t, first.Schema.Fields, len(second.Schema.Fields))
+	for i := range first.Schema.Fields {
+		assert.Equal(t, first.Schema.Fields[i].Name, second.Schema.Fields[i].Name)
+	}
+
+	assert.Equal(t, []string{
+		"traceIdHidden",
+		"spanID",
+		"time",
+		"name",
+		"db.system",
+		"http.method",
+		"service.name",
+		"duration",
+	}, []string{
+		first.Schema.Fields[0].Name,
+		first.Schema.Fields[1].Name,
+		first.Schema.Fields[2].Name,
+		first.Schema.Fields[3].Name,
+		first.Schema.Fields[4].Name,
+		first.Schema.Fields[5].Name,
+		first.Schema.Fields[6].Name,
+		first.Schema.Fields[7].Name,
+	})
+}
+
 func TestTransformTraceSearchResponseSubFrame_MissingDynamicAttributeUsesNil(t *testing.T) {
 	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
 	trace := &tempopb.TraceSearchMetadata{
@@ -214,6 +301,55 @@ func TestTransformTraceSearchResponseSubFrame_MissingDynamicAttributeUsesNil(t *
 	assert.Equal(t, "http.method", frame.Fields[4].Name)
 	assert.Equal(t, "GET", *(frame.Fields[4].At(0).(*string)))
 	assert.True(t, frame.Fields[4].NilAt(1))
+}
+
+func TestTransformTraceSearchResponseSubFrame_UsesTraceWideSchema(t *testing.T) {
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	trace := &tempopb.TraceSearchMetadata{
+		TraceID:           "test-trace-id",
+		RootServiceName:   "svc",
+		RootTraceName:     "root",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+		SpanSets: []*tempopb.SpanSet{
+			{
+				Spans: []*tempopb.Span{
+					{
+						SpanID:            "span-1",
+						Name:              "op-1",
+						StartTimeUnixNano: 1000000,
+						DurationNanos:     1000,
+						Attributes: []*v1.KeyValue{
+							{Key: "http.method", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "GET"}}},
+						},
+					},
+				},
+			},
+			{
+				Spans: []*tempopb.Span{
+					{
+						SpanID:            "span-2",
+						StartTimeUnixNano: 1001000,
+						DurationNanos:     1000,
+						Attributes: []*v1.KeyValue{
+							{Key: "db.system", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "postgres"}}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	frame := transformTraceSearchResponseSubFrame(trace, trace.SpanSets[0], pCtx)
+	require.NotNil(t, frame)
+	require.Equal(t, 1, frame.Rows())
+	require.Len(t, frame.Fields, 7)
+
+	assert.Equal(t, "db.system", frame.Fields[4].Name)
+	assert.True(t, frame.Fields[4].NilAt(0))
+	assert.Equal(t, "http.method", frame.Fields[5].Name)
+	assert.Equal(t, "GET", *(frame.Fields[5].At(0).(*string)))
+	assert.Equal(t, "duration", frame.Fields[6].Name)
 }
 
 func TestTransformSpanSearchResponse_MissingDynamicAttributeUsesNil(t *testing.T) {

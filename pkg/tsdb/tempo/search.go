@@ -35,6 +35,12 @@ type TraceTableData struct {
 	attributes    map[string]interface{}
 }
 
+type traceSearchSubFrameSchema struct {
+	dynamicAttributes map[string]*DataFrameField
+	attributeNames    []string
+	hasNameAttribute  bool
+}
+
 func (s *Service) Search(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	model := &dataquery.TempoQuery{}
@@ -240,9 +246,10 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *tempopb.
 		}
 
 		nestedFrames := []json.RawMessage{}
+		subFrameSchema := buildTraceSearchResponseSubFrameSchema(trace, nil)
 
 		if trace.SpanSet != nil {
-			subFrame := transformTraceSearchResponseSubFrame(trace, trace.SpanSet, pCtx)
+			subFrame := transformTraceSearchResponseSubFrameWithSchema(trace, trace.SpanSet, pCtx, subFrameSchema)
 			subFrameJSON, err := json.Marshal(subFrame)
 			if err != nil {
 				backend.Logger.Error("Failed to marshal subFrame", "error", err)
@@ -252,7 +259,7 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *tempopb.
 			}
 		} else if len(trace.SpanSets) > 0 {
 			for _, spanSet := range trace.SpanSets {
-				subFrame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx)
+				subFrame := transformTraceSearchResponseSubFrameWithSchema(trace, spanSet, pCtx, subFrameSchema)
 				subFrameJSON, err := json.Marshal(subFrame)
 				if err != nil {
 					backend.Logger.Error("Failed to marshal subFrame", "error", err)
@@ -278,26 +285,40 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *tempopb.
 }
 
 func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, spanSet *tempopb.SpanSet, pCtx backend.PluginContext) *data.Frame {
+	return transformTraceSearchResponseSubFrameWithSchema(trace, spanSet, pCtx, buildTraceSearchResponseSubFrameSchema(trace, spanSet))
+}
+
+func buildTraceSearchResponseSubFrameSchema(trace *tempopb.TraceSearchMetadata, primarySpanSet *tempopb.SpanSet) traceSearchSubFrameSchema {
 	spanDynamicAttributes := make(map[string]*DataFrameField)
 	hasNameAttribute := false
 
-	for _, attribute := range spanSet.Attributes {
-		spanDynamicAttributes[attribute.Key] = &DataFrameField{
-			Name:   attribute.Key,
-			Type:   getTypeForAttribute(attribute),
-			Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
-		}
+	spanSets := make([]*tempopb.SpanSet, 0, len(trace.SpanSets)+2)
+	if primarySpanSet != nil {
+		spanSets = append(spanSets, primarySpanSet)
 	}
+	if trace.SpanSet != nil {
+		spanSets = append(spanSets, trace.SpanSet)
+	}
+	spanSets = append(spanSets, trace.SpanSets...)
 
-	for _, span := range spanSet.Spans {
-		if span.Name != "" {
-			hasNameAttribute = true
-		}
-		for _, attribute := range span.Attributes {
+	for _, spanSet := range spanSets {
+		for _, attribute := range spanSet.Attributes {
 			spanDynamicAttributes[attribute.Key] = &DataFrameField{
 				Name:   attribute.Key,
 				Type:   getTypeForAttribute(attribute),
 				Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+			}
+		}
+		for _, span := range spanSet.Spans {
+			if span.Name != "" {
+				hasNameAttribute = true
+			}
+			for _, attribute := range span.Attributes {
+				spanDynamicAttributes[attribute.Key] = &DataFrameField{
+					Name:   attribute.Key,
+					Type:   getTypeForAttribute(attribute),
+					Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+				}
 			}
 		}
 	}
@@ -308,6 +329,14 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 	}
 	sort.Strings(spanAttributeNames)
 
+	return traceSearchSubFrameSchema{
+		dynamicAttributes: spanDynamicAttributes,
+		attributeNames:    spanAttributeNames,
+		hasNameAttribute:  hasNameAttribute,
+	}
+}
+
+func transformTraceSearchResponseSubFrameWithSchema(trace *tempopb.TraceSearchMetadata, spanSet *tempopb.SpanSet, pCtx backend.PluginContext, schema traceSearchSubFrameSchema) *data.Frame {
 	frame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
 	frame.Fields = append(frame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
@@ -339,10 +368,10 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 	}))
 	frame.Fields = append(frame.Fields, data.NewField("name", nil, []string{}).SetConfig(&data.FieldConfig{
 		DisplayNameFromDS: "Name",
-		Custom:            map[string]interface{}{"hideFrom": map[string]interface{}{"viz": !hasNameAttribute}},
+		Custom:            map[string]interface{}{"hideFrom": map[string]interface{}{"viz": !schema.hasNameAttribute}},
 	}))
-	for _, attributeName := range spanAttributeNames {
-		field := spanDynamicAttributes[attributeName]
+	for _, attributeName := range schema.attributeNames {
+		field := schema.dynamicAttributes[attributeName]
 		frame.Fields = append(frame.Fields, data.NewField(field.Name, nil, field.Type).SetConfig(&field.Config))
 	}
 	frame.Fields = append(frame.Fields, data.NewField("duration", nil, []float64{}).SetConfig(&data.FieldConfig{
@@ -362,7 +391,7 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 		frame.Fields[2].Append(traceData.time)
 		frame.Fields[3].Append(traceData.name)
 		attributeIndex := 4
-		for _, attributeName := range spanAttributeNames {
+		for _, attributeName := range schema.attributeNames {
 			if attribute, ok := traceData.attributes[attributeName]; ok {
 				frame.Fields[attributeIndex].Append(attribute)
 			} else {
