@@ -215,17 +215,6 @@
           "type": "default.type"
         }
       ]
-    },
-    {
-      "id": 12,
-      "title": "News panel",
-      "type": "news",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
     }
   ],
   "schemaVersion": 36,

@@ -16,11 +16,6 @@ title: Visualizations
 description: Apply visualizations to your data
 weight: 10
 refs:
-  news:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/news/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/news/
   stat:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/
@@ -185,7 +180,6 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Alert list](ref:alert-list) can list alerts.
   - [Annotations list](ref:annotations-list) can list available annotations.
   - [Text](ref:text) can show markdown and html.
-  - [News](ref:news) can show RSS feeds.
 
 The following video shows you how to create gauge, time series line graph, stats, logs, and node graph visualizations:
 

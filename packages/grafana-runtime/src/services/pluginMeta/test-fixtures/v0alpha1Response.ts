@@ -3251,64 +3251,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'news',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'news',
-          type: 'panel',
-          name: 'News',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/panel/news/img/news.svg',
-              large: 'app/plugins/panel/news/img/news.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'RSS feed reader',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          skipDataQuery: true,
-          state: 'beta',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/news',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/panel/news',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'nodeGraph',
         namespace: 'default',
       },
