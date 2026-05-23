@@ -479,7 +479,7 @@ export function enhanceTraceQlMetricsResponse(
   data.data
     ?.filter((f) => f.name === 'exemplar' && f.meta?.dataTopic === 'annotations')
     .map((frame) => {
-      const traceIDField = frame.fields.find((field: Field) => field.name === 'traceId');
+      const traceIDField = frame.fields.find((field: Field) => field.name === 'traceID' || field.name === 'traceId');
       if (traceIDField) {
         const links = getDataLinks(instanceSettings);
         const existingLinks = traceIDField.config.links || [];

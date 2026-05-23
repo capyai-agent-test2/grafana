@@ -14,6 +14,7 @@ import {
   transformFromOTLP,
   createTableFrameFromTraceQlQuery,
   createTableFrameFromTraceQlQueryAsSpans,
+  enhanceTraceQlMetricsResponse,
 } from './resultTransformer';
 import {
   badOTLPResponse,
@@ -449,6 +450,80 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     expect(frame.fields[6].values).toMatchObject([]);
     // No more fields
     expect(frame.fields.length).toBe(7);
+  });
+});
+
+describe('enhanceTraceQlMetricsResponse()', () => {
+  test('adds trace links to exemplar traceID fields', () => {
+    const response = {
+      data: [
+        {
+          name: 'exemplar',
+          fields: [
+            {
+              name: 'traceID',
+              type: FieldType.string,
+              values: ['trace-1'],
+              config: {},
+            },
+          ],
+          meta: {
+            dataTopic: 'annotations',
+          },
+        },
+      ],
+    };
+
+    const enhanced = enhanceTraceQlMetricsResponse(response, defaultSettings);
+
+    expect(enhanced.data[0].fields[0].config.links).toEqual([
+      {
+        title: 'View trace',
+        url: '',
+        internal: {
+          query: { query: '${__value.raw}', queryType: 'traceql' },
+          datasourceUid: '0',
+          datasourceName: 'tempo',
+        },
+      },
+    ]);
+  });
+
+  test('does not duplicate an existing trace link on exemplar traceID fields', () => {
+    const response = {
+      data: [
+        {
+          name: 'exemplar',
+          fields: [
+            {
+              name: 'traceID',
+              type: FieldType.string,
+              values: ['trace-1'],
+              config: {
+                links: [
+                  {
+                    title: 'View trace',
+                    url: '',
+                    internal: {
+                      query: { query: '${__value.raw}', queryType: 'traceql' },
+                      datasourceUid: '0',
+                      datasourceName: 'tempo',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+          meta: {
+            dataTopic: 'annotations',
+          },
+        },
+      ],
+    };
+
+    const enhanced = enhanceTraceQlMetricsResponse(response, defaultSettings);
+
+    expect(enhanced.data[0].fields[0].config.links).toHaveLength(1);
   });
 });
 
