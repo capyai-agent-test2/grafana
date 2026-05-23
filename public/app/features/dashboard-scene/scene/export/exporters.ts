@@ -1,4 +1,4 @@
-import { defaults, each, sortBy } from 'lodash';
+import { cloneDeep, defaults, each, sortBy } from 'lodash';
 
 import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -17,7 +17,7 @@ import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel, type GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegexExec } from 'app/features/variables/utils';
@@ -92,17 +92,42 @@ export interface LibraryElementExport {
   kind: LibraryElementKind;
 }
 
+function getPanelsWithNestedRows(panels: PanelModel[]): PanelModel[] {
+  return panels.flatMap((panel) => (panel.panels ? [panel, ...getPanelsWithNestedRows(panel.panels)] : [panel]));
+}
+
+function cloneDashboardForExport(dashboard: DashboardModel): DashboardModel {
+  const dashboardSaveModel = dashboard.getSaveModelClone();
+  let exportModel!: DashboardModel;
+  exportModel = new DashboardModel(dashboardSaveModel, dashboard.meta, {
+    getVariablesFromState: () => exportModel.templating.list,
+  });
+
+  const sourcePanels = new Map(getPanelsWithNestedRows(dashboard.panels).map((panel) => [panel.id, panel]));
+
+  for (const panel of getPanelsWithNestedRows(exportModel.panels)) {
+    const sourcePanel = sourcePanels.get(panel.id);
+    if (sourcePanel?.libraryPanel?.model) {
+      panel.initLibraryPanel(cloneDeep(sourcePanel.libraryPanel));
+    }
+  }
+
+  return exportModel;
+}
+
 export async function makeExportableV1(dashboard: DashboardModel) {
+  const exportModel = cloneDashboardForExport(dashboard);
+
   // clean up repeated rows and panels,
   // this is done on the live real dashboard instance, not on a clone
   // so we need to undo this
   // this is pretty hacky and needs to be changed
-  dashboard.cleanUpRepeats();
+  exportModel.cleanUpRepeats();
 
-  const saveModel = dashboard.getSaveModelCloneOld();
+  const saveModel = exportModel.getSaveModelCloneOld();
 
   // undo repeat cleanup
-  dashboard.processRepeats();
+  exportModel.processRepeats();
 
   const inputs: Input[] = [];
   const requires: Requires = {};
