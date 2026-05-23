@@ -105,12 +105,14 @@ describe('MonacoQueryField', () => {
 
     monacoEditorProps.onMount?.(editor as never, monaco);
 
+    const editorFocusContext = createContextKey.mock.calls[0][0];
+
     expect(createContextKey).toHaveBeenCalledWith(expect.stringMatching(/^isEditorFocused/), false);
     expect(addKeybindingRule).toHaveBeenCalledWith(
       expect.objectContaining({
         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
         command: null,
-        when: expect.stringMatching(/^isEditorFocused/),
+        when: editorFocusContext,
       })
     );
   });
