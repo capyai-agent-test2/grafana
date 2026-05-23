@@ -222,7 +222,7 @@ func CreateDataFrame(val OpenTsdbCommon, length int, refID string) *data.Frame {
 	return frame
 }
 
-func ParseResponse(logger log.Logger, res *http.Response, refID string, tsdbVersion float32) (*backend.QueryDataResponse, error) {
+func ParseResponse(logger log.Logger, res *http.Response, refID string, tsdbVersion float32, tsdbResolution int32) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	body, err := io.ReadAll(res.Body)
@@ -251,7 +251,7 @@ func ParseResponse(logger log.Logger, res *http.Response, refID string, tsdbVers
 			return nil, err
 		}
 
-		frames = ParseResponse24(responseData24, refID, frames)
+		frames = ParseResponse24(responseData24, refID, frames, tsdbResolution)
 	} else {
 		err = json.Unmarshal(body, &responseData)
 		if err != nil {
@@ -259,7 +259,7 @@ func ParseResponse(logger log.Logger, res *http.Response, refID string, tsdbVers
 			return nil, err
 		}
 
-		frames, err = ParseResponseLT24(responseData, refID, frames)
+		frames, err = ParseResponseLT24(responseData, refID, frames, tsdbResolution)
 		if err != nil {
 			return nil, err
 		}
@@ -271,12 +271,12 @@ func ParseResponse(logger log.Logger, res *http.Response, refID string, tsdbVers
 	return resp, nil
 }
 
-func ParseResponse24(responseData []OpenTsdbResponse24, refID string, frames data.Frames) data.Frames {
+func ParseResponse24(responseData []OpenTsdbResponse24, refID string, frames data.Frames, tsdbResolution int32) data.Frames {
 	for _, val := range responseData {
 		frame := CreateDataFrame(val.OpenTsdbCommon, len(val.DataPoints), refID)
 
 		for i, point := range val.DataPoints {
-			frame.SetRow(i, time.Unix(int64(point[0]), 0).UTC(), point[1])
+			frame.SetRow(i, parseTimestamp(int64(point[0]), tsdbResolution), point[1])
 		}
 
 		frames = append(frames, frame)
@@ -285,7 +285,7 @@ func ParseResponse24(responseData []OpenTsdbResponse24, refID string, frames dat
 	return frames
 }
 
-func ParseResponseLT24(responseData []OpenTsdbResponse, refID string, frames data.Frames) (data.Frames, error) {
+func ParseResponseLT24(responseData []OpenTsdbResponse, refID string, frames data.Frames, tsdbResolution int32) (data.Frames, error) {
 	for _, val := range responseData {
 		frame := CreateDataFrame(val.OpenTsdbCommon, len(val.DataPoints), refID)
 
@@ -302,11 +302,19 @@ func ParseResponseLT24(responseData []OpenTsdbResponse, refID string, frames dat
 				logger.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
 				return frames, err
 			}
-			frame.SetRow(i, time.Unix(timestamp, 0).UTC(), val.DataPoints[timeString])
+			frame.SetRow(i, parseTimestamp(timestamp, tsdbResolution), val.DataPoints[timeString])
 		}
 
 		frames = append(frames, frame)
 	}
 
 	return frames, nil
+}
+
+func parseTimestamp(timestamp int64, tsdbResolution int32) time.Time {
+	if tsdbResolution == 2 {
+		return time.UnixMilli(timestamp).UTC()
+	}
+
+	return time.Unix(timestamp, 0).UTC()
 }

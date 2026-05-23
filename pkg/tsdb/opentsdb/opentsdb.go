@@ -182,8 +182,9 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 
 		tsdbQuery := OpenTsdbQuery{
-			Start: query.TimeRange.From.Unix(),
-			End:   query.TimeRange.To.Unix(),
+			Start:        query.TimeRange.From.Unix(),
+			End:          query.TimeRange.To.Unix(),
+			MSResolution: dsInfo.TSDBResolution == 2,
 			Queries: []map[string]any{
 				metric,
 			},
@@ -214,7 +215,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			}
 		}()
 
-		queryRes, err := ParseResponse(logger, httpRes, query.RefID, dsInfo.TSDBVersion)
+		queryRes, err := ParseResponse(logger, httpRes, query.RefID, dsInfo.TSDBVersion, dsInfo.TSDBResolution)
 		if err != nil {
 			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
 			continue
