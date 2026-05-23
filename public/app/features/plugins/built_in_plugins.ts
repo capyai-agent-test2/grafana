@@ -26,7 +26,6 @@ const candlestickPanel = async () =>
   await import(/* webpackChunkName: "candlestickPanel" */ 'app/plugins/panel/candlestick/module');
 const dashListPanel = async () =>
   await import(/* webpackChunkName: "dashListPanel" */ 'app/plugins/panel/dashlist/module');
-const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */ 'app/plugins/panel/debug/module');
 const flamegraphPanel = async () =>
   await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
 const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
@@ -91,7 +90,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/news': newsPanel,
   'core:plugin/live': livePanel,
   'core:plugin/stat': statPanel,
-  'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
   'core:plugin/gettingstarted': gettingStartedPanel,
   'core:plugin/gauge': gaugePanel,

@@ -9,7 +9,7 @@
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations \u0026 Alerts",
+        "name": "Annotations & Alerts",
         "type": "dashboard"
       }
     ]
@@ -266,62 +266,6 @@
         }
       ],
       "type": "xychart"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "grafana-testdata-datasource",
-        "uid": "testdata-type-uid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 7,
-        "x": 17,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "counters": {
-          "dataChanged": true,
-          "render": true,
-          "schemaChanged": true
-        },
-        "mode": "cursor"
-      },
-      "pluginVersion": "7.5.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "grafana-testdata-datasource",
-            "uid": "testdata-type-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Cursor info",
-      "type": "debug"
     },
     {
       "datasource": {

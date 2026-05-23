@@ -20,65 +20,7 @@
   "graphTooltip": 0,
   "id": 10,
   "links": [],
-  "panels": [
-    {
-      "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "maxDataPoints": 10,
-      "options": {
-        "counters": {
-          "dataChanged": true,
-          "render": true,
-          "schemaChanged": true
-        },
-        "mode": "events",
-        "stateView": ""
-      },
-      "pluginVersion": "12.2.0-16975765900",
-      "targets": [
-        {
-          "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Panel Title",
-      "type": "debug"
-    }
-  ],
+  "panels": [],
   "preload": false,
   "refresh": "",
   "schemaVersion": 41,

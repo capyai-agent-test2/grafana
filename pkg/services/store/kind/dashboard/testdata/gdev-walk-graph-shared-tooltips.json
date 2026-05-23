@@ -56,24 +56,6 @@
       ]
     },
     {
-      "UID": "graph-shared-tooltips.json#2",
-      "kind": "panel",
-      "name": "Cursor info",
-      "fields": {
-        "type": "debug"
-      },
-      "references": [
-        {
-          "family": "ds"
-        },
-        {
-          "family": "plugin",
-          "type": "panel",
-          "identifier": "debug"
-        }
-      ]
-    },
-    {
       "UID": "graph-shared-tooltips.json#5",
       "kind": "panel",
       "name": "Only temperature",
@@ -167,11 +149,6 @@
   "references": [
     {
       "family": "ds"
-    },
-    {
-      "family": "plugin",
-      "type": "panel",
-      "identifier": "debug"
     },
     {
       "family": "plugin",
