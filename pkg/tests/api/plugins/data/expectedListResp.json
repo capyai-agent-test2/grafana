@@ -171,7 +171,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "Data source for Microsoft Azure Monitor \u0026 Application Insights",
+      "description": "Data source for Microsoft Azure Monitor & Application Insights",
       "links": [
         {
           "name": "Learn more",
@@ -220,7 +220,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -696,52 +696,6 @@
     "angularDetected": false
   },
   {
-    "name": "Getting Started",
-    "type": "panel",
-    "id": "gettingstarted",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg",
-        "large": "public/plugins/gettingstarted/img/icn-dashlist-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/gettingstarted/",
-    "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Google Cloud Monitoring",
     "type": "datasource",
     "id": "stackdriver",
@@ -774,7 +728,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -836,7 +790,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -894,7 +848,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1111,7 +1065,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1265,7 +1219,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1315,7 +1269,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1365,7 +1319,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1515,7 +1469,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1574,7 +1528,7 @@
       ]
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1674,7 +1628,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1702,7 +1656,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "Open source time series database \u0026 alerting",
+      "description": "Open source time series database & alerting",
       "links": [
         {
           "name": "Learn more",
@@ -1756,7 +1710,7 @@
         "name": "Grafana Labs",
         "url": "https://grafana.com"
       },
-      "description": "Big stat values \u0026 sparklines",
+      "description": "Big stat values & sparklines",
       "links": [
         {
           "name": "Raise issue",
@@ -1982,7 +1936,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -2032,7 +1986,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {

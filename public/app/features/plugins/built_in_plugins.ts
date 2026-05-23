@@ -30,8 +30,6 @@ const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */
 const flamegraphPanel = async () =>
   await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
 const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
-const gettingStartedPanel = async () =>
-  await import(/* webpackChunkName: "gettingStartedPanel" */ 'app/plugins/panel/gettingstarted/module');
 const histogramPanel = async () =>
   await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
@@ -93,7 +91,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/stat': statPanel,
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
-  'core:plugin/gettingstarted': gettingStartedPanel,
   'core:plugin/gauge': gaugePanel,
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,

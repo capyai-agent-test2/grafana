@@ -9393,21 +9393,6 @@
     "requires-license": "需要 Grafana 企業版授權",
     "title": "企業版"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完成",
-      "learn-how": "在文件中了解如何操作"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "前往進階教學",
-      "aria-label-to-basic-tutorials": "前往基本教學",
-      "checking-completed-setup-steps": "正在檢查已完成的設定步驟",
-      "remove-this-panel": "移除此面板"
-    },
-    "tutorial-card": {
-      "complete": "完成"
-    }
-  },
   "gops": {
     "config-card": {
       "text-loading-configuration": "正在載入設定...."
