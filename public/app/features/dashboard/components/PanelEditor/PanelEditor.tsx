@@ -248,7 +248,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelAndEditor(uiState: PanelEditorUIState, styles: EditorStyles) {
-    const { panel, dashboard, plugin, tab } = this.props;
+    const { panel, dashboard, plugin, tab, updatePanelEditorUIState } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
     const isOnlyPanel = tabs.length === 0;
     const panelPane = this.renderPanel(styles, isOnlyPanel);
@@ -265,7 +265,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         primary="first"
         secondaryPaneStyle={{ minHeight: 0 }}
         onDragFinished={(size) => {
-          if (size) {
+          if (size !== undefined) {
             updatePanelEditorUIState({ topPaneSize: size / window.innerHeight });
           }
         }}
@@ -481,7 +481,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                 paneSize={uiState.rightPaneSize}
                 primary="second"
                 onDragFinished={(size) => {
-                  if (size) {
+                  if (size !== undefined) {
                     updatePanelEditorUIState({ rightPaneSize: size / window.innerWidth });
                   }
                 }}
