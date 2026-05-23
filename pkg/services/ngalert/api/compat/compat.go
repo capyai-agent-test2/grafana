@@ -233,10 +233,9 @@ func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions
 		result.ExecErrState = &execErrorState
 	}
 
-	result.For = model.Duration(rule.For)
-	if rule.For > 0 {
-		result.ForString = new(model.Duration(rule.For).String())
-	}
+	forDuration := model.Duration(rule.For)
+	result.For = &forDuration
+	result.ForString = new(forDuration.String())
 
 	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
 	if rule.KeepFiringFor > 0 {
