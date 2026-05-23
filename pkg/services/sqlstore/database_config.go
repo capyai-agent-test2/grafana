@@ -123,7 +123,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.MigrationLock = sec.Key("migration_locking").MustBool(true)
 	dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 
-	dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
+	dbCfg.QueryRetries = sec.Key("query_retries").MustInt(5)
 	dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)

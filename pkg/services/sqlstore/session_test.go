@@ -18,6 +18,7 @@ func TestIntegration_RetryingDisabled(t *testing.T) {
 
 	store, _ := InitTestDB(t)
 	retryErrors := getRetryErrors(t, store)
+	store.dbCfg.QueryRetries = 0
 
 	require.Equal(t, 0, store.dbCfg.QueryRetries)
 

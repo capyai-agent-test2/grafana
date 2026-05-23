@@ -214,3 +214,14 @@ func TestBuildConnectionStringPostgres(t *testing.T) {
 		})
 	}
 }
+
+func TestDatabaseConfigReadConfig_SetsSQLiteRetryDefaults(t *testing.T) {
+	cfg := setting.NewCfg()
+	sec := cfg.Raw.Section("database")
+	sec.Key("type").SetValue("sqlite3")
+
+	dbCfg := &DatabaseConfig{}
+	require.NoError(t, dbCfg.readConfig(cfg))
+	assert.Equal(t, 5, dbCfg.QueryRetries)
+	assert.Equal(t, 5, dbCfg.TransactionRetries)
+}
