@@ -10,10 +10,11 @@ export interface Props {
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
   onModelChange: (dataSource: DataSourceSettings) => void;
+  pdcInjected?: boolean;
   validation?: DataSourceConfigValidationAPI;
 }
 
-export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChange, validation }: Props) => {
+export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChange, pdcInjected, validation }: Props) => {
   if (!plugin) {
     return null;
   }
@@ -28,6 +29,7 @@ export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChang
             pluginVersion: plugin.meta?.info?.version,
           }),
           onOptionsChange: onModelChange,
+          pdcInjected,
           validation,
         })}
     </div>
