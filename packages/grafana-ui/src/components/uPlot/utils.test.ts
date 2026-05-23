@@ -347,6 +347,60 @@ describe('preparePlotData2', () => {
       `);
     });
 
+    it('keeps mixed-sign series on their own side of zero within one stack group', () => {
+      const df = new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+          {
+            name: 'a',
+            values: [-10, 10, -5],
+            config: {
+              custom: { drawStyle: GraphDrawStyle.Bars, stacking: { mode: StackingMode.Normal, group: 'stackA' } },
+            },
+          },
+          {
+            name: 'b',
+            values: [5, -7, 3],
+            config: {
+              custom: { drawStyle: GraphDrawStyle.Bars, stacking: { mode: StackingMode.Normal, group: 'stackA' } },
+            },
+          },
+          {
+            name: 'c',
+            values: [2, 4, -1],
+            config: {
+              custom: { drawStyle: GraphDrawStyle.Bars, stacking: { mode: StackingMode.Normal, group: 'stackA' } },
+            },
+          },
+        ],
+      });
+
+      expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
+        [
+          [
+            9997,
+            9998,
+            9999,
+          ],
+          [
+            -10,
+            10,
+            -5,
+          ],
+          [
+            5,
+            -7,
+            3,
+          ],
+          [
+            7,
+            14,
+            -6,
+          ],
+        ]
+      `);
+    });
+
     it('standard with multiple groups', () => {
       const df = new MutableDataFrame({
         fields: [
