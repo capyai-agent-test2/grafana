@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
-	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -44,7 +43,6 @@ func ProvideAppInstallers(
 	alertingNotificationAppInstaller *notifications.AppInstaller,
 	logsdrilldownAppInstaller *logsdrilldown.LogsDrilldownAppInstaller,
 	annotationAppInstaller *annotation.AppInstaller,
-	exampleAppInstaller *example.AppInstaller,
 	advisorAppInstaller *advisor.AppInstaller,
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
@@ -53,7 +51,6 @@ func ProvideAppInstallers(
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
 		pluginsAppInstaller,
-		exampleAppInstaller,
 		quotasAppInstaller,
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -101,7 +98,7 @@ func ProvideAppInstallers(
 	// as this API has been deprecated and will be removed in future releases.
 	//
 	// Developers are encouraged to explore the built-in functionality of the App Platform
-	// to control the app registration (see `docs/apps/example/README.md`).
+	// to control the app registration.
 	if cfg.AnnotationAppPlatform.Enabled {
 		installers = append(installers, annotationAppInstaller)
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
-	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
@@ -27,7 +26,6 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 	correlationsAppInstaller := &correlations.AppInstaller{}
 	notificationsAppInstaller := &notifications.AppInstaller{}
 	annotationAppInstaller := &annotation.AppInstaller{}
-	exampleAppInstaller := &example.AppInstaller{}
 	advisorAppInstaller := &advisor.AppInstaller{}
 	historianAppInstaller := &historian.AppInstaller{}
 	quotasAppInstaller := &quotas.QuotasAppInstaller{}
@@ -58,7 +56,6 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				notificationsAppInstaller,
 				nil,
 				annotationAppInstaller,
-				exampleAppInstaller,
 				advisorAppInstaller,
 				historianAppInstaller,
 				quotasAppInstaller,

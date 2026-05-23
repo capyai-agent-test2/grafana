@@ -15,7 +15,6 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashvalidator "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/manifestdata"
 	dashvalidator1 "github.com/grafana/grafana/apps/dashvalidator/pkg/generated/manifestdata"
-	example "github.com/grafana/grafana/apps/example/pkg/apis/manifestdata"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/manifestdata"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	live "github.com/grafana/grafana/apps/live/pkg/apis/manifestdata"
@@ -42,7 +41,6 @@ func AppManifests() []app.Manifest {
 		dashboard.LocalManifest(),
 		dashvalidator.LocalManifest(),
 		dashvalidator1.LocalManifest(),
-		example.LocalManifest(),
 		folder.LocalManifest(),
 		iam.LocalManifest(),
 		live.LocalManifest(),
