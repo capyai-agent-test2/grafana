@@ -118,6 +118,14 @@ describe('transformDataFrame', () => {
     });
   });
 
+  it('ignores unknown transforms instead of throwing while building the pipeline', async () => {
+    await expect(transformDataFrame([{ id: '__unknown_transform__' }], [getSeriesAWithSingleField()])).toEmitValuesWith(
+      (received) => {
+        expect(received).toEqual([[getSeriesAWithSingleField()]]);
+      }
+    );
+  });
+
   it('Support filtering', async () => {
     const frameA = toDataFrame({
       refId: 'A',
