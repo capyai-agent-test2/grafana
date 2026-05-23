@@ -189,6 +189,14 @@ describe('labelSearch', () => {
       let found = labelSearch(term, container);
       expect(found.size).toBe(0);
     });
+
+    it('keeps exact-match regex results stable across casing', () => {
+      const canonical = [...labelSearch('^net/http\\.HandlerFunc\\.ServeHTTP$', container)];
+      const mismatchedCase = [...labelSearch('^net/http\\.handlerfunc\\.servehttp$', container)];
+
+      expect(mismatchedCase).toEqual(canonical);
+      expect(mismatchedCase).toEqual(['net/http.HandlerFunc.ServeHTTP']);
+    });
   });
 
   describe('fuzzy and regex', () => {
@@ -220,6 +228,14 @@ describe('labelSearch', () => {
       const search = ',,,,,';
       let found = labelSearch(search, container);
       expect(found.size).toBe(0);
+    });
+
+    it('keeps plain-text matches stable across casing', () => {
+      const canonical = [...labelSearch('net/http.HandlerFunc.ServeHTTP', container)];
+      const mismatchedCase = [...labelSearch('net/http.handlerfunc.servehttp', container)];
+
+      expect(mismatchedCase).toEqual(canonical);
+      expect(mismatchedCase).toContain('net/http.HandlerFunc.ServeHTTP');
     });
   });
 });

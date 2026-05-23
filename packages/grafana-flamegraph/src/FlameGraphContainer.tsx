@@ -668,11 +668,14 @@ export function useLabelSearch(
 export function labelSearch(search: string, data: FlameGraphDataContainer): Set<string> {
   const foundLabels = new Set<string>();
   const terms = search.split(',');
+  const labels = data.getUniqueLabels();
+  const normalizedLabels = labels.map((label) => label.toLowerCase());
+  const regexChars = /[.*+?^${}()|[\]\\]/;
 
-  const regexFilter = (labels: string[], pattern: string): boolean => {
+  const regexFilter = (pattern: string): boolean => {
     let regex: RegExp;
     try {
-      regex = new RegExp(pattern);
+      regex = new RegExp(pattern, 'i');
     } catch (e) {
       return false;
     }
@@ -689,17 +692,18 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
     return foundMatch;
   };
 
-  const fuzzyFilter = (labels: string[], term: string): boolean => {
-    let idxs = ufuzzy.filter(labels, term);
+  const fuzzyFilter = (term: string): boolean => {
+    const idxs = ufuzzy.filter(normalizedLabels, term.toLowerCase());
     if (!idxs) {
       return false;
     }
 
     let foundMatch = false;
-    for (let idx of idxs) {
+    for (const idx of idxs) {
       foundLabels.add(labels[idx]);
       foundMatch = true;
     }
+
     return foundMatch;
   };
 
@@ -708,9 +712,10 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
       continue;
     }
 
-    const found = regexFilter(data.getUniqueLabels(), term);
-    if (!found) {
-      fuzzyFilter(data.getUniqueLabels(), term);
+    const isRegexTerm = regexChars.test(term);
+    const found = isRegexTerm ? regexFilter(term) : fuzzyFilter(term);
+    if (!found && isRegexTerm) {
+      fuzzyFilter(term);
     }
   }
 
