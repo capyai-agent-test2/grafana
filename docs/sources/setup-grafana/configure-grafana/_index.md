@@ -2995,6 +2995,16 @@ Use a key-value pair to set feature flag values explicitly, overriding any defau
 
 For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
 
+To enable one or more feature toggles, add each feature name as a separate key under `[feature_toggles]`, and then restart Grafana.
+
+For example, to enable both `panelTimeSettings` and `timeComparison`, add the following:
+
+```ini
+[feature_toggles]
+panelTimeSettings = true
+timeComparison = true
+```
+
 #### `enable`
 
 {{< admonition type="note" >}}
