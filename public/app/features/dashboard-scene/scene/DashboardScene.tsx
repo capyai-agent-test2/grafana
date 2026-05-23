@@ -2,6 +2,7 @@ import type * as H from 'history';
 
 import {
   CoreApp,
+  AppEvents,
   type DataQueryRequest,
   type FieldConfig,
   type FieldConfigSource,
@@ -44,7 +45,6 @@ import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/S
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
@@ -78,7 +78,7 @@ import {
   createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
   transformSaveModelSchemaV2ToScene,
 } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
@@ -113,7 +113,7 @@ import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
-import { clearClipboard } from './layouts-shared/paste';
+import { clearClipboard, getDashboardGridItemFromClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type LayoutParent } from './types/LayoutParent';
@@ -756,15 +756,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     }
 
-    const jsonData = store.get(LS_PANEL_COPY_KEY);
-    const jsonObj = JSON.parse(jsonData);
-    const panelModel = new PanelModel(jsonObj);
-    const gridItem = buildGridItemForPanel(panelModel);
+    let gridItem: DashboardGridItem;
+
+    try {
+      gridItem = getDashboardGridItemFromClipboard(this, null);
+    } catch (error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
+
     const panel = gridItem.state.body;
 
     this.addPanel(panel);
 
-    store.delete(LS_PANEL_COPY_KEY);
+    clearClipboard();
   }
 
   /** @internal */
