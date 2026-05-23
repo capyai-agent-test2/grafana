@@ -6,8 +6,8 @@ import { Alert, Button, EmptyState, LinkButton, Stack, useStyles2 } from '@grafa
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { DashListItem } from 'app/features/dashboard/components/DashListItem';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
-import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
 interface Props {

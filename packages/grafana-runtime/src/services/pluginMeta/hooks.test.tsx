@@ -478,7 +478,6 @@ describe('useListedPanelPluginIds', () => {
       'bargauge',
       'candlestick',
       'canvas',
-      'dashlist',
       'debug',
       'flamegraph',
       'gauge',

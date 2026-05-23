@@ -26,7 +26,10 @@
       "icon": "external link",
       "includeVars": false,
       "keepTime": false,
-      "tags": ["gdev", "panel-tests"],
+      "tags": [
+        "gdev",
+        "panel-tests"
+      ],
       "targetBlank": false,
       "title": "Dropdown link",
       "tooltip": "",
@@ -354,27 +357,6 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 21
-      },
-      "id": 8,
-      "options": {
-        "maxItems": 10,
-        "query": "",
-        "showHeadings": true,
-        "showRecentlyViewed": true,
-        "showSearch": true,
-        "showStarred": true,
-        "tags": []
-      },
-      "pluginVersion": "8.1.0-pre",
-      "title": "Dashboard list",
-      "type": "dashlist"
-    },
-    {
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
         "y": 29
       },
       "id": 6,
@@ -472,7 +454,9 @@
         "displayMode": "gradient",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -521,7 +505,9 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -571,7 +557,9 @@
       "id": 18,
       "options": {
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -694,7 +682,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -871,7 +861,11 @@
   ],
   "refresh": "",
   "schemaVersion": 36,
-  "tags": ["gdev", "panel-tests", "all-panels"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "all-panels"
+  ],
   "templating": {
     "list": [
       {

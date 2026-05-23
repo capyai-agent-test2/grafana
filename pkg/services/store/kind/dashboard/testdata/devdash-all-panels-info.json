@@ -91,18 +91,6 @@
       ]
     },
     {
-      "id": 8,
-      "title": "Dashboard list",
-      "type": "dashlist",
-      "pluginVersion": "8.1.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
       "id": 6,
       "title": "Alert list",
       "type": "alertlist",

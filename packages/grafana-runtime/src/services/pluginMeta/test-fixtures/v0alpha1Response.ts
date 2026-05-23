@@ -1115,63 +1115,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'dashlist',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'dashlist',
-          type: 'panel',
-          name: 'Dashboard list',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
-              large: 'app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'List of dynamic links to other dashboards',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/dashboard-list/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          skipDataQuery: true,
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/dashlist',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/panel/dashlist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'debug',
         namespace: 'default',
       },

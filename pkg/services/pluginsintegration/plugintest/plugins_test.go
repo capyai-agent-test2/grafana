@@ -207,7 +207,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"barchart":       {},
 		"bargauge":       {},
 		"canvas":         {},
-		"dashlist":       {},
 		"debug":          {},
 		"gauge":          {},
 		"geomap":         {},

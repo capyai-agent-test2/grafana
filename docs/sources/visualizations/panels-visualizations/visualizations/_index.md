@@ -181,7 +181,6 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Canvas](ref:canvas) allows you to explicitly place elements within static and dynamic layouts.
   - [Geomap](ref:geomap) helps you visualize geospatial data.
 - Widgets
-  - [Dashboard list](ref:dashboard-list) can list dashboards.
   - [Alert list](ref:alert-list) can list alerts.
   - [Annotations list](ref:annotations-list) can list available annotations.
   - [Text](ref:text) can show markdown and html.

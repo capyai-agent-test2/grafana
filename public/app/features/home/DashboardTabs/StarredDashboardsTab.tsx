@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, EmptyState, Icon, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { DashListItem } from 'app/features/dashboard/components/DashListItem';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
-import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 interface Props {
   dashboards: DashboardQueryResult[];

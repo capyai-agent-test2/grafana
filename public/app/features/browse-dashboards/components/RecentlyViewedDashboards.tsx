@@ -8,8 +8,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, CollapsableSection, Grid, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import impressionSrv from 'app/core/services/impression_srv';
+import { DashListItem } from 'app/features/dashboard/components/DashListItem';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 
 import { getRecentlyViewedDashboards } from '../api/recentlyViewed';
 
