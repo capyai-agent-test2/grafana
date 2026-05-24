@@ -2,7 +2,13 @@ import { config } from '../config';
 import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 
-import { MAX_PAGE_URL_LENGTH, TRUNCATION_MARKER, reportInteraction, reportPageview } from './utils';
+import {
+  MAX_PAGE_URL_LENGTH,
+  TRUNCATION_MARKER,
+  reportInteraction,
+  reportPageview,
+  resetReportPageviewStateForTesting,
+} from './utils';
 
 jest.mock('../services/EchoSrv');
 jest.mock('../services', () => ({
@@ -22,6 +28,7 @@ describe('reportPageview', () => {
     jest.clearAllMocks();
     jest.mocked(getEchoSrv).mockReturnValue({ addEvent: mockAddEvent } as unknown as ReturnType<typeof getEchoSrv>);
     config.appSubUrl = '';
+    resetReportPageviewStateForTesting();
   });
 
   it('reports the full URL when it is within the length limit', () => {
@@ -69,6 +76,19 @@ describe('reportPageview', () => {
       type: EchoEventType.Pageview,
       payload: { page: '/grafana/d/abc' },
     });
+  });
+
+  it('deduplicates consecutive pageview reports for the same URL', () => {
+    jest.mocked(locationService.getLocation).mockReturnValue({
+      pathname: '/d/abc',
+      search: '?var-cluster=prod',
+      hash: '',
+    } as ReturnType<typeof locationService.getLocation>);
+
+    reportPageview();
+    reportPageview();
+
+    expect(mockAddEvent).toHaveBeenCalledTimes(1);
   });
 });
 
