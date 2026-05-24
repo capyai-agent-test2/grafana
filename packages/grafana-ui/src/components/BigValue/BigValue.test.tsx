@@ -32,6 +32,12 @@ describe('BigValue', () => {
       expect(screen.getByText('25')).toBeInTheDocument();
     });
 
+    it('should keep the rendered size within the allotted panel box', () => {
+      const { container } = render(<BigValue {...getProps({ width: 120, height: 80 })} />);
+
+      expect(container.firstChild).toHaveStyle({ boxSizing: 'border-box', width: '120px', height: '80px' });
+    });
+
     it('should render with percent change', () => {
       render(
         <BigValue
