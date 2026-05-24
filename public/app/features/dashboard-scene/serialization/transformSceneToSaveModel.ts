@@ -381,7 +381,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
         x = repeater.state.x!;
         y = repeater.state.y! + index * h;
       } else {
-        x = (index % columnCount) * w;
+        x = repeater.state.x! + (index % columnCount) * w;
         y = repeater.state.y! + Math.floor(index / columnCount) * h;
       }
 
