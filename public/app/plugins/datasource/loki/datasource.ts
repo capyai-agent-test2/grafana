@@ -1144,7 +1144,13 @@ export class LokiDatasource
         // We want to escape special characters in value for non-regex selectors to match the same char in the log line as the user types in the input
         value = escapeLabelValueInSelector(value, operator);
       }
-      return addLabelToQuery(acc, key, operator, value);
+      const labelType =
+        this.languageProvider.labelKeys.length > 0
+          ? this.languageProvider.labelKeys.includes(key)
+            ? LabelType.Indexed
+            : LabelType.Parsed
+          : undefined;
+      return addLabelToQuery(acc, key, operator, value, labelType);
     }, expr);
 
     return returnVariables(expr);
