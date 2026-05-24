@@ -382,6 +382,21 @@ describe('templateSrv', () => {
       expect(target).toBe('this.All.filters');
     });
 
+    it('should apply sqlstring formatting to custom all value', () => {
+      const target = _templateSrv.replace('this.${test:sqlstring}.filters', {});
+      expect(target).toBe("this.'*'.filters");
+    });
+
+    it('should apply singlequote formatting to custom all value', () => {
+      const target = _templateSrv.replace('this.${test:singlequote}.filters', {});
+      expect(target).toBe("this.'*'.filters");
+    });
+
+    it('should apply doublequote formatting to custom all value', () => {
+      const target = _templateSrv.replace('this.${test:doublequote}.filters', {});
+      expect(target).toBe('this."*".filters');
+    });
+
     it('should not escape custom all value', () => {
       const target = _templateSrv.replace('this.$test', {}, 'regex');
       expect(target).toBe('this.*');
