@@ -415,6 +415,35 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     expect(frame.fields.length).toBe(9);
   });
 
+  test('keeps duration empty when TraceQL span is missing durationNanos', () => {
+    const traces = [
+      {
+        traceID: '1',
+        rootServiceName: 'image-provider',
+        rootTraceName: '',
+        startTimeUnixNano: '1753606049378936000',
+        spanSets: [
+          {
+            spans: [
+              {
+                spanID: '19873521660f399a',
+                startTimeUnixNano: '1753606049379000000',
+              },
+            ],
+            matched: 1,
+          },
+        ],
+      },
+    ];
+
+    const frameList = createTableFrameFromTraceQlQueryAsSpans(traces, defaultSettings);
+    const frame = frameList[0];
+
+    expect(frame.fields[6].name).toBe('duration');
+    expect(frame.fields[6].type).toBe('number');
+    expect(frame.fields[6].values[0]).toBeUndefined();
+  });
+
   it.each([[undefined], [[]]])('TraceQL response with no data', (traces: TraceSearchMetadata[] | undefined) => {
     const frameList = createTableFrameFromTraceQlQueryAsSpans(traces, defaultSettings);
     const frame = frameList[0];

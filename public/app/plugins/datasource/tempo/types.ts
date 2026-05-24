@@ -83,7 +83,7 @@ export type SpanAttributes = {
 };
 
 export type Span = {
-  durationNanos: string;
+  durationNanos?: string;
   traceId?: string;
   spanID: string;
   traceState?: string;
