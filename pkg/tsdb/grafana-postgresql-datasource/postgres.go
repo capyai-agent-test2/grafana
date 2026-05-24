@@ -82,12 +82,12 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 }
 
 func configureTimestampHandling(pgxConf *pgxpool.Config, timezone string) {
-	scanLocation := getTimestampScanLocation(timezone)
-	if timezone != "" {
+	scanLocation, validatedTimezone := getTimestampScanLocation(timezone)
+	if validatedTimezone != "" {
 		if pgxConf.ConnConfig.RuntimeParams == nil {
 			pgxConf.ConnConfig.RuntimeParams = map[string]string{}
 		}
-		pgxConf.ConnConfig.RuntimeParams["timezone"] = timezone
+		pgxConf.ConnConfig.RuntimeParams["timezone"] = validatedTimezone
 	}
 
 	previousAfterConnect := pgxConf.AfterConnect
@@ -103,17 +103,17 @@ func configureTimestampHandling(pgxConf *pgxpool.Config, timezone string) {
 	}
 }
 
-func getTimestampScanLocation(timezone string) *time.Location {
+func getTimestampScanLocation(timezone string) (*time.Location, string) {
 	if timezone == "" {
-		return time.Local
+		return time.Local, ""
 	}
 
 	location, err := time.LoadLocation(timezone)
 	if err != nil {
-		return time.Local
+		return time.Local, ""
 	}
 
-	return location
+	return location, timezone
 }
 
 func configureTimestampScanLocation(typeMap *pgtype.Map, scanLocation *time.Location) {

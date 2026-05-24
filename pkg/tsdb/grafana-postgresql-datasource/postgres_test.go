@@ -192,7 +192,9 @@ func TestConfigureTimestampHandling(t *testing.T) {
 
 		require.Empty(t, poolConfig.ConnConfig.RuntimeParams["timezone"])
 		require.NotNil(t, poolConfig.AfterConnect)
-		require.Equal(t, time.Local, getTimestampScanLocation(""))
+		location, validatedTimezone := getTimestampScanLocation("")
+		require.Equal(t, time.Local, location)
+		require.Empty(t, validatedTimezone)
 	})
 
 	t.Run("uses configured datasource timezone when it is a named location", func(t *testing.T) {
@@ -203,7 +205,22 @@ func TestConfigureTimestampHandling(t *testing.T) {
 
 		require.Equal(t, "Europe/Stockholm", poolConfig.ConnConfig.RuntimeParams["timezone"])
 		require.NotNil(t, poolConfig.AfterConnect)
-		require.Equal(t, "Europe/Stockholm", getTimestampScanLocation("Europe/Stockholm").String())
+		location, validatedTimezone := getTimestampScanLocation("Europe/Stockholm")
+		require.Equal(t, "Europe/Stockholm", location.String())
+		require.Equal(t, "Europe/Stockholm", validatedTimezone)
+	})
+
+	t.Run("ignores invalid datasource timezones", func(t *testing.T) {
+		poolConfig, err := pgxpool.ParseConfig("postgres://user:password@localhost/test")
+		require.NoError(t, err)
+
+		configureTimestampHandling(poolConfig, "UTC+2")
+
+		require.Empty(t, poolConfig.ConnConfig.RuntimeParams["timezone"])
+		require.NotNil(t, poolConfig.AfterConnect)
+		location, validatedTimezone := getTimestampScanLocation("UTC+2")
+		require.Equal(t, time.Local, location)
+		require.Empty(t, validatedTimezone)
 	})
 }
 
