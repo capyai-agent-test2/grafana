@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Test generateConnectionString.
@@ -161,6 +163,48 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConfigureTimestampScanLocation(t *testing.T) {
+	typeMap := pgtype.NewMap()
+	location := time.FixedZone("UTC+2", 2*60*60)
+
+	configureTimestampScanLocation(typeMap, location)
+
+	timestampType, ok := typeMap.TypeForName("timestamp")
+	require.True(t, ok)
+
+	value, err := timestampType.Codec.DecodeValue(typeMap, timestampType.OID, 0, []byte("2024-04-26 12:05:34"))
+	require.NoError(t, err)
+
+	decoded, ok := value.(time.Time)
+	require.True(t, ok)
+	require.Equal(t, location, decoded.Location())
+	require.Equal(t, time.Date(2024, time.April, 26, 10, 5, 34, 0, time.UTC), decoded.UTC())
+}
+
+func TestConfigureTimestampHandling(t *testing.T) {
+	t.Run("uses local time when datasource timezone is empty", func(t *testing.T) {
+		poolConfig, err := pgxpool.ParseConfig("postgres://user:password@localhost/test")
+		require.NoError(t, err)
+
+		configureTimestampHandling(poolConfig, "")
+
+		require.Empty(t, poolConfig.ConnConfig.RuntimeParams["timezone"])
+		require.NotNil(t, poolConfig.AfterConnect)
+		require.Equal(t, time.Local, getTimestampScanLocation(""))
+	})
+
+	t.Run("uses configured datasource timezone when it is a named location", func(t *testing.T) {
+		poolConfig, err := pgxpool.ParseConfig("postgres://user:password@localhost/test")
+		require.NoError(t, err)
+
+		configureTimestampHandling(poolConfig, "Europe/Stockholm")
+
+		require.Equal(t, "Europe/Stockholm", poolConfig.ConnConfig.RuntimeParams["timezone"])
+		require.NotNil(t, poolConfig.AfterConnect)
+		require.Equal(t, "Europe/Stockholm", getTimestampScanLocation("Europe/Stockholm").String())
+	})
 }
 
 // To run this test, set runPostgresTests=true

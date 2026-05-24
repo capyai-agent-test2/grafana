@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -60,6 +62,8 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
 	pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
 
+	configureTimestampHandling(pgxConf, dsInfo.JsonData.Timezone)
+
 	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
 	if err != nil {
 		logger.Error("Failed connecting to Postgres", "err", err)
@@ -75,6 +79,49 @@ func newPostgres(ctx context.Context, userFacingDefaultError string, rowLimit in
 
 	logger.Debug("Successfully connected to Postgres")
 	return p, handler, nil
+}
+
+func configureTimestampHandling(pgxConf *pgxpool.Config, timezone string) {
+	scanLocation := getTimestampScanLocation(timezone)
+	if timezone != "" {
+		if pgxConf.ConnConfig.RuntimeParams == nil {
+			pgxConf.ConnConfig.RuntimeParams = map[string]string{}
+		}
+		pgxConf.ConnConfig.RuntimeParams["timezone"] = timezone
+	}
+
+	previousAfterConnect := pgxConf.AfterConnect
+	pgxConf.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		if previousAfterConnect != nil {
+			if err := previousAfterConnect(ctx, conn); err != nil {
+				return err
+			}
+		}
+
+		configureTimestampScanLocation(conn.TypeMap(), scanLocation)
+		return nil
+	}
+}
+
+func getTimestampScanLocation(timezone string) *time.Location {
+	if timezone == "" {
+		return time.Local
+	}
+
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		return time.Local
+	}
+
+	return location
+}
+
+func configureTimestampScanLocation(typeMap *pgtype.Map, scanLocation *time.Location) {
+	typeMap.RegisterType(&pgtype.Type{
+		Name:  "timestamp",
+		OID:   pgtype.TimestampOID,
+		Codec: &pgtype.TimestampCodec{ScanLocation: scanLocation},
+	})
 }
 
 func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
