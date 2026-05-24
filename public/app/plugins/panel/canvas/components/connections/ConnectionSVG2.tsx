@@ -18,6 +18,7 @@ import {
 } from '../../utils';
 
 import { CONNECTION_VERTEX_ADD_ID, CONNECTION_VERTEX_ID } from './Connections';
+import { syncConnectionOriginalCoordinates } from './connectionMovementUtils';
 
 type Props = {
   setLineRef: (anchorElement: SVGLineElement) => void;
@@ -133,22 +134,9 @@ export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setC
 
           let { x1, y1, x2, y2 } = calculateCoordinates2(source, target, info);
 
-          let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
-          if (v.sourceOriginal && v.targetOriginal) {
-            xStart = v.sourceOriginal.x;
-            yStart = v.sourceOriginal.y;
-            xEnd = v.targetOriginal.x;
-            yEnd = v.targetOriginal.y;
-          } else if (source.options.connections) {
-            // If original source or target coordinates are not set for the current connection, set them
-            if (
-              !source.options.connections[index].sourceOriginal ||
-              !source.options.connections[index].targetOriginal
-            ) {
-              source.options.connections[index].sourceOriginal = { x: x1, y: y1 };
-              source.options.connections[index].targetOriginal = { x: x2, y: y2 };
-            }
-          }
+          syncConnectionOriginalCoordinates(v, { x1, y1, x2, y2 });
+
+          const { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
 
           const midpoint = calculateMidpoint(x1, y1, x2, y2);
           const xDist = xEnd - xStart;

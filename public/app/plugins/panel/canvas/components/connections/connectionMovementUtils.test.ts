@@ -4,6 +4,7 @@ import type { ElementState } from 'app/features/canvas/runtime/element';
 import type { ConnectionState } from '../../types';
 
 import {
+  syncConnectionOriginalCoordinates,
   updateConnectionsAfterIndividualMove,
   updateConnectionsAfterGroupMove,
   type CoordinateCalculator,
@@ -42,6 +43,33 @@ const mockCalculateCoords: CoordinateCalculator = () => ({
 });
 
 describe('connectionMovementUtils', () => {
+  describe('syncConnectionOriginalCoordinates', () => {
+    it('should replace stale original coordinates with the current endpoints', () => {
+      const sourceElement = createMockElement('source', [
+        createConnection({
+          sourceOriginal: { x: 50, y: 50 },
+          targetOriginal: { x: 150, y: 150 },
+          vertices: [{ x: 0.5, y: 0.5 }],
+        }),
+      ]);
+      const targetElement = createMockElement('target');
+
+      const connectionState: ConnectionState = {
+        source: sourceElement,
+        target: targetElement,
+        info: createConnection(),
+        index: 0,
+        sourceOriginal: { x: 50, y: 50 },
+        targetOriginal: { x: 150, y: 150 },
+      };
+
+      syncConnectionOriginalCoordinates(connectionState, { x1: 100, y1: 100, x2: 200, y2: 200 });
+
+      expect(sourceElement.options?.connections?.[0].sourceOriginal).toEqual({ x: 100, y: 100 });
+      expect(sourceElement.options?.connections?.[0].targetOriginal).toEqual({ x: 200, y: 200 });
+    });
+  });
+
   describe('updateConnectionsAfterIndividualMove', () => {
     it('should update source coordinates when source element is moved', () => {
       const sourceElement = createMockElement('source', [
