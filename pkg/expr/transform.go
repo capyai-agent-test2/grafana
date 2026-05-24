@@ -129,6 +129,10 @@ func hiddenRefIDs(queries []Query) (map[string]struct{}, error) {
 			Hide bool `json:"hide"`
 		}{}
 
+		if len(query.JSON) == 0 {
+			continue
+		}
+
 		if err := json.Unmarshal(query.JSON, &hide); err != nil {
 			return nil, err
 		}

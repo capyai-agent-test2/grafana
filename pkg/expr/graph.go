@@ -241,7 +241,12 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 	}()
 
 	degraded := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSseExpressionErrorIsolation, false, openfeature.TransactionContext(ctx))
-	graph, err := s.buildDependencyGraph(ctx, req, degraded)
+	hidden, err := hiddenRefIDs(req.Queries)
+	if err != nil {
+		return nil, err
+	}
+
+	graph, err := s.buildDependencyGraph(ctx, req, degraded, hidden)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +262,7 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 // buildDependencyGraph returns a dependency graph for a set of queries.
 // When degraded is true, nodes with missing dependencies are marked as
 // disabled on the node itself rather than causing a hard error.
-func (s *Service) buildDependencyGraph(ctx context.Context, req *Request, degraded bool) (*simple.DirectedGraph, error) {
+func (s *Service) buildDependencyGraph(ctx context.Context, req *Request, degraded bool, hidden map[string]struct{}) (*simple.DirectedGraph, error) {
 	graph, err := s.buildGraph(ctx, req)
 	if err != nil {
 		return nil, err
@@ -265,7 +270,7 @@ func (s *Service) buildDependencyGraph(ctx context.Context, req *Request, degrad
 
 	registry := buildNodeRegistry(graph)
 
-	if err := s.buildGraphEdges(graph, registry, degraded); err != nil {
+	if err := s.buildGraphEdges(graph, registry, degraded, hidden); err != nil {
 		return nil, err
 	}
 
@@ -378,7 +383,7 @@ func (s *Service) buildGraph(ctx context.Context, req *Request) (*simple.Directe
 // When degraded is true, nodes with missing dependencies are marked as
 // disabled (rather than causing a hard error) so that valid nodes can
 // still execute.
-func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node, degraded bool) error {
+func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node, degraded bool, hidden map[string]struct{}) error {
 	nodeIt := dp.Nodes()
 
 nextNode:
@@ -415,7 +420,9 @@ nextNode:
 			// If the input is SQL, conversion is handled differently
 			if _, ok := cmdNode.Command.(*SQLCommand); ok {
 				if dsNode, ok := neededNode.(*DSNode); ok {
-					dsNode.isInputToSQLExpr = true
+					if _, isHidden := hidden[cmdNode.RefID()]; !isHidden {
+						dsNode.isInputToSQLExpr = true
+					}
 				} else {
 					// Only allow data source nodes as SQL expression inputs for now
 					return fmt.Errorf("only data source queries may be inputs to a sql expression, %v is the input for %v", neededVar, cmdNode.RefID())
