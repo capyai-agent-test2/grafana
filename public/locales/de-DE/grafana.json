@@ -3857,43 +3857,6 @@
       "label-stat": "Stat."
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Filter entfernen: {{filterToRemove}}",
-      "filter": "Filter:",
-      "loading": "Wird geladen ...",
-      "no-annotations-found": "Keine Anmerkungen gefunden"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Erstellt von:<br/> {{email}}"
-    },
-    "category-annotation-query": "Annotationsabfrage",
-    "category-display": "Display",
-    "category-link-behaviour": "Link-Verhalten",
-    "description-tags": "Annotations-Tags abgleichen",
-    "link-target-options": {
-      "label-dashboard": "Dashboard",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Grenze",
-    "name-link-target": "Linkziel",
-    "name-query-filter": "Abfragefilter",
-    "name-show-tags": "Tags anzeigen",
-    "name-show-time": "Zeit anzeigen",
-    "name-show-user": "Nutzer anzeigen",
-    "name-tags": "Tags",
-    "name-time-after": "Zeitraum danach",
-    "name-time-before": "Zeitraum davor",
-    "name-time-range": "Zeitbereich",
-    "query-filter-options": {
-      "label-all-dashboards": "Alle Dashboards",
-      "label-this-dashboard": "Dieses Dashboard"
-    },
-    "time-range-options": {
-      "label-none": "Keine",
-      "label-this-dashboard": "Dieses Dashboard"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Anmerkung",

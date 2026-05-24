@@ -3901,43 +3901,6 @@
       "label-stat": "Статистика"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Удалить фильтр: {{filterToRemove}}",
-      "filter": "Фильтр:",
-      "loading": "Загрузка…",
-      "no-annotations-found": "Аннотации не найдены"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Автор:<br/> {{email}}"
-    },
-    "category-annotation-query": "Запрос аннотаций",
-    "category-display": "Отображение",
-    "category-link-behaviour": "Поведение ссылок",
-    "description-tags": "Сопоставить теги аннотаций",
-    "link-target-options": {
-      "label-dashboard": "Дашборд",
-      "label-panel": "Панель"
-    },
-    "name-limit": "Лимит",
-    "name-link-target": "Цель ссылки",
-    "name-query-filter": "Фильтр запроса",
-    "name-show-tags": "Показывать теги",
-    "name-show-time": "Показывать время",
-    "name-show-user": "Показывать пользователя",
-    "name-tags": "Теги",
-    "name-time-after": "Время после",
-    "name-time-before": "Время до",
-    "name-time-range": "Временной диапазон",
-    "query-filter-options": {
-      "label-all-dashboards": "Все дашборды",
-      "label-this-dashboard": "Данный дашборд"
-    },
-    "time-range-options": {
-      "label-none": "Нет",
-      "label-this-dashboard": "Данный дашборд"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Аннотация",

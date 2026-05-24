@@ -3857,43 +3857,6 @@
       "label-stat": "Statistiques"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Supprimer le filtre : {{filterToRemove}}",
-      "filter": "Filtre :",
-      "loading": "Chargement en cours...",
-      "no-annotations-found": "Aucune annotation trouvée"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Créé par :<br/> {{email}}"
-    },
-    "category-annotation-query": "Requête d’annotation",
-    "category-display": "Affichage",
-    "category-link-behaviour": "Comportement du lien",
-    "description-tags": "Faire correspondre les balises d’annotation",
-    "link-target-options": {
-      "label-dashboard": "Tableau de bord",
-      "label-panel": "Panneau"
-    },
-    "name-limit": "Limite",
-    "name-link-target": "Cible du lien",
-    "name-query-filter": "Filtre de requête",
-    "name-show-tags": "Afficher les balises",
-    "name-show-time": "Afficher l’heure",
-    "name-show-user": "Afficher l’utilisateur",
-    "name-tags": "Balises",
-    "name-time-after": "Après l’heure",
-    "name-time-before": "Avant l’heure",
-    "name-time-range": "Plage temporelle",
-    "query-filter-options": {
-      "label-all-dashboards": "Tous les tableaux de bord",
-      "label-this-dashboard": "Ce tableau de bord"
-    },
-    "time-range-options": {
-      "label-none": "Aucun",
-      "label-this-dashboard": "Ce tableau de bord"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Annotation",

@@ -172,17 +172,6 @@
       ]
     },
     {
-      "id": 10,
-      "title": "Annotation list",
-      "type": "annolist",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
       "id": 16,
       "title": "Stat",
       "type": "stat",

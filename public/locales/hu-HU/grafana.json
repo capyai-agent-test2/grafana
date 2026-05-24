@@ -3857,43 +3857,6 @@
       "label-stat": "Statisztika"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Szűrő eltávolítása: {{filterToRemove}}",
-      "filter": "Szűrés:",
-      "loading": "Betöltés…",
-      "no-annotations-found": "Nem található jegyzet"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Létrehozta:<br/> {{email}}"
-    },
-    "category-annotation-query": "Jegyzetlekérdezés",
-    "category-display": "Megjelenítés",
-    "category-link-behaviour": "Hivatkozás viselkedése",
-    "description-tags": "Jegyzetcímkék egyeztetése",
-    "link-target-options": {
-      "label-dashboard": "Irányítópult",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Korlát",
-    "name-link-target": "Hivatkozási cél",
-    "name-query-filter": "Lekérdezési szűrő",
-    "name-show-tags": "Címkék megjelenítése",
-    "name-show-time": "Idő megjelenítése",
-    "name-show-user": "Felhasználó megjelenítése",
-    "name-tags": "Címkék",
-    "name-time-after": "Idő utána",
-    "name-time-before": "Idő előtte",
-    "name-time-range": "Időtartomány",
-    "query-filter-options": {
-      "label-all-dashboards": "Összes irányítópult",
-      "label-this-dashboard": "Ez az irányítópult"
-    },
-    "time-range-options": {
-      "label-none": "Nincs",
-      "label-this-dashboard": "Ez az irányítópult"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Jegyzet",

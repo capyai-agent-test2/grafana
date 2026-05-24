@@ -46,11 +46,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/pie-chart/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart/
-  annotations-list:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/annotations/
   canvas:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/
@@ -183,7 +178,6 @@ If you are unsure which visualization to pick, Grafana can provide visualization
 - Widgets
   - [Dashboard list](ref:dashboard-list) can list dashboards.
   - [Alert list](ref:alert-list) can list alerts.
-  - [Annotations list](ref:annotations-list) can list available annotations.
   - [Text](ref:text) can show markdown and html.
   - [News](ref:news) can show RSS feeds.
 

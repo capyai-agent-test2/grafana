@@ -3901,43 +3901,6 @@
       "label-stat": "Statistika"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Odebrat filtr: {{filterToRemove}}",
-      "filter": "Filtr:",
-      "loading": "Načítání…",
-      "no-annotations-found": "Nebyly nalezeny žádné vysvětlivky"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Vytvořeno uživatelem:<br/> {{email}}"
-    },
-    "category-annotation-query": "Dotaz na vysvětlivky",
-    "category-display": "Zobrazit",
-    "category-link-behaviour": "Chování odkazu",
-    "description-tags": "Porovnat tagy vysvětlivek",
-    "link-target-options": {
-      "label-dashboard": "Nástěnka",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Limit",
-    "name-link-target": "Cíl odkazu",
-    "name-query-filter": "Filtr dotazu",
-    "name-show-tags": "Ukázat štítky",
-    "name-show-time": "Zobrazit čas",
-    "name-show-user": "Zobrazit uživatele",
-    "name-tags": "Štítky",
-    "name-time-after": "Čas po",
-    "name-time-before": "Čas před",
-    "name-time-range": "Časový rozsah",
-    "query-filter-options": {
-      "label-all-dashboards": "Všechny nástěnky",
-      "label-this-dashboard": "Tato nástěnka"
-    },
-    "time-range-options": {
-      "label-none": "Žádné",
-      "label-this-dashboard": "Tato nástěnka"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Anotace",

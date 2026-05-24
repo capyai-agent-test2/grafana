@@ -3835,43 +3835,6 @@
       "label-stat": "統計"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "フィルターを削除：{{filterToRemove}} ",
-      "filter": "フィルター：",
-      "loading": "読み込み中...",
-      "no-annotations-found": "注釈が見つかりません"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "作成者：<br/>{{email}}"
-    },
-    "category-annotation-query": "注釈クエリ",
-    "category-display": "表示",
-    "category-link-behaviour": "リンクの動作",
-    "description-tags": "注釈タグを一致",
-    "link-target-options": {
-      "label-dashboard": "ダッシュボード",
-      "label-panel": "パネル"
-    },
-    "name-limit": "制限",
-    "name-link-target": "リンク先",
-    "name-query-filter": "クエリフィルター",
-    "name-show-tags": "タグを表示",
-    "name-show-time": "時間を表示",
-    "name-show-user": "ユーザーを表示",
-    "name-tags": "タグ",
-    "name-time-after": "次の時間より後",
-    "name-time-before": "次の時間より前",
-    "name-time-range": "時間範囲",
-    "query-filter-options": {
-      "label-all-dashboards": "すべてのダッシュボード",
-      "label-this-dashboard": "このダッシュボード"
-    },
-    "time-range-options": {
-      "label-none": "なし",
-      "label-this-dashboard": "このダッシュボード"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "注釈",

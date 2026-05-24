@@ -246,46 +246,6 @@ export const panels: PanelPluginMetas = structuredClone({
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,
   },
-  annolist: {
-    id: 'annolist',
-    name: 'Annotations list',
-    aliasIds: ['ryantxu-annolist-panel'],
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: 'List annotations',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-        {
-          name: 'Documentation',
-          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/annotations/',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/annolist/img/icn-annolist-panel.svg',
-        large: 'app/plugins/panel/annolist/img/icn-annolist-panel.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: false,
-    sort: 100,
-    skipDataQuery: true,
-    baseUrl: 'app/plugins/panel/annolist',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/annolist',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
   barchart: {
     id: 'barchart',
     name: 'Bar chart',

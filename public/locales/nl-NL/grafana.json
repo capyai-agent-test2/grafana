@@ -3857,43 +3857,6 @@
       "label-stat": "Stat"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Filter verwijderen: {{filterToRemove}}",
-      "filter": "Filteren:",
-      "loading": "Laden...",
-      "no-annotations-found": "Geen annotaties gevonden"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Aangemaakt door:<br/> {{email}}"
-    },
-    "category-annotation-query": "Annotatiequery",
-    "category-display": "Display",
-    "category-link-behaviour": "Linkgedrag",
-    "description-tags": "Annotatielabels matchen",
-    "link-target-options": {
-      "label-dashboard": "Dashboard",
-      "label-panel": "Paneel"
-    },
-    "name-limit": "Limiet",
-    "name-link-target": "Linkdoel",
-    "name-query-filter": "Queryfilter",
-    "name-show-tags": "Tags tonen",
-    "name-show-time": "Tijd tonen",
-    "name-show-user": "Gebruiker tonen",
-    "name-tags": "Labels",
-    "name-time-after": "Tijd na",
-    "name-time-before": "Tijd voor",
-    "name-time-range": "Tijdsbereik",
-    "query-filter-options": {
-      "label-all-dashboards": "Alle dashboards",
-      "label-this-dashboard": "Dit dashboard"
-    },
-    "time-range-options": {
-      "label-none": "Geen",
-      "label-this-dashboard": "Dit dashboard"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Opmerking",

@@ -3857,43 +3857,6 @@
       "label-stat": "Estatística"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Remover filtro: {{filterToRemove}}",
-      "filter": "Filtro:",
-      "loading": "Carregando...",
-      "no-annotations-found": "Nenhuma anotação encontrada"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Criado por:<br/> {{email}}"
-    },
-    "category-annotation-query": "Consulta de anotação",
-    "category-display": "Exibição",
-    "category-link-behaviour": "Comportamento do link",
-    "description-tags": "Corresponder etiquetas de anotação",
-    "link-target-options": {
-      "label-dashboard": "Painel de controle",
-      "label-panel": "Painel"
-    },
-    "name-limit": "Limite",
-    "name-link-target": "Destino do link",
-    "name-query-filter": "Filtro de consulta",
-    "name-show-tags": "Mostrar tags",
-    "name-show-time": "Mostrar hora",
-    "name-show-user": "Mostrar usuário",
-    "name-tags": "Tags",
-    "name-time-after": "Horário após",
-    "name-time-before": "Horário antes",
-    "name-time-range": "Intervalo de tempo",
-    "query-filter-options": {
-      "label-all-dashboards": "Todos os painéis",
-      "label-this-dashboard": "Este painel"
-    },
-    "time-range-options": {
-      "label-none": "Nenhum",
-      "label-this-dashboard": "Este painel"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Anotação",
