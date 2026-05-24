@@ -901,6 +901,68 @@ func TestAddTraceDataLinksToFields_EmptyResources(t *testing.T) {
 	}
 }
 
+func TestAddTraceDataLinksToFields_ParentSpanLinkGetsSeparateQueryModel(t *testing.T) {
+	query := &AzureLogAnalyticsQuery{
+		JSON: []byte(`{
+			"queryType": "Azure Traces",
+			"azureTraces": {
+				"resources": ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+				"resultFormat": "table",
+				"traceTypes": ["dependencies"],
+				"filters": [{"property": "itemType", "operation": "eq", "filters": ["dependency"]}]
+			}
+		}`),
+		QueryType:               dataquery.AzureQueryTypeAzureTraces,
+		ResultFormat:            dataquery.ResultFormatTable,
+		TraceExploreQuery:       "trace-query",
+		TraceParentExploreQuery: "parent-query",
+		TraceLogsExploreQuery:   "logs-query",
+	}
+
+	frame := data.NewFrame("test", data.NewField("traceID", nil, []string{"trace-1"}))
+	dsInfo := types.DatasourceInfo{
+		DatasourceUID:  "azure-monitor-uid",
+		DatasourceName: "Azure Monitor",
+	}
+
+	err := addTraceDataLinksToFields(query, "https://portal.azure.com", frame, dsInfo)
+	require.NoError(t, err)
+	require.NotNil(t, frame.Fields[0].Config)
+
+	var traceLinkQuery dataquery.AzureMonitorQuery
+	var parentLinkQuery dataquery.AzureMonitorQuery
+
+	for _, link := range frame.Fields[0].Config.Links {
+		switch link.Title {
+		case "Explore Trace: ${__data.fields.traceID}":
+			var ok bool
+			traceLinkQuery, ok = link.Internal.Query.(dataquery.AzureMonitorQuery)
+			require.True(t, ok)
+		case "Explore Parent Span: ${__data.fields.parentSpanID}":
+			var ok bool
+			parentLinkQuery, ok = link.Internal.Query.(dataquery.AzureMonitorQuery)
+			require.True(t, ok)
+		}
+	}
+
+	require.NotNil(t, traceLinkQuery.AzureTraces)
+	require.NotNil(t, parentLinkQuery.AzureTraces)
+	require.NotNil(t, traceLinkQuery.AzureTraces.Query)
+	require.NotNil(t, parentLinkQuery.AzureTraces.Query)
+	require.Equal(t, "trace-query", *traceLinkQuery.AzureTraces.Query)
+	require.Equal(t, "parent-query", *parentLinkQuery.AzureTraces.Query)
+	require.NotNil(t, traceLinkQuery.AzureTraces.OperationId)
+	require.Equal(t, "${__data.fields.traceID}", *traceLinkQuery.AzureTraces.OperationId)
+	require.Equal(t, "${__data.fields.traceID}", *parentLinkQuery.AzureTraces.OperationId)
+	require.Len(t, traceLinkQuery.AzureTraces.Filters, 1)
+	require.Len(t, parentLinkQuery.AzureTraces.Filters, 2)
+	require.Equal(t, dataquery.AzureTracesFilter{
+		Property:  "operation_ParentId",
+		Operation: "eq",
+		Filters:   []string{"${__data.fields.parentSpanID}"},
+	}, parentLinkQuery.AzureTraces.Filters[1])
+}
+
 func decodeEncodedQuery(t *testing.T, encoded string) string {
 	t.Helper()
 	gzipped, err := base64.StdEncoding.DecodeString(encoded)

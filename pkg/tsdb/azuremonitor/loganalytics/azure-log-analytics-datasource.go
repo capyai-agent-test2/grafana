@@ -584,12 +584,22 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 	}
 
 	traceIdVariable := "${__data.fields.traceID}"
+	parentSpanIdVariable := "${__data.fields.parentSpanID}"
 	resultFormat := dataquery.ResultFormatTrace
-	queryJSONModel.AzureTraces.ResultFormat = &resultFormat
-	queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
-	if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
-		queryJSONModel.AzureTraces.OperationId = &traceIdVariable
+	traceQueryModel := cloneAzureTracesDataLinkQuery(queryJSONModel)
+	traceQueryModel.AzureTraces.ResultFormat = &resultFormat
+	traceQueryModel.AzureTraces.Query = &query.TraceExploreQuery
+	if traceQueryModel.AzureTraces.OperationId == nil || *traceQueryModel.AzureTraces.OperationId == "" {
+		traceQueryModel.AzureTraces.OperationId = &traceIdVariable
 	}
+
+	parentTraceQueryModel := cloneAzureTracesDataLinkQuery(traceQueryModel)
+	parentTraceQueryModel.AzureTraces.Query = &query.TraceParentExploreQuery
+	parentTraceQueryModel.AzureTraces.Filters = append(parentTraceQueryModel.AzureTraces.Filters, dataquery.AzureTracesFilter{
+		Property:  "operation_ParentId",
+		Operation: "eq",
+		Filters:   []string{parentSpanIdVariable},
+	})
 
 	logsQueryType := string(dataquery.AzureQueryTypeLogAnalytics)
 	logsJSONModel := dataquery.AzureMonitorQuery{
@@ -607,18 +617,17 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
+				Query:          traceQueryModel,
 			},
 		}, MultiField)
 
-		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
 			URL:   "",
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
+				Query:          parentTraceQueryModel,
 			},
 		}, MultiField)
 
@@ -637,6 +646,19 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 	}, SingleField)
 
 	return nil
+}
+
+func cloneAzureTracesDataLinkQuery(query dataquery.AzureMonitorQuery) dataquery.AzureMonitorQuery {
+	cloned := query
+	if query.AzureTraces != nil {
+		azureTraces := *query.AzureTraces
+		azureTraces.Resources = append([]string(nil), query.AzureTraces.Resources...)
+		azureTraces.TraceTypes = append([]string(nil), query.AzureTraces.TraceTypes...)
+		azureTraces.Filters = append([]dataquery.AzureTracesFilter(nil), query.AzureTraces.Filters...)
+		cloned.AzureTraces = &azureTraces
+	}
+
+	return cloned
 }
 
 func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.Frame {
