@@ -158,6 +158,12 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
       },
     }),
+    suffixIcon: css({
+      label: 'combobox-suffix-icon',
+      display: 'flex',
+      alignItems: 'center',
+      pointerEvents: 'auto',
+    }),
     input: css({
       label: 'combobox-input',
       '> div > div:last-child': {

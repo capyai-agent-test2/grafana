@@ -741,6 +741,17 @@ describe('Combobox', () => {
   });
 
   describe('open state isOpen / onIsOpenChange', () => {
+    it('opens the dropdown when clicking the dropdown icon', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const suffixIcon = screen.getByTestId('icon-angle-down').parentElement;
+      expect(suffixIcon).not.toBeNull();
+
+      await user.click(suffixIcon!);
+
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
     it('opens the dropdown when parent sets isOpen after interaction (controlled)', async () => {
       const { rerender } = render(
         <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={false} onIsOpenChange={jest.fn()} />
