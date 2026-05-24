@@ -18,13 +18,7 @@ import type TNil from '../types/TNil';
 import { type TraceSpan } from '../types/trace';
 
 function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
-  return _get(
-    _find(
-      span.references,
-      ({ span: ref, refType }) => ref && ref.spanID && (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM')
-    ),
-    'span'
-  );
+  return _get(_find(span.references, ({ span: ref, refType }) => ref && ref.spanID && refType === 'CHILD_OF'), 'span');
 }
 
 export default function spanAncestorIds(span: TraceSpan | TNil): string[] {

@@ -21,7 +21,7 @@ import { type TraceResponse } from '../types/trace';
 
 import { getSpanId, getSpanParentId } from './span';
 import * as traceSelectors from './trace';
-import { followsFromRef } from './trace.fixture';
+import { cyclicFollowsFromRef, followsFromRef } from './trace.fixture';
 
 const generatedTrace: TraceResponse = traceGenerator.trace({ numberOfSpans: 45 });
 
@@ -47,5 +47,13 @@ describe('getTraceSpanIdsAsTree()', () => {
 
   it('#115 - handles FOLLOW_FROM refs', () => {
     expect(() => traceSelectors.getTraceSpanIdsAsTree(followsFromRef)).not.toThrow();
+  });
+
+  it('keeps FOLLOWS_FROM references out of the parent-child tree', () => {
+    const tree = traceSelectors.getTraceSpanIdsAsTree(cyclicFollowsFromRef);
+    const rootSpanNode = tree.children[0];
+
+    expect(rootSpanNode.value).toBe('root-span');
+    expect(rootSpanNode.children.map((child) => child.value)).toEqual(['child-span']);
   });
 });

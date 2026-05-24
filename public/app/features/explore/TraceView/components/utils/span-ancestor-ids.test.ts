@@ -19,7 +19,6 @@ import spanAncestorIdsSpy from './span-ancestor-ids';
 describe('spanAncestorIdsSpy', () => {
   const ownSpanID = 'ownSpanID';
   const firstParentSpanID = 'firstParentSpanID';
-  const firstParentFirstGrandparentSpanID = 'firstParentFirstGrandparentSpanID';
   const firstParentSecondGrandparentSpanID = 'firstParentSecondGrandparentSpanID';
   const secondParentSpanID = 'secondParentSpanID';
   const rootSpanID = 'rootSpanID';
@@ -31,7 +30,7 @@ describe('spanAncestorIdsSpy', () => {
           references: [
             {
               span: {
-                spanID: firstParentFirstGrandparentSpanID,
+                spanID: 'firstParentFirstGrandparentSpanID',
                 references: [
                   {
                     span: {
@@ -69,7 +68,7 @@ describe('spanAncestorIdsSpy', () => {
     ],
     spanID: ownSpanID,
   };
-  const expectedAncestorIds = [firstParentSpanID, firstParentSecondGrandparentSpanID, rootSpanID];
+  const expectedAncestorIds = [firstParentSpanID, firstParentSecondGrandparentSpanID];
 
   it('returns an empty array if given falsy span', () => {
     expect(spanAncestorIdsSpy(null)).toEqual([]);
@@ -84,15 +83,31 @@ describe('spanAncestorIdsSpy', () => {
     expect(spanAncestorIdsSpy(spanWithoutReferences as unknown as TraceSpan)).toEqual([]);
   });
 
-  it('returns all unique spanIDs from first valid CHILD_OF or FOLLOWS_FROM reference up to the root span', () => {
+  it('returns span IDs from the first valid CHILD_OF chain only', () => {
     expect(spanAncestorIdsSpy(span as TraceSpan)).toEqual(expectedAncestorIds);
   });
 
-  it('ignores references without a span', () => {
+  it('ignores invalid references without a span', () => {
     const spanWithSomeEmptyReferences = {
       ...span,
       references: [{ refType: 'CHILD_OF' }, { refType: 'FOLLOWS_FROM', span: {} }, ...span.references],
     };
     expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
+  });
+
+  it('ignores FOLLOWS_FROM references when calculating ancestor IDs', () => {
+    const spanWithOnlyFollowsFromReferences = {
+      spanID: ownSpanID,
+      references: [
+        {
+          refType: 'FOLLOWS_FROM',
+          span: {
+            spanID: secondParentSpanID,
+          },
+        },
+      ],
+    };
+
+    expect(spanAncestorIdsSpy(spanWithOnlyFollowsFromReferences as TraceSpan)).toEqual([]);
   });
 });
