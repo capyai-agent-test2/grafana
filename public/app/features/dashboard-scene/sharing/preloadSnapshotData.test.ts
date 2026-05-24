@@ -27,6 +27,28 @@ function createQueryRunner(initialState?: LoadingState) {
   };
 }
 
+function createRaceQueryRunner() {
+  let unsubscribeCount = 0;
+
+  const queryRunner = {
+    state: {
+      data: undefined as undefined | { state: LoadingState },
+    },
+    subscribeToState: jest.fn(() => {
+      queryRunner.state.data = { state: LoadingState.Done };
+      return {
+        unsubscribe: jest.fn(() => {
+          unsubscribeCount++;
+        }),
+      };
+    }),
+    runQueries: jest.fn(),
+    getUnsubscribeCount: () => unsubscribeCount,
+  };
+
+  return queryRunner;
+}
+
 describe('preloadSnapshotDataForPanels', () => {
   beforeEach(() => {
     getQueryRunnerForMock.mockReset();
@@ -63,5 +85,17 @@ describe('preloadSnapshotDataForPanels', () => {
     subscribeCallback({ data: { state: LoadingState.Done } });
 
     await preloadPromise;
+  });
+
+  it('re-checks state after subscribing to avoid hanging on a race', async () => {
+    const raceRunner = createRaceQueryRunner();
+    const panels = [{ key: 'race' }] as VizPanel[];
+
+    getQueryRunnerForMock.mockReturnValue(raceRunner);
+
+    await preloadSnapshotDataForPanels(panels);
+
+    expect(raceRunner.getUnsubscribeCount()).toBe(1);
+    expect(raceRunner.runQueries).not.toHaveBeenCalled();
   });
 });

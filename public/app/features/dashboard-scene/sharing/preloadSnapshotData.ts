@@ -22,6 +22,11 @@ function waitForQueryRunner(queryRunner: NonNullable<ReturnType<typeof getQueryR
         resolve();
       }
     });
+
+    if (isSnapshotReady(queryRunner.state.data?.state)) {
+      subscription.unsubscribe();
+      resolve();
+    }
   });
 }
 
