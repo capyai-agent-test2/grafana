@@ -325,6 +325,15 @@ func TestBuildAnnotationQuery_Mappings(t *testing.T) {
 	})
 }
 
+func TestBuildAnnotationFilter_PreservesLargePanelIDs(t *testing.T) {
+	filter := buildAnnotationFilter(map[string]interface{}{
+		"ids": []interface{}{float64(4294967296), int(9007199254740991)},
+	})
+
+	require.NotNil(t, filter)
+	require.Equal(t, []float64{4294967296, 9007199254740991}, filter.Ids)
+}
+
 func TestTransformVariableHideToEnum_V1_to_V2alpha1(t *testing.T) {
 	tests := []struct {
 		name string
