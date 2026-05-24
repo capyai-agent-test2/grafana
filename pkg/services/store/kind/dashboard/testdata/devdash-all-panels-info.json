@@ -103,17 +103,6 @@
       ]
     },
     {
-      "id": 6,
-      "title": "Alert list",
-      "type": "alertlist",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
       "id": 26,
       "title": "Heatmap",
       "type": "heatmap",

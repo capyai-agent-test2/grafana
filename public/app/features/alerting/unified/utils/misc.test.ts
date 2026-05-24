@@ -11,7 +11,7 @@ import {
   sortAlerts,
   stringifyErrorLike,
 } from 'app/features/alerting/unified/utils/misc';
-import { SortOrder } from 'app/plugins/panel/alertlist/types';
+import { SortOrder } from './misc';
 import { type Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 

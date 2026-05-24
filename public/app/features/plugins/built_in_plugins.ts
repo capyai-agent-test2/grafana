@@ -14,8 +14,6 @@ const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
 // Async loaded panels
-const alertListPanel = async () =>
-  await import(/* webpackChunkName: "alertListPanel" */ 'app/plugins/panel/alertlist/module');
 const annoListPanel = async () =>
   await import(/* webpackChunkName: "annoListPanel" */ 'app/plugins/panel/annolist/module');
 const barChartPanel = async () =>
@@ -84,7 +82,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/geomap': geomapPanel,
   'core:plugin/canvas': canvasPanel,
   'core:plugin/dashlist': dashListPanel,
-  'core:plugin/alertlist': alertListPanel,
   'core:plugin/annolist': annoListPanel,
   'core:plugin/heatmap': heatmapPanel,
   'core:plugin/table': tablePanel,

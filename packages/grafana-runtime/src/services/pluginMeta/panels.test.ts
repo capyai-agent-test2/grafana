@@ -28,6 +28,7 @@ jest.mock('./plugins', () => ({
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
 const refetchPluginMetasMock = jest.mocked(refetchPluginMetas);
+const dashlistMeta = v0alpha1Response.items.find((item) => item.spec.pluginJson.id === 'dashlist');
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
@@ -50,27 +51,27 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     beforeEach(() => {
       setPanelPluginMetas({});
       jest.resetAllMocks();
-      initPluginMetasMock.mockResolvedValue({ items: [v0alpha1Response.items[0]] });
+      initPluginMetasMock.mockResolvedValue({ items: [dashlistMeta!] });
     });
 
     it('getPanelPluginMetas should call initPluginMetas and return correct result', async () => {
       const panels = await getPanelPluginMetas();
 
-      expect(panels).toMatchObject([testPanels.alertlist]);
+      expect(panels).toMatchObject([testPanels.dashlist]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
     it('getListedPanelPluginMetas should call initPluginMetas and return correct result', async () => {
       const panels = await getListedPanelPluginMetas();
 
-      expect(panels).toMatchObject([testPanels.alertlist]);
+      expect(panels).toMatchObject([testPanels.dashlist]);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
     it('getPanelPluginMetasMap should call initPluginMetas and return correct result', async () => {
       const panels = await getPanelPluginMetasMap();
 
-      expect(panels).toMatchObject({ alertlist: testPanels.alertlist });
+      expect(panels).toMatchObject({ dashlist: testPanels.dashlist });
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
@@ -100,14 +101,14 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     });
 
     it('getPanelPluginMeta should call initPluginMetas and return correct result', async () => {
-      const result = await getPanelPluginMeta('alertlist');
+      const result = await getPanelPluginMeta('dashlist');
 
-      expect(result).toMatchObject(testPanels.alertlist);
+      expect(result).toMatchObject(testPanels.dashlist);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
     it('isPanelPluginInstalled should call initPluginMetas and return true if the panel exists', async () => {
-      const installed = await isPanelPluginInstalled('alertlist');
+      const installed = await isPanelPluginInstalled('dashlist');
 
       expect(installed).toEqual(true);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
@@ -121,7 +122,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     });
 
     it('getPanelPluginVersion should call initPluginMetas and return correct verstion if the panel exists', async () => {
-      const result = await getPanelPluginVersion('alertlist');
+      const result = await getPanelPluginVersion('dashlist');
 
       expect(result).toEqual('');
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
@@ -137,7 +138,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     it('getListedPanelPluginIds should call initPluginMetas and return a correct array', async () => {
       const installed = await getListedPanelPluginIds();
 
-      expect(installed).toEqual(['alertlist']);
+      expect(installed).toEqual(['dashlist']);
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
@@ -363,7 +364,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     it('should return the last result for concurrent calls', async () => {
       refetchPluginMetasMock
         .mockResolvedValueOnce(v0alpha1Response)
-        .mockResolvedValue({ items: [v0alpha1Response.items[0]] });
+        .mockResolvedValue({ items: [dashlistMeta!] });
 
       const promise1 = refetchPanelPluginMetas();
       const promise2 = refetchPanelPluginMetas();
@@ -375,7 +376,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       const actualIds = actual.map((a) => a.id).sort();
 
       expect(actual).toHaveLength(1);
-      expect(actualIds).toStrictEqual([v0alpha1Response.items[0].spec.pluginJson.id]);
+      expect(actualIds).toStrictEqual([dashlistMeta!.spec.pluginJson.id]);
     });
   });
 });
@@ -568,7 +569,7 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
       backendSrv.get = jest
         .fn()
         .mockResolvedValueOnce({ panels: testPanels })
-        .mockResolvedValue({ panels: { alertlist: testPanels.alertlist } });
+        .mockResolvedValue({ panels: { annolist: testPanels.annolist } });
 
       const promise1 = refetchPanelPluginMetas();
       const promise2 = refetchPanelPluginMetas();
@@ -580,7 +581,7 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
       const actualIds = actual.map((a) => a.id).sort();
 
       expect(actual).toHaveLength(1);
-      expect(actualIds).toStrictEqual(['alertlist']);
+      expect(actualIds).toStrictEqual(['annolist']);
     });
   });
 });
