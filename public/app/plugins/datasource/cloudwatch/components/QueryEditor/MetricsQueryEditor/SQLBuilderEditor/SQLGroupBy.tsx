@@ -37,7 +37,12 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const baseOptions = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
+  const baseOptions = useDimensionKeys(datasource, {
+    region: query.region,
+    namespace,
+    metricName,
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
+  });
   const options = useMemo(
     // Exclude options we've already selected
     () => {

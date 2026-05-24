@@ -56,11 +56,11 @@ export const MetricStatEditor = ({
   };
 
   const validateMetricName = async (metricStat: MetricStat) => {
-    let { metricName, namespace, region } = metricStat;
+    let { metricName, namespace, region, accountId } = metricStat;
     if (!metricName) {
       return metricStat;
     }
-    await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
+    await datasource.resources.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }

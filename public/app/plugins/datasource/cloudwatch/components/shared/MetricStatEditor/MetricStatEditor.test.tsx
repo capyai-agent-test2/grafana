@@ -227,6 +227,29 @@ describe('MetricStatEditor', () => {
         [{ ...propsNamespaceMetrics.metricStat, metricName: 'm1', namespace: 'n2' }],
       ]);
     });
+
+    it('should validate metricName against the selected account', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = true;
+      propsNamespaceMetrics.metricStat.namespace = 'n1';
+      propsNamespaceMetrics.metricStat.metricName = 'm1';
+      propsNamespaceMetrics.metricStat.accountId = '123456789012';
+
+      await act(async () => {
+        render(<MetricStatEditor {...propsNamespaceMetrics} />);
+      });
+
+      const namespaceSelect = screen.getByLabelText('Namespace');
+      await waitFor(() => selectEvent.select(namespaceSelect, 'n2', { container: document.body }));
+
+      expect(propsNamespaceMetrics.datasource.resources.getMetrics).toHaveBeenCalledWith({
+        namespace: 'n2',
+        region: propsNamespaceMetrics.metricStat.region,
+        accountId: '123456789012',
+      });
+      expect(onChange.mock.calls.at(-1)).toEqual([
+        { ...propsNamespaceMetrics.metricStat, metricName: 'm1', namespace: 'n2' },
+      ]);
+    });
   });
 
   describe('metric value', () => {
