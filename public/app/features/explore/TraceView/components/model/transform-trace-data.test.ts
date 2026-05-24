@@ -14,6 +14,7 @@
 
 import { type TraceKeyValuePair } from '@grafana/data';
 
+import { cyclicFollowsFromRef } from '../selectors/trace.fixture';
 import { type TraceResponse } from '../types/trace';
 
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
@@ -176,5 +177,17 @@ describe('transformTraceData()', () => {
     } as unknown as TraceResponse;
 
     expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
+  });
+
+  it('keeps cyclic FOLLOWS_FROM references out of the rendered hierarchy', () => {
+    const trace = transformTraceData(cyclicFollowsFromRef as TraceResponse);
+
+    expect(trace?.spans.map((span) => ({ spanID: span.spanID, depth: span.depth, childSpanIds: span.childSpanIds }))).toEqual(
+      [
+        { spanID: 'root-span', depth: 0, childSpanIds: ['child-span'] },
+        { spanID: 'child-span', depth: 1, childSpanIds: [] },
+      ]
+    );
+    expect(trace?.spans[0].references[0].refType).toBe('FOLLOWS_FROM');
   });
 });

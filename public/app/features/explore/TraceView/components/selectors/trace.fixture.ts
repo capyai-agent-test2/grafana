@@ -62,3 +62,54 @@ export const followsFromRef = {
   traceID: '2992f2a5b5d037a8aabffd08ef384237',
   warnings: null,
 };
+
+export const cyclicFollowsFromRef = {
+  processes: {
+    p1: {
+      serviceName: 'issue-cycle',
+      tags: [],
+    },
+  },
+  spans: [
+    {
+      duration: 2000,
+      flags: 1,
+      logs: [],
+      operationName: 'root',
+      processID: 'p1',
+      references: [
+        {
+          refType: 'FOLLOWS_FROM',
+          spanID: 'child-span',
+          traceID: 'cycle-trace',
+        },
+      ],
+      spanID: 'root-span',
+      startTime: 1000,
+      tags: [],
+      traceID: 'cycle-trace',
+      warnings: null,
+    },
+    {
+      duration: 1000,
+      flags: 1,
+      logs: [],
+      operationName: 'child',
+      processID: 'p1',
+      references: [
+        {
+          refType: 'CHILD_OF',
+          spanID: 'root-span',
+          traceID: 'cycle-trace',
+        },
+      ],
+      spanID: 'child-span',
+      startTime: 1500,
+      tags: [],
+      traceID: 'cycle-trace',
+      warnings: null,
+    },
+  ],
+  traceID: 'cycle-trace',
+  warnings: null,
+};

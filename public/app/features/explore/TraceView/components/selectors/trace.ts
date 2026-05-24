@@ -48,11 +48,15 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse, spanMap: Map<string,
   trace.spans.forEach((span: TraceSpanData) => {
     const node = nodesById.get(span.spanID)!;
     if (Array.isArray(span.references) && span.references.length) {
-      const { refType, spanID: parentID } = span.references[0];
-      if (refType === 'CHILD_OF' || refType === 'FOLLOWS_FROM') {
+      const childOfRef = span.references.find((ref) => ref.refType === 'CHILD_OF');
+      if (childOfRef) {
+        const { spanID: parentID } = childOfRef;
         const parent = nodesById.get(parentID) || root;
         parent.children?.push(node);
+      } else if (span.references.every((ref) => ref.refType === 'FOLLOWS_FROM')) {
+        root.children.push(node);
       } else {
+        const { refType } = span.references[0];
         throw new Error(`Unrecognized ref type: ${refType}`);
       }
     } else {

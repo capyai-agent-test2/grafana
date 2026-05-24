@@ -1,6 +1,6 @@
 import { createDataFrame } from '@grafana/data';
 
-import { transformTraceDataFrame } from './transform';
+import { transformDataFrames, transformTraceDataFrame } from './transform';
 
 describe('transformTraceDataFrame()', () => {
   const fields = [
@@ -62,5 +62,35 @@ describe('transformTraceDataFrame()', () => {
       serviceNamespace: 'production',
       tags: [],
     });
+  });
+
+  it('keeps cyclic follows-from references out of the rendered hierarchy', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'traceID', values: ['trace1', 'trace1'] },
+        { name: 'spanID', values: ['root-span', 'child-span'] },
+        { name: 'parentSpanID', values: ['', 'root-span'] },
+        { name: 'operationName', values: ['root', 'child'] },
+        { name: 'serviceName', values: ['svc', 'svc'] },
+        { name: 'serviceTags', values: [[], []] },
+        { name: 'startTime', values: [1, 2] },
+        { name: 'duration', values: [1, 1] },
+        { name: 'logs', values: [[], []] },
+        {
+          name: 'references',
+          values: [[{ refType: 'FOLLOWS_FROM', spanID: 'child-span', traceID: 'trace1' }], []],
+        },
+        { name: 'tags', values: [[], []] },
+        { name: 'kind', values: ['', ''] },
+        { name: 'statusCode', values: [0, 0] },
+        { name: 'warnings', values: [[], []] },
+        { name: 'stackTraces', values: [[], []] },
+      ],
+    });
+
+    expect(transformDataFrames(frame)?.spans.map((span) => ({ spanID: span.spanID, depth: span.depth }))).toEqual([
+      { spanID: 'root-span', depth: 0 },
+      { spanID: 'child-span', depth: 1 },
+    ]);
   });
 });
