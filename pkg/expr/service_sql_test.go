@@ -251,6 +251,11 @@ func TestHiddenSQLExpressionDoesNotCorruptDatasourceOutput(t *testing.T) {
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", data.Labels{"host": "a"}, []*float64{new(2.0)}),
 	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+	expectedA := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"host": "a"}, []*float64{new(2.0)}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+	expectedA.RefID = "A"
 
 	resp := map[string]backend.DataResponse{
 		"A": {Frames: data.Frames{tsMulti}},
@@ -298,7 +303,7 @@ func TestHiddenSQLExpressionDoesNotCorruptDatasourceOutput(t *testing.T) {
 	require.NoError(t, err)
 	require.NotContains(t, res.Responses, "B")
 
-	if diff := cmp.Diff(tsMulti, res.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+	if diff := cmp.Diff(expectedA, res.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 		require.FailNowf(t, "datasource response was unexpectedly reshaped (-want +got):\n%s", diff)
 	}
 

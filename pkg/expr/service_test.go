@@ -401,6 +401,16 @@ func TestTransformDataDegradedPipeline(t *testing.T) {
 	})
 }
 
+func TestHiddenRefIDsAllowsEmptyJSON(t *testing.T) {
+	hidden, err := hiddenRefIDs([]Query{
+		{RefID: "A"},
+		{RefID: "B", JSON: json.RawMessage(`{"hide":true}`)},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, map[string]struct{}{"B": {}}, hidden)
+}
+
 func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 	dsDF := data.NewFrame("test",
