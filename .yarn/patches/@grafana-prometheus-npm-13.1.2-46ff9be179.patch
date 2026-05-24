@@ -1,0 +1,26 @@
+diff --git a/dist/cjs/querybuilder/shared/OperationsEditorRow.cjs b/dist/cjs/querybuilder/shared/OperationsEditorRow.cjs
+index ef5ad5f15d2f4aa2d170ce86510ba65505b30ff4..3bb21f85d9578be8360b6221dfdb296b1ecdf57f 100644
+--- a/dist/cjs/querybuilder/shared/OperationsEditorRow.cjs
++++ b/dist/cjs/querybuilder/shared/OperationsEditorRow.cjs
+@@ -9,7 +9,7 @@ var ui = require('@grafana/ui');
+ "use strict";
+ function OperationsEditorRow({ operationsLength, children }) {
+   const styles = ui.useStyles2(getStyles, operationsLength);
+-  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: styles.root, children: /* @__PURE__ */ jsxRuntime.jsx(ui.Stack, { gap: 1, children }) });
++  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: styles.root, children: /* @__PURE__ */ jsxRuntime.jsx(ui.Stack, { gap: 1, wrap: "wrap", children }) });
+ }
+ const getStyles = (theme, operationsLength) => {
+   return {
+diff --git a/dist/esm/querybuilder/shared/OperationsEditorRow.mjs b/dist/esm/querybuilder/shared/OperationsEditorRow.mjs
+index df6d5476f85173b67550153675b7e311ee1001e9..73cee25a0094661301ec1cb27766e5b71795f515 100644
+--- a/dist/esm/querybuilder/shared/OperationsEditorRow.mjs
++++ b/dist/esm/querybuilder/shared/OperationsEditorRow.mjs
+@@ -5,7 +5,7 @@ import { useStyles2, Stack } from '@grafana/ui';
+ "use strict";
+ function OperationsEditorRow({ operationsLength, children }) {
+   const styles = useStyles2(getStyles, operationsLength);
+-  return /* @__PURE__ */ jsx("div", { className: styles.root, children: /* @__PURE__ */ jsx(Stack, { gap: 1, children }) });
++  return /* @__PURE__ */ jsx("div", { className: styles.root, children: /* @__PURE__ */ jsx(Stack, { gap: 1, wrap: "wrap", children }) });
+ }
+ const getStyles = (theme, operationsLength) => {
+   return {
