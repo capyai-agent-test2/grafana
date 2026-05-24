@@ -32,13 +32,13 @@ func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) respon
 	// Parse Path Parameters{{/hasPathParams}}{{#pathParams}}
 	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]{{/pathParams}}
 	{{#bodyParams}}
-	// Parse Request Body
-	conf := apimodels.{{dataType}}{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		// Parse Request Body
+		conf := apimodels.{{dataType}}{}
+		if err := web.Bind(ctx.Req, &conf); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		{{/bodyParams}}return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
 	}
-	{{/bodyParams}}return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
-}
 {{/vendorExtensions.x-raw-request}}
 {{/operation}}{{/operations}}
 
