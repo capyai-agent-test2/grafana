@@ -143,6 +143,17 @@ describe('timeSrv', () => {
       expect(time.to.valueOf()).toEqual(1410337665699);
     });
 
+    it('should handle ISO 8601 dates', () => {
+      locationService.push('/d/id?from=2025-03-11T07:09:37.253Z&to=2025-03-12T07:09:37.253Z');
+
+      timeSrv = new TimeSrv(new ContextSrvStub());
+
+      timeSrv.init(_dashboard);
+      const time = timeSrv.timeRange();
+      expect(time.from.toISOString()).toEqual('2025-03-11T07:09:37.253Z');
+      expect(time.to.toISOString()).toEqual('2025-03-12T07:09:37.253Z');
+    });
+
     it('should handle epochs that look like formatted date without time', () => {
       locationService.push('/d/id?from=20149999&to=20159999');
 
