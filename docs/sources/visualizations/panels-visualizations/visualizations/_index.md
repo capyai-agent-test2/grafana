@@ -125,11 +125,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/dashboard-list/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/dashboard-list/
-  alert-list:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
   traces:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/traces/
@@ -182,7 +177,6 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Geomap](ref:geomap) helps you visualize geospatial data.
 - Widgets
   - [Dashboard list](ref:dashboard-list) can list dashboards.
-  - [Alert list](ref:alert-list) can list alerts.
   - [Annotations list](ref:annotations-list) can list available annotations.
   - [Text](ref:text) can show markdown and html.
   - [News](ref:news) can show RSS feeds.

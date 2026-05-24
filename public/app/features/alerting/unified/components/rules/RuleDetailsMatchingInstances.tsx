@@ -12,8 +12,7 @@ import {
   type InstanceStateFilter,
 } from 'app/features/alerting/unified/components/rules/AlertInstanceStateFilter';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { createViewLink, sortAlerts } from 'app/features/alerting/unified/utils/misc';
-import { SortOrder } from 'app/plugins/panel/alertlist/types';
+import { createViewLink, SortOrder, sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 

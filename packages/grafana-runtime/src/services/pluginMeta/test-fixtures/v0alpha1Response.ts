@@ -421,63 +421,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'alertlist',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'alertlist',
-          type: 'panel',
-          name: 'Alert list',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/panel/alertlist/img/icn-singlestat-panel.svg',
-              large: 'app/plugins/panel/alertlist/img/icn-singlestat-panel.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Shows list of alerts and their current status',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/alert-list/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          skipDataQuery: true,
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/alertlist',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/panel/alertlist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'alertmanager',
         namespace: 'default',
       },

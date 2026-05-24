@@ -15,7 +15,6 @@ import {
   isGrafanaRuleIdentifier,
   isPrometheusRuleIdentifier,
 } from 'app/features/alerting/unified/utils/rules';
-import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   type Alert,
   type CombinedRule,
@@ -45,6 +44,14 @@ import { getMatcherQueryParams } from './matchers';
 import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
+
+export enum SortOrder {
+  AlphaAsc = 1,
+  AlphaDesc = 2,
+  Importance = 3,
+  TimeAsc = 4,
+  TimeDesc = 5,
+}
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);

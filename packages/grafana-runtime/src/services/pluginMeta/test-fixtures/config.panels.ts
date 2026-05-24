@@ -207,45 +207,6 @@ export const clockPanelConfigOnPrem: PanelPluginMeta = structuredClone({
 });
 
 export const panels: PanelPluginMetas = structuredClone({
-  alertlist: {
-    id: 'alertlist',
-    name: 'Alert list',
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: 'Shows list of alerts and their current status',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-        {
-          name: 'Documentation',
-          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/alert-list/',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/alertlist/img/icn-singlestat-panel.svg',
-        large: 'app/plugins/panel/alertlist/img/icn-singlestat-panel.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: false,
-    sort: 15,
-    skipDataQuery: true,
-    baseUrl: 'app/plugins/panel/alertlist',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/alertlist',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
   annolist: {
     id: 'annolist',
     name: 'Annotations list',

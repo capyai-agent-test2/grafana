@@ -1134,16 +1134,8 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Expression:  "true",
 		},
-		{
-			Name:        "alertingAlertListPanelEnhancements",
-			Description: "Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "alertingNavigationV2",
+			{
+				Name:        "alertingNavigationV2",
 			Description: "Enables the new Alerting navigation structure with improved menu grouping",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,

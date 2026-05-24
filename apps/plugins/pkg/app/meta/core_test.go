@@ -137,7 +137,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, staticRootPath, false, defaultCoreTTL)
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		assert.Len(t, provider.loadedPlugins, 50)
+			assert.Len(t, provider.loadedPlugins, 49)
 	})
 
 	t.Run("loads plugins from staticRootPath", func(t *testing.T) {
@@ -297,17 +297,17 @@ func TestAssetProvider(t *testing.T) {
 			assert.Equal(t, "app/plugins/datasource/prometheus", baseURL)
 		})
 
-		t.Run("non-decoupled panel", func(t *testing.T) {
-			pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/panel/alertlist"}}
+			t.Run("non-decoupled panel", func(t *testing.T) {
+				pi := pluginassets.PluginInfo{FS: &stubFS{base: staticRoot + "/app/plugins/panel/annolist"}}
 
-			module, err := p.Module(pi)
-			require.NoError(t, err)
-			assert.Equal(t, "core:plugin/alertlist", module)
+				module, err := p.Module(pi)
+				require.NoError(t, err)
+				assert.Equal(t, "core:plugin/annolist", module)
 
-			baseURL, err := p.AssetPath(pi)
-			require.NoError(t, err)
-			assert.Equal(t, "app/plugins/panel/alertlist", baseURL)
-		})
+				baseURL, err := p.AssetPath(pi)
+				require.NoError(t, err)
+				assert.Equal(t, "app/plugins/panel/annolist", baseURL)
+			})
 
 		// Decoupled plugins: FS.Base() points to the /dist directory.
 		// module  → "app/plugins/<type>/<name>/dist/module.js"
@@ -347,20 +347,20 @@ func TestAssetProvider(t *testing.T) {
 			assert.Equal(t, "plugins/prometheus", baseURL)
 		})
 
-		t.Run("non-decoupled panel", func(t *testing.T) {
-			pi := pluginassets.PluginInfo{
-				FS:       &stubFS{base: staticRoot + "/app/plugins/panel/alertlist"},
-				JsonData: plugins.JSONData{ID: "alertlist"},
-			}
+			t.Run("non-decoupled panel", func(t *testing.T) {
+				pi := pluginassets.PluginInfo{
+					FS:       &stubFS{base: staticRoot + "/app/plugins/panel/annolist"},
+					JsonData: plugins.JSONData{ID: "annolist"},
+				}
 
-			module, err := p.Module(pi)
-			require.NoError(t, err)
-			assert.Equal(t, "core:plugin/alertlist", module)
+				module, err := p.Module(pi)
+				require.NoError(t, err)
+				assert.Equal(t, "core:plugin/annolist", module)
 
-			baseURL, err := p.AssetPath(pi)
-			require.NoError(t, err)
-			assert.Equal(t, "plugins/alertlist", baseURL)
-		})
+				baseURL, err := p.AssetPath(pi)
+				require.NoError(t, err)
+				assert.Equal(t, "plugins/annolist", baseURL)
+			})
 
 		// Decoupled plugins: module and AssetPath both use "plugins/<id>/..." paths.
 		t.Run("decoupled datasource (grafana-testdata-datasource)", func(t *testing.T) {
