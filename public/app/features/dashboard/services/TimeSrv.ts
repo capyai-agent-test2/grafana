@@ -2,6 +2,7 @@ import { cloneDeep, extend } from 'lodash';
 
 import {
   dateMath,
+  dateTimeParse,
   getDefaultTimeRange,
   isDateTime,
   rangeUtil,
@@ -35,6 +36,9 @@ import {
 } from '../../../types/events';
 import { type TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
+
+const ISO_8601_URL_PARAM_REGEX =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
 
 export class TimeSrv {
   time: RawTimeRange;
@@ -125,6 +129,13 @@ export class TimeSrv {
     if (!isNaN(Number(value))) {
       const epoch = parseInt(value, 10);
       return timeZone ? dateTimeForTimeZone(timeZone, epoch) : toUtc(epoch);
+    }
+
+    if (ISO_8601_URL_PARAM_REGEX.test(value)) {
+      const parsed = dateTimeParse(value, { timeZone });
+      if (parsed.isValid()) {
+        return parsed;
+      }
     }
 
     return null;
