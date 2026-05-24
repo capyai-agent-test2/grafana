@@ -78,6 +78,27 @@ describe('Cloudwatch SQLGroupBy', () => {
     expect(screen.getByText('Account ID')).toBeInTheDocument();
   });
 
+  it('should load dimension keys for the selected account when cross-account querying is enabled', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
+    baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+    const query = makeSQLQuery();
+    query.accountId = '123456789012';
+
+    render(<SQLGroupBy {...baseProps} query={query} />);
+
+    await waitFor(() => {
+      expect(datasource.resources.getDimensionKeys).toHaveBeenCalledWith(
+        {
+          region: query.region,
+          namespace: undefined,
+          metricName: undefined,
+          accountId: '123456789012',
+        },
+        false
+      );
+    });
+  });
+
   it('should not show Account ID in groupBy options if not using a monitoring account', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
     baseProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
