@@ -2,7 +2,7 @@ import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEve
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { type AbsoluteTimeRange, LogsSortOrder, type TimeRange } from '@grafana/data';
+import { type AbsoluteTimeRange, LogsSortOrder, rangeUtil, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -156,7 +156,11 @@ export const InfiniteScroll = ({
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
-      if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
+      const canRetryOutOfBounds =
+        infiniteLoaderState === 'out-of-bounds' &&
+        canRequestNewerLogs(scrollDirection, sortOrder) &&
+        rangeUtil.isRelativeTime(timeRange.raw.to);
+      if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top' && !canRetryOutOfBounds) {
         if (infiniteScrollMode === 'unlimited' && scrollDirection === ScrollDirection.Top) {
           setInfiniteLoaderState('pre-scroll-top');
           resetStateTimeout.current = setTimeout(() => {
@@ -178,7 +182,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement]);
+  }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement, sortOrder, timeRange]);
 
   useEffect(() => {
     return () => {
@@ -310,6 +314,13 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
     default:
       return null;
   }
+}
+
+function canRequestNewerLogs(scrollDirection: ScrollDirection, sortOrder: LogsSortOrder) {
+  return (
+    (scrollDirection === ScrollDirection.Top && sortOrder === LogsSortOrder.Descending) ||
+    (scrollDirection === ScrollDirection.Bottom && sortOrder === LogsSortOrder.Ascending)
+  );
 }
 
 function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
