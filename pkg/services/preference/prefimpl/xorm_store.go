@@ -14,13 +14,16 @@ type sqlStore struct {
 }
 
 func (s *sqlStore) Get(ctx context.Context, query *pref.Preference) (*pref.Preference, error) {
-	var prefs pref.Preference
+	prefs := make([]*pref.Preference, 0, 1)
 	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgID, query.UserID, query.TeamID).Get(&prefs)
+		err := sess.Where("org_id=? AND user_id=? AND team_id=?", query.OrgID, query.UserID, query.TeamID).
+			OrderBy("updated DESC, id DESC").
+			Limit(1).
+			Find(&prefs)
 		if err != nil {
 			return err
 		}
-		if !exist {
+		if len(prefs) == 0 {
 			return pref.ErrPrefNotFound
 		}
 		return nil
@@ -28,7 +31,7 @@ func (s *sqlStore) Get(ctx context.Context, query *pref.Preference) (*pref.Prefe
 	if err != nil {
 		return nil, err
 	}
-	return &prefs, nil
+	return prefs[0], nil
 }
 
 func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Preference, error) {
@@ -51,7 +54,7 @@ func (s *sqlStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Pr
 
 	err := s.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		err := dbSession.Where(filter, params...).
-			OrderBy("user_id ASC, team_id ASC").
+			OrderBy("user_id ASC, team_id ASC, updated ASC, id ASC").
 			Find(&prefs)
 
 		if err != nil {
