@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -68,6 +69,43 @@ var provisioningGetResponses embed.FS
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+func TestProvisioningApiHandlerReturnsBindErrorsInResponseBody(t *testing.T) {
+	handler := &ProvisioningApiHandler{}
+	rc := createTestRequestCtx()
+	rc.Req.Method = http.MethodPost
+	rc.Req.Header.Set("Content-Type", "application/json")
+	rc.Req.Body = io.NopCloser(strings.NewReader(`{
+		"orgID":1,
+		"folderUID":"default",
+		"ruleGroup":"Test Group",
+		"title":"Provisioned",
+		"condition":"A",
+		"data":[{
+			"refId":"A",
+			"queryType":"",
+			"relativeTimeRange":{"from":600,"to":0},
+			"datasourceUid":"__expr__",
+			"model":{
+				"type":"math",
+				"expression":"1 == 1",
+				"refId":"A"
+			}
+		}],
+		"noDataState":"NoData",
+		"execErrState":"Error",
+		"for":"300"
+	}`))
+
+	resp := handler.RoutePostAlertRule(&rc)
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+
+	var body struct {
+		Message string `json:"message"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body(), &body))
+	require.Equal(t, `not a valid duration string: "300"`, body.Message)
 }
 
 func TestIntegrationProvisioningApi(t *testing.T) {
