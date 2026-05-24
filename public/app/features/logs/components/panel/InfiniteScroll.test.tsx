@@ -137,6 +137,67 @@ describe('InfiniteScroll', () => {
         }
       );
 
+      test('Does not reset scroll position when rerendering with equivalent logs', async () => {
+        const setInitialScrollPosition = jest.fn();
+        const { element } = getMockElement(0);
+        const equivalentLogs = [...logs];
+
+        const { rerender } = render(
+          <InfiniteScroll
+            {...defaultProps}
+            logs={logs}
+            scrollElement={element as unknown as HTMLDivElement}
+            setInitialScrollPosition={setInitialScrollPosition}
+            sortOrder={order}
+          >
+            {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+              <VariableSizeList
+                height={100}
+                itemCount={itemCount}
+                itemSize={() => virtualization.getLineHeight()}
+                itemKey={getItemKey}
+                layout="vertical"
+                onItemsRendered={onItemsRendered}
+                style={{ overflow: 'scroll' }}
+                width="100%"
+              >
+                {Renderer}
+              </VariableSizeList>
+            )}
+          </InfiniteScroll>
+        );
+
+        expect(await screen.findByText('log line 1')).toBeInTheDocument();
+        setInitialScrollPosition.mockClear();
+
+        rerender(
+          <InfiniteScroll
+            {...defaultProps}
+            logs={equivalentLogs}
+            scrollElement={element as unknown as HTMLDivElement}
+            setInitialScrollPosition={setInitialScrollPosition}
+            sortOrder={order}
+          >
+            {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+              <VariableSizeList
+                height={100}
+                itemCount={itemCount}
+                itemSize={() => virtualization.getLineHeight()}
+                itemKey={getItemKey}
+                layout="vertical"
+                onItemsRendered={onItemsRendered}
+                style={{ overflow: 'scroll' }}
+                width="100%"
+              >
+                {Renderer}
+              </VariableSizeList>
+            )}
+          </InfiniteScroll>
+        );
+
+        expect(setInitialScrollPosition).not.toHaveBeenCalled();
+      });
+
       test.each([
         ['up', -5, 0],
         ['down', 5, 60],
