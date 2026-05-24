@@ -598,6 +598,15 @@ describe('explore links utils', () => {
       expect(links).toHaveLength(0);
     });
 
+    it('returns external links when dashboard urls contain $__all', () => {
+      const { field, range, dataFrame } = setup({
+        title: 'dashboard',
+        url: '/d/test?var-test=${test}&var-multi=$__all',
+      });
+      const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+      expect(links).toHaveLength(1);
+    });
+
     it('does not return internal links when not all query variables are matched', () => {
       const transformationLink: DataLink = {
         title: '',
@@ -687,6 +696,10 @@ describe('explore links utils', () => {
 
     it('ignores global variables', () => {
       expect(allVariablesDefinedInQuery('test ${__rate_interval} $__from $__to')).toBe(true);
+    });
+
+    it('ignores $__all in dashboard urls', () => {
+      expect(allVariablesDefinedInQuery('test ${testVal} $__all')).toBe(true);
     });
 
     it('returns false when query contains variables and no variables are used', () => {

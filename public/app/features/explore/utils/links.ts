@@ -294,6 +294,7 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
 
 // See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 const builtInVariables = [
+  '__all',
   '__from',
   '__to',
   '__interval',
