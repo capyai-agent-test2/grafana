@@ -16761,12 +16761,6 @@
       "link": "Link"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Precisa de ajuda? ",
-      "welcome-to-grafana": "Damos-lhe as boas-vindas à Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "Gráfico XY",
     "errors": {

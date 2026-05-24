@@ -16668,12 +16668,6 @@
       "link": "Tautan"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Butuh bantuan?",
-      "welcome-to-grafana": "Selamat datang di Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "Diagram XY",
     "errors": {

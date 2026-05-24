@@ -16761,12 +16761,6 @@
       "link": "Länk"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Behöver du hjälp?",
-      "welcome-to-grafana": "Välkommen till Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "XY-diagram",
     "errors": {

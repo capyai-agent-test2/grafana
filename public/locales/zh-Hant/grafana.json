@@ -16668,12 +16668,6 @@
       "link": "連結"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "需要幫忙嗎？",
-      "welcome-to-grafana": "歡迎使用 Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "XY 散佈圖",
     "errors": {

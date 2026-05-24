@@ -16761,12 +16761,6 @@
       "link": "Koppelen"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Hulp nodig?",
-      "welcome-to-grafana": "Welkom bij Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "Spreidingsdiagram",
     "errors": {

@@ -16761,12 +16761,6 @@
       "link": "Bağlantı"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Yardıma mı ihtiyacınız var?",
-      "welcome-to-grafana": "Grafana'ya hoş geldiniz"
-    }
-  },
   "xychart": {
     "category-xychart": "XY Grafiği",
     "errors": {

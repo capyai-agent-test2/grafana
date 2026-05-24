@@ -230,7 +230,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"text":           {},
 		"timeseries":     {},
 		"trend":          {},
-		"welcome":        {},
 		"xychart":        {},
 	}
 
