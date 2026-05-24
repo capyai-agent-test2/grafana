@@ -46,6 +46,16 @@ export type LoadMoreLogsType =
   | ((range: AbsoluteTimeRange) => void)
   | ((range: AbsoluteTimeRange, scrollDirection: ScrollDirection) => void);
 
+function hasSameLogs(previousLogs: LogListModel[], currentLogs: LogListModel[]) {
+  return (
+    previousLogs.length === currentLogs.length &&
+    previousLogs.every(
+      (previousLog, index) =>
+        previousLog.uid === currentLogs[index].uid && previousLog.timeEpochMs === currentLogs[index].timeEpochMs
+    )
+  );
+}
+
 export const InfiniteScroll = ({
   children,
   displayedFields,
@@ -79,7 +89,7 @@ export const InfiniteScroll = ({
 
   useEffect(() => {
     // Logs have not changed, ignore effect
-    if (!prevLogs || prevLogs === logs) {
+    if (!prevLogs || prevLogs === logs || hasSameLogs(prevLogs, logs)) {
       return;
     }
     // New logs are from infinite scrolling
