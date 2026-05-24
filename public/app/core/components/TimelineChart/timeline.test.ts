@@ -205,6 +205,44 @@ describe('StateTimeline uPlot integration', () => {
           const { rect } = callOrientCallback(mockUplot);
           expect(rect).toHaveBeenCalledTimes(1);
         });
+
+        it('should merge consecutive values using mapped keys rather than raw values', () => {
+          const getValueMergeKey = jest.fn((_, value) => (value === 1 || value === 2 ? 'mapped-a' : value));
+          const { drawClear, drawPaths } = getConfig(
+            buildTestCoreOptions({
+              mergeValues: true,
+              getValueMergeKey,
+              formatValue: () => 'foo',
+            })
+          );
+          const mockUplot = buildMockUplotInstance([[0, 1, 2], [1, 2, 3]]);
+
+          drawClear(mockUplot);
+          drawPaths(mockUplot, 1, 0, 2);
+
+          const { rect } = callOrientCallback(mockUplot);
+          expect(rect).toHaveBeenCalledTimes(3);
+          expect(getValueMergeKey).toHaveBeenCalledWith(1, 1);
+          expect(getValueMergeKey).toHaveBeenCalledWith(1, 2);
+        });
+
+        it('should not merge consecutive values when mapped keys differ', () => {
+          const getValueMergeKey = jest.fn((_, value) => value);
+          const { drawClear, drawPaths } = getConfig(
+            buildTestCoreOptions({
+              mergeValues: true,
+              getValueMergeKey,
+              formatValue: () => 'foo',
+            })
+          );
+          const mockUplot = buildMockUplotInstance([[0, 1, 2], [1, 2, 3]]);
+
+          drawClear(mockUplot);
+          drawPaths(mockUplot, 1, 0, 2);
+
+          const { rect } = callOrientCallback(mockUplot);
+          expect(rect).toHaveBeenCalledTimes(4);
+        });
       });
     });
   });
