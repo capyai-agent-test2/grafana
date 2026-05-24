@@ -243,6 +243,44 @@ describe('InfluxQuery', () => {
     });
   });
 
+  describe('query with field not-equals condition', () => {
+    it('should not quote numeric field values for <>', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value::field', value: '5', operator: '<>' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe('SELECT mean("value") FROM "autogen"."cpu" WHERE ("value"::field <> 5) AND $timeFilter');
+    });
+
+    it('should keep quoting string field values for <>', () => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value::field', value: 'server2', operator: '<>' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value"::field <> \'server2\') AND $timeFilter'
+      );
+    });
+  });
+
   describe('query with Is operator', () => {
     it('should use =', () => {
       const query = new InfluxQueryModel(

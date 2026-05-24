@@ -159,23 +159,25 @@ export default class InfluxQueryModel {
       };
     }
 
-    let lowerValue = value.toLowerCase();
-
-    // Try and discern type
-    if (!isNaN(parseFloat(value))) {
-      // Integer or float, don't quote
-      textValue = value;
-    } else if (['true', 'false'].includes(lowerValue)) {
-      // It's a boolean, don't quite
-      textValue = lowerValue;
-    } else {
-      // String or unrecognised: quote
-      textValue = "'" + removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
-    }
+    textValue = this.formatFieldValue(value);
     return {
       operator: operator,
       value: textValue,
     };
+  }
+
+  private formatFieldValue(value: string) {
+    const lowerValue = value.toLowerCase();
+
+    if (!isNaN(parseFloat(value))) {
+      return value;
+    }
+
+    if (['true', 'false'].includes(lowerValue)) {
+      return lowerValue;
+    }
+
+    return "'" + removeRegexWrapper(value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'")) + "'";
   }
 
   private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
@@ -205,6 +207,8 @@ export default class InfluxQueryModel {
         let r = this.isOperatorTypeHandler(operator, value, tag.key);
         operator = r.operator;
         value = r.value;
+      } else if (operator === '<>' && tag.key.endsWith('::field')) {
+        value = this.formatFieldValue(value);
       } else if ((!operator.startsWith('>') && !operator.startsWith('<')) || operator === '<>') {
         value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
       }
