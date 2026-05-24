@@ -582,14 +582,14 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 	if params.Download {
 		r := response.JSONDownload
 		if params.Format == "yaml" {
-			r = response.YAMLDownload
+			r = yamlDownloadResponse
 		}
 		return r(http.StatusOK, body, fmt.Sprintf("export.%s", params.Format))
 	}
 
 	r := response.JSON
 	if params.Format == "yaml" {
-		r = response.YAML
+		r = yamlResponse
 	}
 	return r(http.StatusOK, body)
 }
