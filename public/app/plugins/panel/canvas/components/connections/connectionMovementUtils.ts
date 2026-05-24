@@ -11,6 +11,19 @@ export type CoordinateCalculator = (
   connectionState: ConnectionState
 ) => { x1: number; y1: number; x2: number; y2: number };
 
+export function syncConnectionOriginalCoordinates(
+  connectionState: ConnectionState,
+  coordinates: { x1: number; y1: number; x2: number; y2: number }
+): void {
+  const sourceConnections = connectionState.source.options.connections;
+  if (!sourceConnections || connectionState.index < 0) {
+    return;
+  }
+
+  sourceConnections[connectionState.index].sourceOriginal = { x: coordinates.x1, y: coordinates.y1 };
+  sourceConnections[connectionState.index].targetOriginal = { x: coordinates.x2, y: coordinates.y2 };
+}
+
 /**
  * Update connection coordinates when an individual element is moved.
  * This function handles updating either the source or target coordinates and
