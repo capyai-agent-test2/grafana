@@ -89,6 +89,22 @@ describe('MultiCombobox', () => {
     expect(input).toHaveAttribute('placeholder', '');
   });
 
+  it('opens the dropdown when clicking the dropdown icon', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+
+    const suffixIcon = screen.getByTestId('icon-angle-down').parentElement;
+    expect(suffixIcon).not.toBeNull();
+
+    await user.click(suffixIcon!);
+
+    expect(await screen.findByRole('option', { name: 'A' })).toBeInTheDocument();
+  });
+
   it.each([
     ['a', 'b', 'c'],
     [1, 2, 3],
