@@ -245,3 +245,74 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+func TestHiddenSQLExpressionDoesNotCorruptDatasourceOutput(t *testing.T) {
+	tsMulti := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"host": "a"}, []*float64{new(2.0)}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{tsMulti}},
+	}
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT * FROM A", "hide": true }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
+		},
+		{
+			RefID:      "C",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	s.cfg.ExpressionsEnabled = true
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+	res, err := s.TransformData(t.Context(), time.Now(), req)
+	require.NoError(t, err)
+	require.NotContains(t, res.Responses, "B")
+
+	if diff := cmp.Diff(tsMulti, res.Responses["A"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "datasource response was unexpectedly reshaped (-want +got):\n%s", diff)
+	}
+
+	expectedC := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("C", data.Labels{"host": "a"}, []*float64{new(4.0)}),
+	)
+	expectedC.RefID = "C"
+	expectedC.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
+
+	if diff := cmp.Diff(expectedC, res.Responses["C"].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "math expression result mismatch (-want +got):\n%s", diff)
+	}
+}
