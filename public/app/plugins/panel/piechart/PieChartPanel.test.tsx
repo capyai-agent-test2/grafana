@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
 import {
+  FieldColorModeId,
   type FieldConfigSource,
   type FieldDisplay,
   toDataFrame,
@@ -163,6 +164,37 @@ describe('PieChartPanel', () => {
         expect(slices.length).toBe(3);
       });
     });
+  });
+
+  it('renders fixed slice colors directly instead of radial gradients', () => {
+    setup({
+      data: {
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'Used',
+                type: FieldType.number,
+                values: [1],
+                config: {
+                  color: {
+                    mode: FieldColorModeId.Fixed,
+                    fixedColor: '#e11e4c',
+                  },
+                },
+              },
+            ],
+          }),
+        ],
+      },
+    });
+
+    const slice = screen.getByTestId('data testid Pie Chart Slice');
+    const path = slice.querySelector('path');
+
+    expect(path).toHaveAttribute('fill', '#e11e4c');
   });
 });
 
