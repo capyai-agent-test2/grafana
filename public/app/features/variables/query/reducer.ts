@@ -122,7 +122,11 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
     }
 
     if (regex) {
-      const matches = getAllMatches(value, regex);
+      let matches = getAllMatches(value, regex);
+      if (!matches.length && value !== text) {
+        matches = getAllMatches(text, regex);
+      }
+
       if (!matches.length) {
         continue;
       }

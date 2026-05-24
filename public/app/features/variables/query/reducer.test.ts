@@ -377,6 +377,14 @@ describe('metricNamesToVariableValues', () => {
     const result = metricNamesToVariableValues(variableRegEx, VariableSort.disabled, metricsNames);
     expect(result).toEqual(expected);
   });
+
+  it('falls back to matching the display text when regex does not match the underlying value', () => {
+    const metrics = [{ text: 'Primary Subscription', value: '99999999-cccc-bbbb-aaaa-9106972f9572', selected: false }];
+
+    expect(metricNamesToVariableValues('/^Primary/', VariableSort.disabled, metrics)).toEqual([
+      { text: 'Primary Subscription', value: '99999999-cccc-bbbb-aaaa-9106972f9572', selected: false },
+    ]);
+  });
 });
 
 function createMetric(value: string) {
