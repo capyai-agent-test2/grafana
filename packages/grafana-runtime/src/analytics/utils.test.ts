@@ -90,6 +90,31 @@ describe('reportPageview', () => {
 
     expect(mockAddEvent).toHaveBeenCalledTimes(1);
   });
+
+  it('does not deduplicate distinct long URLs that truncate to the same payload', () => {
+    const sharedPrefix = '?var-cluster=' + 'x'.repeat(MAX_PAGE_URL_LENGTH);
+    const firstSearch = `${sharedPrefix}a`;
+    const secondSearch = `${sharedPrefix}b`;
+
+    jest
+      .mocked(locationService.getLocation)
+      .mockReturnValueOnce({
+        pathname: '/d/abc',
+        search: firstSearch,
+        hash: '',
+      } as ReturnType<typeof locationService.getLocation>)
+      .mockReturnValueOnce({
+        pathname: '/d/abc',
+        search: secondSearch,
+        hash: '',
+      } as ReturnType<typeof locationService.getLocation>);
+
+    reportPageview();
+    reportPageview();
+
+    expect(mockAddEvent).toHaveBeenCalledTimes(2);
+    expect(mockAddEvent.mock.calls[0][0].payload.page).toBe(mockAddEvent.mock.calls[1][0].payload.page);
+  });
 });
 
 describe('reportInteraction', () => {

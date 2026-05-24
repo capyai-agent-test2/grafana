@@ -25,7 +25,7 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
 export const MAX_PAGE_URL_LENGTH = 2048;
 export const TRUNCATION_MARKER = '[url too long]';
 
-let lastReportedPage: string | undefined;
+let lastReportedFullPage: string | undefined;
 
 /**
  * Helper function to report pageview events to the {@link EchoSrv}.
@@ -40,11 +40,11 @@ export const reportPageview = () => {
       ? `${fullPage.substring(0, MAX_PAGE_URL_LENGTH - TRUNCATION_MARKER.length)}${TRUNCATION_MARKER}`
       : fullPage;
 
-  if (page === lastReportedPage) {
+  if (fullPage === lastReportedFullPage) {
     return;
   }
 
-  lastReportedPage = page;
+  lastReportedFullPage = fullPage;
 
   getEchoSrv().addEvent<PageviewEchoEvent>({
     type: EchoEventType.Pageview,
@@ -55,7 +55,7 @@ export const reportPageview = () => {
 };
 
 export const resetReportPageviewStateForTesting = () => {
-  lastReportedPage = undefined;
+  lastReportedFullPage = undefined;
 };
 
 /**
