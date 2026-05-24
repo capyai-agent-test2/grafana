@@ -814,6 +814,90 @@ describe('Canvas', () => {
     });
   });
 
+  it('removes unmounted inactive canvas panels from the shared instance registry', async () => {
+    const eventBus = new EventBusSrv();
+    const firstPanelRef = React.createRef<CanvasPanel>();
+    const secondPanelRef = React.createRef<CanvasPanel>();
+
+    const PanelContextWrapper = ({ children }: { children: React.ReactNode }) => {
+      const [instanceState, setInstanceState] = React.useState<unknown>();
+      return (
+        <PanelContextProvider
+          value={{
+            eventsScope: 'canvas-panel-integration',
+            eventBus,
+            instanceState,
+            onInstanceStateChange: setInstanceState,
+          }}
+        >
+          {children}
+        </PanelContextProvider>
+      );
+    };
+
+    const panelElement = (id: number, ref: React.RefObject<CanvasPanel | null>) => (
+      <CanvasPanel
+        ref={ref}
+        onChangeTimeRange={onChangeTimeRange}
+        title={''}
+        timeZone={'utc'}
+        timeRange={getDefaultTimeRange()}
+        id={id}
+        data={{
+          series: [successIconFrame],
+          state: LoadingState.Done,
+          timeRange: getDefaultTimeRange(),
+        }}
+        onFieldConfigChange={onFieldConfigChange}
+        eventBus={eventBus}
+        onOptionsChange={onOptionsChange}
+        replaceVariables={(s) => s}
+        renderCounter={0}
+        fieldConfig={{
+          overrides: [],
+          defaults: {},
+        }}
+        height={height}
+        width={width}
+        transparent={false}
+        options={defaultOptions}
+      />
+    );
+
+    const { rerender } = render(
+      <PanelContextWrapper>
+        <>
+          {panelElement(1, firstPanelRef)}
+          {panelElement(2, secondPanelRef)}
+        </>
+      </PanelContextWrapper>
+    );
+
+    await waitFor(() => expect(firstPanelRef.current).toBeTruthy());
+    await waitFor(() => expect(secondPanelRef.current).toBeTruthy());
+
+    const firstPanel = firstPanelRef.current!;
+    const secondPanel = secondPanelRef.current!;
+
+    act(() => {
+      secondPanel.scene.selection.next([secondPanel.scene.root]);
+    });
+
+    const clearCurrentSelectionSpy = jest.spyOn(firstPanel.scene, 'clearCurrentSelection');
+
+    rerender(
+      <PanelContextWrapper>
+        <>{panelElement(2, secondPanelRef)}</>
+      </PanelContextWrapper>
+    );
+
+    act(() => {
+      secondPanel.scene.selection.next([secondPanel.scene.root]);
+    });
+
+    expect(clearCurrentSelectionSpy).not.toHaveBeenCalled();
+  });
+
   describe('canvasPanelPanZoom disabled', () => {
     const previousFlagValue = config.featureToggles.canvasPanelPanZoom;
     beforeAll(() => (config.featureToggles.canvasPanelPanZoom = false));
