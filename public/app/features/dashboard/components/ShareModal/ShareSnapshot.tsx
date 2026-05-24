@@ -186,6 +186,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     // snapshot single panel
     if (panel) {
       const singlePanel = panel.getSaveModel();
+      delete singlePanel.repeat;
+      delete singlePanel.repeatDirection;
+      delete singlePanel.maxPerRow;
+      delete singlePanel.repeatPanelId;
+      delete singlePanel.repeatedByRow;
       singlePanel.gridPos.w = 24;
       singlePanel.gridPos.x = 0;
       singlePanel.gridPos.y = 0;
