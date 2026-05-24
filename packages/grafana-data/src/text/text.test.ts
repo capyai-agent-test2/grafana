@@ -45,6 +45,17 @@ describe('findMatchesInText()', () => {
     ]);
     expect(findMatchesInText('FOO\nfoobar\nbar', '(?ims)(?-smi)^foo.')).toEqual([]);
   });
+
+  test('should ignore named capture group syntax', () => {
+    expect(findMatchesInText('TRACE DEBUG INFO', '(?i)(?P<level>trace|debug)')).toEqual([
+      { length: 5, start: 0, text: 'TRACE', end: 5 },
+      { length: 5, start: 6, text: 'DEBUG', end: 11 },
+    ]);
+    expect(findMatchesInText('TRACE DEBUG INFO', '(?i)(?<level>trace|debug)')).toEqual([
+      { length: 5, start: 0, text: 'TRACE', end: 5 },
+      { length: 5, start: 6, text: 'DEBUG', end: 11 },
+    ]);
+  });
 });
 
 describe('parseFlags()', () => {
@@ -64,5 +75,10 @@ describe('parseFlags()', () => {
     expect(parseFlags('(?i-i)foo')).toEqual({ cleaned: 'foo', flags: 'g' });
     expect(parseFlags('(?is)(?-ims)foo')).toEqual({ cleaned: 'foo', flags: 'g' });
     expect(parseFlags('(?i)(?-i)(?i)foo')).toEqual({ cleaned: 'foo', flags: 'gi' });
+  });
+
+  it('when named groups are present', () => {
+    expect(parseFlags('(?i)(?P<level>foo)')).toEqual({ cleaned: '(?:foo)', flags: 'gi' });
+    expect(parseFlags('(?i)(?<level>foo)')).toEqual({ cleaned: '(?:foo)', flags: 'gi' });
   });
 });

@@ -66,6 +66,7 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
 
 const CLEAR_FLAG = '-';
 const FLAGS_REGEXP = /\(\?([ims-]+)\)/g;
+const NAMED_GROUPS_REGEXP = /\(\?(?:P<|<)[^>]+>/g;
 
 /**
  * Converts any mode modifiers in the text to the Javascript equivalent flag
@@ -73,19 +74,21 @@ const FLAGS_REGEXP = /\(\?([ims-]+)\)/g;
 export function parseFlags(text: string): { cleaned: string; flags: string } {
   const flags: Set<string> = new Set(['g']);
 
-  const cleaned = text.replace(FLAGS_REGEXP, (str, group) => {
-    const clearAll = group.startsWith(CLEAR_FLAG);
+  const cleaned = text
+    .replace(FLAGS_REGEXP, (str, group) => {
+      const clearAll = group.startsWith(CLEAR_FLAG);
 
-    for (let i = 0; i < group.length; ++i) {
-      const flag = group.charAt(i);
-      if (clearAll || group.charAt(i - 1) === CLEAR_FLAG) {
-        flags.delete(flag);
-      } else if (flag !== CLEAR_FLAG) {
-        flags.add(flag);
+      for (let i = 0; i < group.length; ++i) {
+        const flag = group.charAt(i);
+        if (clearAll || group.charAt(i - 1) === CLEAR_FLAG) {
+          flags.delete(flag);
+        } else if (flag !== CLEAR_FLAG) {
+          flags.add(flag);
+        }
       }
-    }
-    return ''; // Remove flag from text
-  });
+      return ''; // Remove flag from text
+    })
+    .replace(NAMED_GROUPS_REGEXP, '(?:');
 
   return {
     cleaned: cleaned,
