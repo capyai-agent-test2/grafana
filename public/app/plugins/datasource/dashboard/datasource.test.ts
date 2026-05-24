@@ -23,7 +23,9 @@ import {
   SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
+  SceneQueryRunner,
   type SceneObject,
+  SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
@@ -111,6 +113,54 @@ describe('DashboardDatasource', () => {
     observable.subscribe({ next: () => {} });
 
     expect(first).not.toHaveBeenCalled();
+  });
+
+  it('Should only trigger one source query run when activating an inactive source query runner', async () => {
+    const resultsStream = new ReplaySubject<SceneDataProviderResult>(1);
+    const sourceData = new SceneQueryRunner({
+      datasource: { uid: 'grafana' },
+      queries: [{ refId: 'A', queryType: 'randomWalk' }],
+      maxDataPointsFromWidth: true,
+    });
+
+    jest.spyOn(sourceData, 'getResultsStream').mockReturnValue(resultsStream);
+
+    const runQueriesSpy = jest.spyOn(sourceData, 'runQueries').mockImplementation();
+
+    const scene = new SceneFlexLayout({
+      $timeRange: new SceneTimeRange({}),
+      children: [
+        new SceneFlexItem({
+          body: new VizPanel({
+            key: getVizPanelKeyForPanelId(1),
+            $data: sourceData,
+          }),
+        }),
+      ],
+    });
+
+    const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+    const observable = ds.query({
+      timezone: 'utc',
+      targets: [{ refId: 'A', panelId: 1 }],
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
+      range: getDefaultTimeRange(),
+      scopedVars: {
+        __sceneObject: new SafeSerializableSceneObject(scene),
+      },
+      app: '',
+      startTime: 0,
+    });
+
+    const subscription = observable.subscribe({ next: () => {} });
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(runQueriesSpy).toHaveBeenCalledTimes(1);
+
+    subscription.unsubscribe();
   });
 
   it('Should skip the stale Done replayed by the upstream ReplaySubject on time-range change in MixedDS', async () => {

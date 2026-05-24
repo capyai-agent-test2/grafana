@@ -21,7 +21,13 @@ import {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
 } from '@grafana/data';
-import { isSceneObject, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
+import {
+  isSceneObject,
+  type SceneDataProvider,
+  SceneDataTransformer,
+  SceneQueryRunner,
+  type SceneObject,
+} from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -37,6 +43,18 @@ function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolea
     return false;
   }
   return a.from.valueOf() === b.from.valueOf() && a.to.valueOf() === b.to.valueOf();
+}
+
+function getSourceQueryRunner(sourceDataProvider: SceneDataProvider | undefined): SceneQueryRunner | undefined {
+  if (sourceDataProvider instanceof SceneQueryRunner) {
+    return sourceDataProvider;
+  }
+
+  if (sourceDataProvider instanceof SceneDataTransformer && sourceDataProvider.state.$data instanceof SceneQueryRunner) {
+    return sourceDataProvider.state.$data;
+  }
+
+  return undefined;
 }
 
 /**
@@ -92,8 +110,20 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const adHocFilters = options.filters || [];
 
     return defer(() => {
+      const sourceQueryRunner = getSourceQueryRunner(sourceDataProvider);
+
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
-        sourceDataProvider?.setContainerWidth(500);
+        if (
+          sourceQueryRunner &&
+          sourceQueryRunner.state.maxDataPointsFromWidth &&
+          !sourceQueryRunner.state.maxDataPoints &&
+          !sourceQueryRunner.state._hasFetchedData &&
+          sourceQueryRunner['_containerWidth'] === undefined
+        ) {
+          sourceQueryRunner['_containerWidth'] = 500;
+        } else {
+          sourceDataProvider?.setContainerWidth(500);
+        }
       }
 
       /**
