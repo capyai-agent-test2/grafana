@@ -118,6 +118,48 @@ describe('Tempo data source', () => {
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
       expect(handleStreamingQuery).toHaveBeenCalledTimes(1);
     });
+
+    it('routes metrics queries with commented metrics functions to trace search', async () => {
+      config.liveEnabled = false;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      const handleTraceQlQuery = jest
+        .spyOn(ds, 'handleTraceQlQuery')
+        .mockReturnValue(of({ data: [], state: LoadingState.Done }));
+      const handleTraceQlMetricsQuery = jest
+        .spyOn(ds, 'handleTraceQlMetricsQuery')
+        .mockReturnValue(of({ data: [], state: LoadingState.Done }));
+
+      await lastValueFrom(
+        ds.query({
+          targets: [{ refId: 'refid1', queryType: 'traceql', query: '{} // | rate()' }],
+          range,
+        } as DataQueryRequest<TempoQuery>)
+      );
+
+      expect(handleTraceQlQuery).toHaveBeenCalledTimes(1);
+      expect(handleTraceQlMetricsQuery).not.toHaveBeenCalled();
+    });
+
+    it('still routes active metrics queries to the metrics endpoint', async () => {
+      config.liveEnabled = false;
+      const ds = new TempoDatasource(defaultSettings, templateSrv);
+      const handleTraceQlQuery = jest
+        .spyOn(ds, 'handleTraceQlQuery')
+        .mockReturnValue(of({ data: [], state: LoadingState.Done }));
+      const handleTraceQlMetricsQuery = jest
+        .spyOn(ds, 'handleTraceQlMetricsQuery')
+        .mockReturnValue(of({ data: [], state: LoadingState.Done }));
+
+      await lastValueFrom(
+        ds.query({
+          targets: [{ refId: 'refid1', queryType: 'traceql', query: '{} | rate()' }],
+          range,
+        } as DataQueryRequest<TempoQuery>)
+      );
+
+      expect(handleTraceQlMetricsQuery).toHaveBeenCalledTimes(1);
+      expect(handleTraceQlQuery).not.toHaveBeenCalled();
+    });
   });
 
   it('returns empty response when traceId is empty', async () => {
