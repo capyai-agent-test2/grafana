@@ -61,7 +61,6 @@ export const enrichWithInteractionTracking = (
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
-      itemIsBookmarked: newItem?.parentItem?.id === 'bookmarks',
       isNew,
     });
     onClick?.();
@@ -123,9 +122,7 @@ export const getActiveItem = (
     }
   }
 
-  // Do not search for the parent in the bookmarks section
-  const isInBookmarksSection = navTree[0]?.parentItem?.id === 'bookmarks';
-  if (parentItem && !isInBookmarksSection) {
+  if (parentItem) {
     return getActiveItem(navTree, parentItem);
   }
 

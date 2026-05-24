@@ -531,12 +531,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/bookmarks',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
-      ),
-    },
-    {
       path: '/theme-playground',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')

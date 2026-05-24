@@ -3,9 +3,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { Icon, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   children: React.ReactNode;
@@ -13,12 +11,9 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
-  onPin: (id?: string) => void;
-  isPinned?: boolean;
-  itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url }: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
@@ -47,16 +42,6 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
-        <IconButton
-          name="bookmark"
-          className={'pin-icon'}
-          iconType={isPinned ? 'solid' : 'default'}
-          onClick={() => onPin(url)}
-          aria-pressed={isPinned}
-          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
-        />
-      )}
     </div>
   );
 }
@@ -66,20 +51,8 @@ MegaMenuItemText.displayName = 'MegaMenuItemText';
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   wrapper: css({
     display: 'flex',
-    justifyContent: 'space-between',
     width: '100%',
     height: '100%',
-    '.pin-icon': {
-      visibility: 'hidden',
-    },
-    '&:hover, &:focus-within': {
-      a: {
-        width: 'calc(100% - 20px)',
-      },
-      '.pin-icon': {
-        visibility: 'visible',
-      },
-    },
   }),
   wrapperActive: css({
     backgroundColor: theme.colors.action.selected,

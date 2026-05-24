@@ -12,7 +12,6 @@ const (
 	// any items with default weight.
 
 	WeightHome = (iota - 40) * 100
-	WeightBookmarks
 	WeightSavedItems
 	WeightDashboard
 	WeightExplore
@@ -55,7 +54,6 @@ const (
 	NavIDCfgGeneral           = "cfg/general"
 	NavIDCfgPlugins           = "cfg/plugins"
 	NavIDCfgAccess            = "cfg/access"
-	NavIDBookmarks            = "bookmarks"
 )
 
 type NavLink struct {

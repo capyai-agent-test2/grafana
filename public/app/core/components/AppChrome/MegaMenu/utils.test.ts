@@ -9,22 +9,6 @@ import { getEnrichedHelpItem, getActiveItem, findByUrl } from './utils';
 const starredDashboardUid = 'foo';
 const mockNavTree: NavModelItem[] = [
   {
-    text: 'Bookmarks',
-    url: '/bookmarks',
-    id: 'bookmarks',
-    children: [
-      {
-        text: 'Item with children',
-        url: '/itemWithChildren',
-        id: 'item-with-children',
-        parentItem: {
-          text: 'Bookmarks',
-          id: 'bookmarks',
-        },
-      },
-    ],
-  },
-  {
     text: 'Item',
     url: '/item',
     id: 'item',
