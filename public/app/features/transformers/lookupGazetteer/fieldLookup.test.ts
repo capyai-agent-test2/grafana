@@ -1,5 +1,5 @@
 import { DataTransformerID, toDataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
-import { frameAsGazetter } from 'app/features/geo/gazetteer/gazetteer';
+import { frameAsGazetter, loadGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 
 import { addFieldsFromGazetteer } from './fieldLookup';
 
@@ -240,5 +240,26 @@ describe('Lookup gazetteer', () => {
         },
       ]
     `);
+  });
+
+  it('adds fields from legacy worldmap gazetteers', async () => {
+    const data = toDataFrame({
+      name: 'locations',
+      fields: [{ name: 'location', type: FieldType.string, values: ['FR', 'DE', 'Nowhere'] }],
+    });
+
+    const matcher = fieldMatchers.get(FieldMatcherID.byName).get('location');
+    const gazetteer = loadGazetteer('path/to/gaz.json', [
+      { keys: ['FR', 'FRA'], latitude: 46.2276, longitude: 2.2137, name: 'France' },
+      { keys: ['DE', 'DEU'], latitude: 51.1657, longitude: 10.4515, name: 'Germany' },
+    ]);
+
+    const out = addFieldsFromGazetteer([data], gazetteer, matcher)[0];
+
+    expect(out.fields.map((field) => field.name)).toEqual(['location', 'keys', 'latitude', 'longitude', 'name']);
+    expect(out.fields[1].values).toEqual([['FR', 'FRA'], ['DE', 'DEU'], undefined]);
+    expect(out.fields[2].values).toEqual([46.2276, 51.1657, undefined]);
+    expect(out.fields[3].values).toEqual([2.2137, 10.4515, undefined]);
+    expect(out.fields[4].values).toEqual(['France', 'Germany', undefined]);
   });
 });

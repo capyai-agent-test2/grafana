@@ -1,6 +1,8 @@
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
+import { toDataFrame } from '@grafana/data';
+
 import { type PlacenameInfo, type Gazetteer } from './gazetteer';
 
 // https://github.com/grafana/worldmap-panel/blob/master/src/data/countries.json
@@ -14,10 +16,13 @@ export interface WorldmapPoint {
 
 export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazetteer {
   let count = 0;
+  const frame = toDataFrame(data);
   const values = new Map<string, PlacenameInfo>();
   for (const v of data) {
     const point = new Point(fromLonLat([v.longitude, v.latitude]));
     const info: PlacenameInfo = {
+      frame,
+      index: count,
       point: () => point,
       geometry: () => point,
     };
@@ -47,6 +52,7 @@ export function loadWorldmapPoints(path: string, data: WorldmapPoint[]): Gazette
       return v;
     },
     count,
+    frame: () => frame,
     examples: (count) => {
       const first: string[] = [];
       if (values.size < 1) {
