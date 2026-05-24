@@ -168,8 +168,9 @@ export default class InfluxQueryModel {
 
   private formatFieldValue(value: string) {
     const lowerValue = value.toLowerCase();
+    const trimmedValue = value.trim();
 
-    if (!isNaN(parseFloat(value))) {
+    if (trimmedValue !== '' && !Number.isNaN(Number(trimmedValue))) {
       return value;
     }
 
