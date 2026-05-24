@@ -118,7 +118,9 @@ describe('LineStyleEditor', () => {
       );
 
       expect(screen.getByRole('combobox', { name: /^Spacing/ })).toBeInTheDocument();
-      expect(screen.getByText('Enter a comma-separated segment list, for example 10, 10.')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /^Spacing/ })).toHaveAccessibleDescription(
+        'Enter a comma-separated segment list, for example 10, 10.'
+      );
     });
 
     it('should show default segments when dash array is empty', () => {
