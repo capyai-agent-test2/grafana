@@ -105,10 +105,16 @@ export async function discoverDataSourceFeatures(dsSettings: {
   }
 
   // if we have both features and buildinfo reported we're talking to Mimir
+  // `ruler_config_api=true` means the config API is compiled in, but it does not guarantee
+  // the backing rule store supports mutating groups. Local rule storage reports the feature
+  // as enabled but rejects group reads/writes, so probe the ruler endpoint before exposing
+  // edit/delete affordances in the UI.
+  const rulerSupported = features?.ruler_config_api === 'true' ? await hasRulerSupport(name) : false;
+
   return {
     application: PromApplication.Mimir,
     features: {
-      rulerApiEnabled: features?.ruler_config_api === 'true',
+      rulerApiEnabled: rulerSupported,
     },
   };
 }

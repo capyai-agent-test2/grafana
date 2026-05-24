@@ -51,37 +51,95 @@ describe('discoverDataSourceFeatures', () => {
       expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
     });
 
-    it.each([true, false])(
-      `Should return Mimir with rulerApiEnabled set to %p according to the ruler_config_api value`,
-      async (rulerApiEnabled) => {
-        fetch.mockReturnValue(
-          of({
+    it('Should return Mimir with rulerApiEnabled disabled when buildinfo enables the config API but the ruler rejects local rule storage', async () => {
+      fetch.mockReturnValue(
+        of({
+          data: {
+            status: 'success',
             data: {
-              status: 'success',
-              data: {
-                version: '2.32.1',
-                features: {
-                  // 'true' and 'false' as strings is intentional
-                  // This is the format returned from the buildinfo endpoint
-                  ruler_config_api: rulerApiEnabled ? 'true' : 'false',
-                },
+              version: '2.32.1',
+              features: {
+                ruler_config_api: 'true',
               },
             },
-          })
-        );
+          },
+        })
+      );
+      mocks.fetchTestRulerRulesGroup.mockRejectedValue({
+        status: 400,
+        data: {
+          message: 'GetRuleGroup unsupported in rule local store',
+        },
+      });
 
-        const response = await discoverDataSourceFeatures({
-          url: '/datasource/proxy',
-          name: 'Prometheus',
-          type: 'prometheus',
-        });
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Mimir',
+        type: 'prometheus',
+      });
 
-        expect(response.application).toBe(PromApplication.Mimir);
-        expect(response.features.rulerApiEnabled).toBe(rulerApiEnabled);
-        expect(mocks.fetchRules).not.toHaveBeenCalled();
-        expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
-      }
-    );
+      expect(response.application).toBe(PromApplication.Mimir);
+      expect(response.features.rulerApiEnabled).toBe(false);
+      expect(mocks.fetchRules).not.toHaveBeenCalled();
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Mimir');
+    });
+
+    it('Should return Mimir with rulerApiEnabled enabled when buildinfo enables the config API and the ruler probe succeeds', async () => {
+      fetch.mockReturnValue(
+        of({
+          data: {
+            status: 'success',
+            data: {
+              version: '2.32.1',
+              features: {
+                ruler_config_api: 'true',
+              },
+            },
+          },
+        })
+      );
+      mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
+
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Mimir',
+        type: 'prometheus',
+      });
+
+      expect(response.application).toBe(PromApplication.Mimir);
+      expect(response.features.rulerApiEnabled).toBe(true);
+      expect(mocks.fetchRules).not.toHaveBeenCalled();
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Mimir');
+    });
+
+    it('Should return Mimir with rulerApiEnabled disabled when buildinfo disables the config API', async () => {
+      fetch.mockReturnValue(
+        of({
+          data: {
+            status: 'success',
+            data: {
+              version: '2.32.1',
+              features: {
+                ruler_config_api: 'false',
+              },
+            },
+          },
+        })
+      );
+
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Prometheus',
+        type: 'prometheus',
+      });
+
+      expect(response.application).toBe(PromApplication.Mimir);
+      expect(response.features.rulerApiEnabled).toBe(false);
+      expect(mocks.fetchRules).not.toHaveBeenCalled();
+      expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
+    });
 
     it('When the data source is Loki should not call the buildinfo endpoint', async () => {
       await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
