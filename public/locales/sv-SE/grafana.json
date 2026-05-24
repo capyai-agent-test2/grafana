@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Visa radnummer",
     "name-show-mini-map": "Visa minikarta"
   },
-  "theme-playground": {
-    "label-base-theme": "Bastema",
-    "title": "Temalekplats"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Instrumentpaneler",

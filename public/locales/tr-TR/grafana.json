@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Satır numaralarını göster",
     "name-show-mini-map": "Mini haritayı göster"
   },
-  "theme-playground": {
-    "label-base-theme": "Temel tema",
-    "title": "Tema deneme alanı"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Panolar",

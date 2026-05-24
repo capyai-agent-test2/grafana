@@ -15588,10 +15588,6 @@
     "name-show-line-numbers": "Показывать номера строк",
     "name-show-mini-map": "Показать мини-карту"
   },
-  "theme-playground": {
-    "label-base-theme": "Базовая тема",
-    "title": "Тестовая площадка для темы"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Дашборды",

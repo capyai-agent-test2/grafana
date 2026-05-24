@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Sorszámozás megjelenítése",
     "name-show-mini-map": "Minitérkép megjelenítése"
   },
-  "theme-playground": {
-    "label-base-theme": "Alaptéma",
-    "title": "Témák próbakörnyezete"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Irányítópultok",

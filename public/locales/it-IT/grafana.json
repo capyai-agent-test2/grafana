@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Mostra numeri di riga",
     "name-show-mini-map": "Mostra mini mappa"
   },
-  "theme-playground": {
-    "label-base-theme": "Tema base",
-    "title": "Playground del tema"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Dashboard",

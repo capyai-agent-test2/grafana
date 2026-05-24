@@ -15588,10 +15588,6 @@
     "name-show-line-numbers": "Pokaż numerację wierszy",
     "name-show-mini-map": "Pokaż minimapę"
   },
-  "theme-playground": {
-    "label-base-theme": "Motyw podstawowy",
-    "title": "Testowanie motywów"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Pulpity",

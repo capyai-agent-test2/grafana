@@ -15309,10 +15309,6 @@
     "name-show-line-numbers": "行番号を表示",
     "name-show-mini-map": "ミニマップを表示"
   },
-  "theme-playground": {
-    "label-base-theme": "基本テーマ",
-    "title": "テーマプレイグラウンド"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "ダッシュボード",

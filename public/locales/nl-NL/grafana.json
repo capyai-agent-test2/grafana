@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Regelnummers tonen",
     "name-show-mini-map": "Minikaart weergeven"
   },
-  "theme-playground": {
-    "label-base-theme": "Basisthema",
-    "title": "Thema speeltuin"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Dashboards",

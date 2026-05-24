@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Mostrar os números das linhas",
     "name-show-mini-map": "Mostrar o minimapa"
   },
-  "theme-playground": {
-    "label-base-theme": "Tema base",
-    "title": "Playground de temas"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Painéis de controlo",

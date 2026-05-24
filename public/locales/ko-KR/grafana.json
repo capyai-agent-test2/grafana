@@ -15309,10 +15309,6 @@
     "name-show-line-numbers": " 번호 표시",
     "name-show-mini-map": "미니 지도 표시"
   },
-  "theme-playground": {
-    "label-base-theme": "기본 테마",
-    "title": "테마 플레이그라운드"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "대시보드",

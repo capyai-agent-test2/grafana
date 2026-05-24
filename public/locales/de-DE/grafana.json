@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Zeilennummern anzeigen",
     "name-show-mini-map": "Minikarte anzeigen"
   },
-  "theme-playground": {
-    "label-base-theme": "Basis-Theme",
-    "title": "Theme-Sandbox"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Dashboards",

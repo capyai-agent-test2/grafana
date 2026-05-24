@@ -15309,10 +15309,6 @@
     "name-show-line-numbers": "Tampilkan nomor baris",
     "name-show-mini-map": "Tampilkan peta mini"
   },
-  "theme-playground": {
-    "label-base-theme": "Tema dasar",
-    "title": "Tema taman bermain"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Dasbor",

@@ -15402,10 +15402,6 @@
     "name-show-line-numbers": "Afficher les numéros de ligne",
     "name-show-mini-map": "Afficher la mini-carte"
   },
-  "theme-playground": {
-    "label-base-theme": "Thème de base",
-    "title": "Aire de test des thèmes"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "Tableaux de bord",

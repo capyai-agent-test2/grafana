@@ -15309,10 +15309,6 @@
     "name-show-line-numbers": "顯示行號",
     "name-show-mini-map": "顯示迷你地圖"
   },
-  "theme-playground": {
-    "label-base-theme": "基本主題",
-    "title": "主題遊樂場"
-  },
   "theme-preview": {
     "breadcrumbs": {
       "dashboards": "儀表板",
