@@ -81,6 +81,20 @@ describe('FilterList', () => {
       );
       expect(screen.getByText('No values')).toBeInTheDocument();
     });
+
+    it('treats regex metacharacters as literal text', () => {
+      const options: SelectableValue[] = [
+        { value: '|=0', label: '|=0' },
+        { value: '0', label: '0' },
+        { value: 'foo', label: 'foo' },
+      ];
+      render(
+        <FilterList options={options} values={[]} onChange={jest.fn()} searchFilter="|=0" operator={containsOp()} />
+      );
+      expect(screen.getByRole('checkbox', { name: '|=0' })).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: '0' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'foo' })).not.toBeInTheDocument();
+    });
   });
 
   describe('numeric comparison operators', () => {
