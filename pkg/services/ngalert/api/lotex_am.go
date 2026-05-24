@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -20,19 +22,19 @@ import (
 
 var endpoints = map[string]map[string]string{
 	"cortex": {
-		"silences": "/alertmanager/api/v2/silences",
-		"silence":  "/alertmanager/api/v2/silence/%s",
-		"status":   "/alertmanager/api/v2/status",
-		"groups":   "/alertmanager/api/v2/alerts/groups",
-		"alerts":   "/alertmanager/api/v2/alerts",
+		"silences": "%s/api/v2/silences",
+		"silence":  "%s/api/v2/silence/%s",
+		"status":   "%s/api/v2/status",
+		"groups":   "%s/api/v2/alerts/groups",
+		"alerts":   "%s/api/v2/alerts",
 		"config":   "/api/v1/alerts",
 	},
 	"mimir": {
-		"silences": "/alertmanager/api/v2/silences",
-		"silence":  "/alertmanager/api/v2/silence/%s",
-		"status":   "/alertmanager/api/v2/status",
-		"groups":   "/alertmanager/api/v2/alerts/groups",
-		"alerts":   "/alertmanager/api/v2/alerts",
+		"silences": "%s/api/v2/silences",
+		"silence":  "%s/api/v2/silence/%s",
+		"status":   "%s/api/v2/status",
+		"groups":   "%s/api/v2/alerts/groups",
+		"alerts":   "%s/api/v2/alerts",
 		"config":   "/api/v1/alerts",
 	},
 	"prometheus": {
@@ -45,7 +47,8 @@ var endpoints = map[string]map[string]string{
 }
 
 const (
-	defaultImplementation = "cortex"
+	defaultImplementation   = "cortex"
+	defaultAlertmanagerPath = "/alertmanager"
 )
 
 type LotexAM struct {
@@ -58,6 +61,37 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 		log:           log,
 		AlertingProxy: proxy,
 	}
+}
+
+func getAlertmanagerPrefix(jsonData *simplejson.Json) string {
+	if jsonData == nil {
+		return defaultAlertmanagerPath
+	}
+
+	prefix := strings.TrimSpace(jsonData.Get("alertmanagerPrefix").MustString(""))
+	if prefix == "" {
+		return defaultAlertmanagerPath
+	}
+
+	normalizedPrefix := strings.Trim(prefix, "/")
+	if normalizedPrefix == "" {
+		return ""
+	}
+
+	return "/" + normalizedPrefix
+}
+
+func formatAlertmanagerEndpointPath(impl string, endpointPath string, jsonData *simplejson.Json, pathParams []string) string {
+	formatArgs := make([]interface{}, 0, len(pathParams)+1)
+	if impl != "prometheus" && strings.Contains(endpointPath, "%s") {
+		formatArgs = append(formatArgs, getAlertmanagerPrefix(jsonData))
+	}
+
+	for _, value := range pathParams {
+		formatArgs = append(formatArgs, value)
+	}
+
+	return fmt.Sprintf(endpointPath, formatArgs...)
 }
 
 func (am *LotexAM) withAMReq(
@@ -95,15 +129,10 @@ func (am *LotexAM) withAMReq(
 		return ErrResp(http.StatusBadRequest, fmt.Errorf("unsupported endpoint \"%s\" for Alert Manager implementation \"%s\"", endpoint, impl), "")
 	}
 
-	iPathParams := make([]interface{}, len(pathParams))
-	for idx, value := range pathParams {
-		iPathParams[idx] = value
-	}
-
 	return am.withReq(
 		ctx,
 		method,
-		withPath(*ctx.Req.URL, fmt.Sprintf(endpointPath, iPathParams...)),
+		withPath(*ctx.Req.URL, formatAlertmanagerEndpointPath(impl, endpointPath, ds.JsonData, pathParams)),
 		body,
 		extractor,
 		headers,
