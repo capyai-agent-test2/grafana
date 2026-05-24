@@ -637,26 +637,31 @@ export const TooltipPlugin2 = ({
         width += TOOLTIP_OFFSET;
         height += TOOLTIP_OFFSET;
 
+        const minX = viaSync ? u.rect.left : 0;
+        const maxX = viaSync ? u.rect.right : winWid;
+        const minY = viaSync ? u.rect.top : 0;
+        const maxY = viaSync ? u.rect.bottom : winHgt;
+
         if (offsetY !== 0) {
-          if (clientY + height < winHgt || clientY - height < 0) {
+          if (clientY + height < maxY || clientY - height < minY) {
             offsetY = 0;
           } else if (offsetY !== -height) {
             offsetY = -height;
           }
         } else {
-          if (clientY + height > winHgt && clientY - height >= 0) {
+          if (clientY + height > maxY && clientY - height >= minY) {
             offsetY = -height;
           }
         }
 
         if (offsetX !== 0) {
-          if (clientX + width < winWid || clientX - width < 0) {
+          if (clientX + width < maxX || clientX - width < minX) {
             offsetX = 0;
           } else if (offsetX !== -width) {
             offsetX = -width;
           }
         } else {
-          if (clientX + width > winWid && clientX - width >= 0) {
+          if (clientX + width > maxX && clientX - width >= minX) {
             offsetX = -width;
           }
         }

@@ -304,6 +304,76 @@ describe('TooltipPlugin2', () => {
       );
     });
 
+    it('keeps synced tooltips within plot bounds', async () => {
+      config.addScale({
+        scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
+        isTime: true,
+      });
+      const getBoundingClientRectSpy = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+        function () {
+          if (this.textContent?.includes('Tooltip content')) {
+            return {
+              x: 0,
+              y: 0,
+              top: 0,
+              left: 0,
+              bottom: 120,
+              right: 100,
+              width: 100,
+              height: 120,
+              toJSON: () => ({}),
+            };
+          }
+
+          return {
+            x: 0,
+            y: 0,
+            top: 0,
+            left: 0,
+            bottom: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            toJSON: () => ({}),
+          };
+        }
+      );
+
+      const { setSeriesCallback, initCallback, mockUPlot, readyCallback, setLegendCallback, getHook } = setUp(
+        {
+          rect: { left: 0, top: 0, width: 400, height: 200, bottom: 200, right: 400 },
+          cursor: {
+            left: 50,
+            top: 150,
+            event: undefined,
+            idxs: [null, 5],
+            drag: { x: true, y: false, setScale: false },
+          },
+        },
+        { syncMode: DashboardCursorSync.Tooltip, render: () => <div style={{ height: 120 }}>Tooltip content</div> }
+      );
+      const setCursorHook = getHook('setCursor') as (u: uPlot) => void;
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        readyCallback();
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      act(() => {
+        setCursorHook(mockUPlot);
+      });
+
+      expect(normalizeCssTransform(getTooltipWrapper()?.style.transform)).toBe(
+        normalizeCssTransform('translateX(60px) translateY(140px) translateY(-100%)')
+      );
+
+      getBoundingClientRectSpy.mockRestore();
+    });
+
     it('schedules render', async () => {
       const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback, getHook } = setUp();
       const setCursorHook = getHook('setCursor') as (u: uPlot) => void;
