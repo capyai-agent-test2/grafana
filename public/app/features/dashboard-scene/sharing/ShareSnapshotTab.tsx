@@ -27,6 +27,7 @@ import {
 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardInteractions } from '../utils/interactions';
 
+import { preloadSnapshotDataForPanels } from './preloadSnapshotData';
 import { type SceneShareTabState, type ShareView } from './types';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
@@ -149,6 +150,11 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
 
   public onSnapshotCreate = async (external = false) => {
     const { selectedExpireOption } = this.state;
+    const { dashboardRef, panelRef } = this.state;
+    const panels = panelRef ? [panelRef.resolve()] : dashboardRef.resolve().state.body.getVizPanels();
+
+    await preloadSnapshotDataForPanels(panels);
+
     const snapshot = this.prepareSnapshot();
 
     // TODO
