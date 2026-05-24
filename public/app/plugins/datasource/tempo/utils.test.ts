@@ -1,5 +1,5 @@
 import { type TempoQuery } from './types';
-import { migrateFromSearchToTraceQLSearch } from './utils';
+import { getErrorMessage, mapErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
 
 describe('utils', () => {
   it('migrateFromSearchToTraceQLSearch correctly updates the query', async () => {
@@ -47,5 +47,17 @@ describe('utils', () => {
     expect(migratedQuery.filters[6].operator).toBe('=');
     expect(migratedQuery.filters[6].value![0]).toBe('tempo');
     expect(migratedQuery.filters[6].valueType).toBe('string');
+  });
+
+  it('maps raw HTML responses to a user-friendly Tempo error', () => {
+    expect(mapErrorMessage('<!doctype html><html><body>502 Bad Gateway</body></html>')).toBe(
+      'Tempo returned an HTML error page instead of an API response. Check that the Tempo URL is correct and the service is reachable.'
+    );
+  });
+
+  it('maps wrapped HTML responses to the same user-friendly error', () => {
+    expect(getErrorMessage('<html><body>upstream connect error</body></html>')).toBe(
+      'Tempo returned an HTML error page instead of an API response. Check that the Tempo URL is correct and the service is reachable.'
+    );
   });
 });

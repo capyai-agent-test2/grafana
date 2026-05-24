@@ -7,8 +7,14 @@ import { type TempoQuery } from './types';
 
 const LIMIT_MESSAGE = /.*range specified by start and end.*exceeds.*/;
 const LIMIT_MESSAGE_METRICS = /.*metrics query time range exceeds the maximum allowed duration of.*/;
+const HTML_ERROR_RESPONSE = /<!doctype html|<html[\s>]|<head[\s>]|<body[\s>]|<\/html>/i;
+const HTML_ERROR_MESSAGE =
+  'Tempo returned an HTML error page instead of an API response. Check that the Tempo URL is correct and the service is reachable.';
 
-export function mapErrorMessage(errorMessage: string) {
+export function mapErrorMessage(errorMessage?: string) {
+  if (errorMessage && HTML_ERROR_RESPONSE.test(errorMessage)) {
+    return HTML_ERROR_MESSAGE;
+  }
   if (errorMessage && (LIMIT_MESSAGE.test(errorMessage) || LIMIT_MESSAGE_METRICS.test(errorMessage))) {
     return 'The selected time range exceeds the maximum allowed duration. Please select a shorter time range.';
   } else {
