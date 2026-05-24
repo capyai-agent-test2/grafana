@@ -89,7 +89,7 @@ export const InfiniteScroll = ({
 
   useEffect(() => {
     // Logs have not changed, ignore effect
-    if (!prevLogs || prevLogs === logs || hasSameLogs(prevLogs, logs)) {
+    if (!prevLogs || prevLogs === logs || (infiniteLoaderState !== 'loading' && hasSameLogs(prevLogs, logs))) {
       return;
     }
     // New logs are from infinite scrolling
