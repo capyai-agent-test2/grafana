@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
@@ -47,6 +48,7 @@ type PublicDashboardServiceImpl struct {
 	ac                 accesscontrol.AccessControl
 	serviceWrapper     publicdashboards.ServiceWrapper
 	dashboardService   dashboards.DashboardService
+	libraryElements    libraryelements.Service
 	license            licensing.Licensing
 }
 
@@ -68,6 +70,7 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	serviceWrapper publicdashboards.ServiceWrapper,
 	dashboardService dashboards.DashboardService,
+	libraryElements libraryelements.Service,
 	license licensing.Licensing,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
@@ -81,6 +84,7 @@ func ProvideService(
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
 		dashboardService:   dashboardService,
+		libraryElements:    libraryElements,
 		license:            license,
 	}
 }
@@ -157,6 +161,10 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 			}
 		}
 		return nil, models.ErrInternalServerError.Errorf("FindDashboard: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
+	}
+
+	if err := pd.hydrateLibraryPanels(ctx, dash); err != nil {
+		return nil, models.ErrInternalServerError.Errorf("FindDashboard: failed to hydrate library panels for dashboardUid %s: %w", dashboardUid, err)
 	}
 
 	return dash, nil
