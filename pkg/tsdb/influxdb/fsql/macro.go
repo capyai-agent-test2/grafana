@@ -22,59 +22,41 @@ var macros = sqlutil.Macros{
 }
 
 func macroTimeGroup(query *sqlutil.Query, args []string) (string, error) {
-	if len(args) != 2 {
-		return "", fmt.Errorf("%w: expected 1 argument, received %d", sqlutil.ErrorBadArgumentCount, len(args))
+	if len(args) != 1 && len(args) != 2 {
+		return "", fmt.Errorf("%w: expected 1 or 2 arguments, received %d", sqlutil.ErrorBadArgumentCount, len(args))
 	}
 
-	column := args[0]
-
-	res := ""
-	switch args[1] {
-	case "minute":
-		res += fmt.Sprintf("datepart('minute', %s),", column)
-		fallthrough
-	case "hour":
-		res += fmt.Sprintf("datepart('hour', %s),", column)
-		fallthrough
-	case "day":
-		res += fmt.Sprintf("datepart('day', %s),", column)
-		fallthrough
-	case "month":
-		res += fmt.Sprintf("datepart('month', %s),", column)
-		fallthrough
-	case "year":
-		res += fmt.Sprintf("datepart('year', %s)", column)
+	interval, err := timeGroupInterval(query, args)
+	if err != nil {
+		return "", err
 	}
 
-	return res, nil
+	return dateBin(args[0], interval, ""), nil
 }
 
 func macroTimeGroupAlias(query *sqlutil.Query, args []string) (string, error) {
-	if len(args) != 2 {
-		return "", fmt.Errorf("%w: expected 1 argument, received %d", sqlutil.ErrorBadArgumentCount, len(args))
+	if len(args) != 1 && len(args) != 2 {
+		return "", fmt.Errorf("%w: expected 1 or 2 arguments, received %d", sqlutil.ErrorBadArgumentCount, len(args))
 	}
 
-	column := args[0]
-
-	res := ""
-	switch args[1] {
-	case "minute":
-		res += fmt.Sprintf("datepart('minute', %s) as %s_minute,", column, column)
-		fallthrough
-	case "hour":
-		res += fmt.Sprintf("datepart('hour', %s) as %s_hour,", column, column)
-		fallthrough
-	case "day":
-		res += fmt.Sprintf("datepart('day', %s) as %s_day,", column, column)
-		fallthrough
-	case "month":
-		res += fmt.Sprintf("datepart('month', %s) as %s_month,", column, column)
-		fallthrough
-	case "year":
-		res += fmt.Sprintf("datepart('year', %s) as %s_year", column, column)
+	interval, err := timeGroupInterval(query, args)
+	if err != nil {
+		return "", err
 	}
 
-	return res, nil
+	return dateBin(args[0], interval, fmt.Sprintf(" as %s_binned", args[0])), nil
+}
+
+func timeGroupInterval(query *sqlutil.Query, args []string) (string, error) {
+	if len(args) == 1 {
+		return macroInterval(query, nil)
+	}
+
+	if args[1] == "$__interval" {
+		return macroInterval(query, nil)
+	}
+
+	return args[1], nil
 }
 
 func macroInterval(query *sqlutil.Query, _ []string) (string, error) {
@@ -96,13 +78,15 @@ func macroDateBin(suffix string) sqlutil.MacroFunc {
 		if len(args) != 1 {
 			return "", fmt.Errorf("%w: expected 1 argument, received %d", sqlutil.ErrorBadArgumentCount, len(args))
 		}
-		column := args[0]
-		aliasing := func() string {
+		return dateBin(args[0], fmt.Sprintf("interval '%d second'", int64(query.Interval.Seconds())), func() string {
 			if suffix == "" {
 				return ""
 			}
-			return fmt.Sprintf(" as %s%s", column, suffix)
-		}()
-		return fmt.Sprintf("date_bin(interval '%d second', %s, timestamp '1970-01-01T00:00:00Z')%s", int64(query.Interval.Seconds()), column, aliasing), nil
+			return fmt.Sprintf(" as %s%s", args[0], suffix)
+		}()), nil
 	}
+}
+
+func dateBin(column string, interval string, alias string) string {
+	return fmt.Sprintf("date_bin(%s, %s, timestamp '1970-01-01T00:00:00Z')%s", interval, column, alias)
 }
