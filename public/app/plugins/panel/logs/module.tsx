@@ -1,10 +1,27 @@
-import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription, FieldType } from '@grafana/data';
+import {
+  PanelPlugin,
+  LogsSortOrder,
+  LogsDedupStrategy,
+  LogsDedupDescription,
+  FieldType,
+  type DataFrame,
+  DataFrameType,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { LogsPanel } from './LogsPanel';
 import { type Options } from './panelcfg.gen';
+
+function canRenderLogsFrame(frame: DataFrame) {
+  return (
+    frame.meta?.preferredVisualisationType === 'logs' ||
+    frame.meta?.type === DataFrameType.LogLines ||
+    (frame.fields.some((field) => field.type === FieldType.time) &&
+      frame.fields.some((field) => field.type === FieldType.string))
+  );
+}
 
 export const plugin = new PanelPlugin<Options>(LogsPanel)
   .setPanelOptions((builder, context) => {
@@ -258,6 +275,4 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
         defaultValue: LogsSortOrder.Descending,
       });
   })
-  .setSuggestionsSupplier(
-    showDefaultSuggestion((ds) => ds.hasData && ds.hasFieldType(FieldType.time) && ds.hasFieldType(FieldType.string))
-  );
+  .setSuggestionsSupplier(showDefaultSuggestion((ds) => ds.hasData && ds.rawFrames?.some(canRenderLogsFrame)));
