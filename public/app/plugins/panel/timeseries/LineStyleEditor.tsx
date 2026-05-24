@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type LineStyle } from '@grafana/schema';
-import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
+import { IconButton, Label, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 type LineFill = 'solid' | 'dash' | 'dot' | 'accessible';
 
@@ -42,6 +42,8 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
+  const dashPatternInputId = useId();
+  const dashPatternDescriptionId = useId();
   const lineFillOptions: Array<SelectableValue<LineFill>> = [
     {
       label: t('timeseries.line-style-editor.line-fill-options.label-solid', 'Solid'),
@@ -102,19 +104,36 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
       />
       {hasDashPattern && (
         <>
-          <Select
-            allowCustomValue={true}
-            options={options}
-            value={current}
-            width={20}
-            onChange={(v) => {
-              onChange({
-                ...value,
-                dash: parseText(v.value ?? ''),
-              });
-            }}
-            formatCreateLabel={(t) => `Segments: ${parseText(t).join(', ')}`}
-          />
+          <div>
+            <Label
+              htmlFor={dashPatternInputId}
+              description={
+                <span id={dashPatternDescriptionId}>
+                  {t(
+                    'timeseries.line-style-editor.description-enter-a-comma-separated-segment-list',
+                    'Enter a comma-separated segment list, for example 10, 10.'
+                  )}
+                </span>
+              }
+            >
+              {t('timeseries.line-style-editor.label-spacing', 'Spacing')}
+            </Label>
+            <Select
+              inputId={dashPatternInputId}
+              aria-describedby={dashPatternDescriptionId}
+              allowCustomValue={true}
+              options={options}
+              value={current}
+              width={20}
+              onChange={(v) => {
+                onChange({
+                  ...value,
+                  dash: parseText(v.value ?? ''),
+                });
+              }}
+              formatCreateLabel={(t) => `Segments: ${parseText(t).join(', ')}`}
+            />
+          </div>
           <div>
             &nbsp;
             <a

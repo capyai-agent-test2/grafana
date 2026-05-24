@@ -96,6 +96,7 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
   );
 
   const valueInputId = useId();
+  const scalarInputId = useId();
 
   const val = value ?? {};
   const mode = value?.mode ?? ScalarDimensionMode.Mod;
@@ -108,13 +109,17 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
             <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
-        <Combobox
-          aria-label={t('dimensions.scalar-dimension-editor.label', 'Scalar')}
-          value={selectedOption}
-          options={selectOptions}
-          onChange={onSelectChange}
-          noOptionsMessage={t('dimensions.scalar-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
-        />
+        <InlineFieldRow>
+          <InlineField label={t('dimensions.scalar-dimension-editor.label', 'Scalar')} grow={true} htmlFor={scalarInputId}>
+            <Combobox
+              id={scalarInputId}
+              value={selectedOption}
+              options={selectOptions}
+              onChange={onSelectChange}
+              noOptionsMessage={t('dimensions.scalar-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
+            />
+          </InlineField>
+        </InlineFieldRow>
       </div>
       <div className={styles.range}>
         {isFixed && (
