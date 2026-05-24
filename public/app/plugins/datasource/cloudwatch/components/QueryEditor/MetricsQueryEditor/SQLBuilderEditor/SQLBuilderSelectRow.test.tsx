@@ -162,4 +162,23 @@ describe('Cloudwatch SQLBuilderSelectRow', () => {
       accountId: '123456789012',
     });
   });
+
+  it('Should ignore accountId during metric validation when cross-account querying is disabled', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = false;
+    const queryWithPersistedAccount = { ...query, accountId: '123456789012' };
+
+    datasource.resources.getMetrics = jest.fn().mockResolvedValue(metrics);
+
+    await act(async () => {
+      render(<SQLBuilderSelectRow {...baseProps} query={queryWithPersistedAccount} />);
+    });
+
+    const namespaceSelect = screen.getByLabelText('Namespace');
+    await selectOptionInTest(namespaceSelect, 'n2');
+
+    expect(datasource.resources.getMetrics).toHaveBeenCalledWith({
+      namespace: 'n2',
+      region: queryWithPersistedAccount.region,
+    });
+  });
 });

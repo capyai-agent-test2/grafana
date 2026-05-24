@@ -75,11 +75,17 @@ const SQLBuilderSelectRow = ({ datasource, query, onQueryChange }: SQLBuilderSel
 
   const validateMetricName = async (query: CloudWatchMetricsQuery) => {
     let { region, sql, namespace, accountId } = query;
-    await datasource.resources.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
-      if (!result.some((metric) => metric.value === metricName)) {
-        sql = removeMetricName(query).sql;
-      }
-    });
+    await datasource.resources
+      .getMetrics({
+        namespace,
+        region,
+        ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId }),
+      })
+      .then((result: Array<SelectableValue<string>>) => {
+        if (!result.some((metric) => metric.value === metricName)) {
+          sql = removeMetricName(query).sql;
+        }
+      });
     return { ...query, sql };
   };
 

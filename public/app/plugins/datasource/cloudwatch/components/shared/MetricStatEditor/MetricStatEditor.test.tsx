@@ -250,6 +250,25 @@ describe('MetricStatEditor', () => {
         { ...propsNamespaceMetrics.metricStat, metricName: 'm1', namespace: 'n2' },
       ]);
     });
+
+    it('should ignore accountId during metric validation when cross-account querying is disabled', async () => {
+      config.featureToggles.cloudWatchCrossAccountQuerying = false;
+      propsNamespaceMetrics.metricStat.namespace = 'n1';
+      propsNamespaceMetrics.metricStat.metricName = 'm1';
+      propsNamespaceMetrics.metricStat.accountId = '123456789012';
+
+      await act(async () => {
+        render(<MetricStatEditor {...propsNamespaceMetrics} />);
+      });
+
+      const namespaceSelect = screen.getByLabelText('Namespace');
+      await waitFor(() => selectEvent.select(namespaceSelect, 'n2', { container: document.body }));
+
+      expect(propsNamespaceMetrics.datasource.resources.getMetrics).toHaveBeenCalledWith({
+        namespace: 'n2',
+        region: propsNamespaceMetrics.metricStat.region,
+      });
+    });
   });
 
   describe('metric value', () => {
