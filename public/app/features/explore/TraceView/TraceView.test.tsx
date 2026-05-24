@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { type DataFrame, MutableDataFrame } from '@grafana/data';
+import { type DataFrame, locationUtil, MutableDataFrame, serializeStateToUrlParam, toURLRange } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
-import { TraceView } from './TraceView';
+import { mapFocusSpanLinkToExplore, TraceView } from './TraceView';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
@@ -145,6 +145,43 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+
+  it('includes the current time range in focus span links', () => {
+    const timeRange = mockTimeRange();
+    const datasource = { uid: 'tempo-uid', name: 'Tempo' };
+    const query = { refId: 'A', queryType: 'traceql', query: 'old-trace' };
+
+    const link = mapFocusSpanLinkToExplore({
+      traceId: 'trace-123',
+      spanId: 'span-456',
+      query,
+      datasource,
+      timeRange,
+    });
+
+    expect(link.href).toBe(
+      locationUtil.assureBaseUrl(
+        `/explore?left=${encodeURIComponent(
+          serializeStateToUrlParam({
+            range: toURLRange(timeRange.raw),
+            datasource: datasource.uid,
+            queries: [
+              {
+                ...query,
+                query: 'trace-123',
+                datasource: { uid: datasource.uid },
+              },
+            ],
+            panelsState: {
+              trace: {
+                spanId: 'span-456',
+              },
+            },
+          })
+        )}`
+      )
+    );
   });
 });
 

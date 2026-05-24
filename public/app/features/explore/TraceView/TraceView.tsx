@@ -72,6 +72,48 @@ type Props = {
   hideHeaderDetails?: boolean;
 };
 
+type FocusSpanLinkOptions = {
+  traceId: string;
+  spanId: string;
+  query?: DataQuery;
+  datasource?: DataSourceApi;
+  timeRange?: TimeRange;
+};
+
+export function mapFocusSpanLinkToExplore(options: FocusSpanLinkOptions): LinkModel<Field> {
+  const { traceId, spanId, query, datasource, timeRange } = options;
+  const link: DataLink = {
+    title: t(
+      'explore.use-focus-span-link.create-focus-span-link.link.title.deep-link-to-this-span',
+      'Deep link to this span'
+    ),
+    url: '',
+    internal: {
+      datasourceUid: datasource?.uid!,
+      datasourceName: datasource?.name!,
+      query: {
+        ...query,
+        query: traceId,
+      },
+      panelsState: {
+        trace: {
+          spanId,
+        },
+      },
+    },
+  };
+
+  return mapInternalLinkToExplore({
+    link,
+    internalLink: link.internal!,
+    scopedVars: {},
+    range: timeRange,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    field: {} as Field,
+    replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+  });
+}
+
 export function TraceView(props: Props) {
   const {
     traceProp,
@@ -123,6 +165,7 @@ export function TraceView(props: Props) {
     exploreId: props.exploreId!,
     datasource,
     splitOpenFn: props.splitOpenFn!,
+    timeRange: props.timeRange,
   });
 
   const focusedSpanId = focusedSpanIdFromProps ?? focusedSpanIdExplore;
@@ -272,6 +315,7 @@ function useFocusSpanLink(options: {
   splitOpenFn: SplitOpen;
   refId?: string;
   datasource?: DataSourceApi;
+  timeRange?: TimeRange;
 }): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
   const panelState = useSelector((state) => state.explore.panes[options.exploreId]?.panelsState.trace);
   const focusedSpanId = panelState?.spanId;
@@ -290,26 +334,13 @@ function useFocusSpanLink(options: {
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
-    const link: DataLink = {
-      title: t(
-        'explore.use-focus-span-link.create-focus-span-link.link.title.deep-link-to-this-span',
-        'Deep link to this span'
-      ),
-      url: '',
-      internal: {
-        datasourceUid: options.datasource?.uid!,
-        datasourceName: options.datasource?.name!,
-        query: {
-          ...query,
-          query: traceId,
-        },
-        panelsState: {
-          trace: {
-            spanId,
-          },
-        },
-      },
-    };
+    const baseLink = mapFocusSpanLinkToExplore({
+      traceId,
+      spanId,
+      query,
+      datasource: options.datasource,
+      timeRange: options.timeRange,
+    });
 
     // Check if the link is to a different trace or not.
     // If it's the same trace, only update panel state with setFocusedSpanId (no navigation).
@@ -317,13 +348,9 @@ function useFocusSpanLink(options: {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const sameTrace = query?.queryType === 'traceql' && (query as TempoQuery).query === traceId;
 
-    return mapInternalLinkToExplore({
-      link,
-      internalLink: link.internal!,
-      scopedVars: {},
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      field: {} as Field,
-      onClickFn: sameTrace
+    return {
+      ...baseLink,
+      onClick: sameTrace
         ? () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
         : options.splitOpenFn
           ? () =>
@@ -340,10 +367,10 @@ function useFocusSpanLink(options: {
                     spanId,
                   },
                 },
+                range: options.timeRange,
               })
           : undefined,
-      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-    });
+    };
   };
 
   return [focusedSpanId, createFocusSpanLink];
