@@ -19,7 +19,7 @@ import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION }
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup } from './utils';
+import { estimateComboboxItemHeight, useComboboxVirtualMetrics } from './virtualization';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -237,6 +237,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     [onIsOpenChangeProp, updateOptions, resetSearch]
   );
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // Injects the group header for the first rendered item into the range to render.
   // Accepts the range that useVirtualizer wants to render, and then returns indexes
@@ -261,22 +262,25 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [filteredOptions, groupStartIndices]
   );
 
+  const { physicalToLogicalScale } = useComboboxVirtualMetrics(
+    filteredOptions,
+    scrollRef,
+    MENU_OPTION_HEIGHT,
+    MENU_OPTION_HEIGHT_DESCRIPTION
+  );
+
   const rowVirtualizer = useVirtualizer({
     count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) => {
-      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
-      const hasGroup = 'group' in filteredOptions[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
+      return (
+        estimateComboboxItemHeight(
+          filteredOptions[index],
+          index > 0 ? filteredOptions[index - 1] : undefined,
+          MENU_OPTION_HEIGHT,
+          MENU_OPTION_HEIGHT_DESCRIPTION
+        ) * physicalToLogicalScale
+      );
     },
     getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
@@ -381,7 +385,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
+  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(filteredOptions, isOpen, scrollRef);
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;

@@ -13,6 +13,7 @@ import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
+import { estimateComboboxItemHeight, getAdjustedVirtualRowOffset, useComboboxVirtualMetrics } from './virtualization';
 
 export const VIRTUAL_OVERSCAN_ITEMS = 4;
 
@@ -42,23 +43,25 @@ export const ComboboxList = <T extends string | number>({
   noOptionsMessage,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
+  const { physicalTotalSize, physicalToLogicalScale } = useComboboxVirtualMetrics(
+    options,
+    scrollRef,
+    MENU_OPTION_HEIGHT,
+    MENU_OPTION_HEIGHT_DESCRIPTION
+  );
 
   const estimateSize = useCallback(
     (index: number) => {
-      const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
-      const hasDescription = 'description' in options[index];
-      const hasGroup = 'group' in options[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
+      return (
+        estimateComboboxItemHeight(
+          options[index],
+          index > 0 ? options[index - 1] : undefined,
+          MENU_OPTION_HEIGHT,
+          MENU_OPTION_HEIGHT_DESCRIPTION
+        ) * physicalToLogicalScale
+      );
     },
-    [options]
+    [options, physicalToLogicalScale]
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -78,7 +81,7 @@ export const ComboboxList = <T extends string | number>({
 
   return (
     <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
-      <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+      <div style={{ height: physicalTotalSize }} className={styles.menuUlContainer}>
         {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
           const item = options[virtualRow.index];
           const startingNewGroup = isNewGroup(item, options[virtualRow.index - 1]);
@@ -102,8 +105,12 @@ export const ComboboxList = <T extends string | number>({
               key={item.value}
               className={styles.listItem}
               style={{
-                height: virtualRow.size,
-                transform: `translateY(${virtualRow.start}px)`,
+                height: virtualRow.size / physicalToLogicalScale,
+                transform: `translateY(${getAdjustedVirtualRowOffset(
+                  virtualRow.start,
+                  rowVirtualizer.scrollOffset,
+                  physicalToLogicalScale
+                )}px)`,
               }}
             >
               {/* Group header */}

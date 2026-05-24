@@ -1,5 +1,5 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
-import { useMemo, useRef, useState } from 'react';
+import { type RefObject, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -31,10 +31,15 @@ const ICON_WIDTH = 28;
 // MessageRow uses Box padding={2} = theme.spacing(2) = 16px each side
 const MESSAGE_ROW_PADDING = 32;
 
-export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
+export const useComboboxFloat = (
+  items: Array<ComboboxOption<string | number>>,
+  isOpen: boolean,
+  externalScrollRef?: RefObject<HTMLDivElement | null>
+) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const internalScrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = externalScrollRef ?? internalScrollRef;
   const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number }>({
     width: 0,
     height: 0,
