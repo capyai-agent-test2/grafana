@@ -114,6 +114,23 @@ describe('config from data', () => {
     expect(thresholdConfig?.value).toBe(50);
   });
 
+  it('Sorts threshold steps regardless of config field order', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [
+        { fieldName: 'Max', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'red' } } },
+        { fieldName: 'Min', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'orange' } } },
+      ],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].config.thresholds?.steps).toEqual([
+      { value: 5, color: 'orange' },
+      { value: 50, color: 'red' },
+    ]);
+  });
+
   it('With custom matcher and displayName mapping', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
