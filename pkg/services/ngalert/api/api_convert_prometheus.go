@@ -953,5 +953,5 @@ func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body inte
 		}
 	}
 
-	return response.YAML(status, body)
+	return yamlResponse(status, body)
 }
