@@ -203,7 +203,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 
 	expPanels := map[string]struct{}{
 		"alertlist":      {},
-		"annolist":       {},
 		"barchart":       {},
 		"bargauge":       {},
 		"canvas":         {},

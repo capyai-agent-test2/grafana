@@ -639,27 +639,6 @@
       "type": "table"
     },
     {
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 53
-      },
-      "id": 10,
-      "options": {
-        "limit": 10,
-        "navigateAfter": "10m",
-        "navigateBefore": "10m",
-        "onlyFromThisDashboard": false,
-        "onlyInTimeRange": false,
-        "showTags": true,
-        "showTime": true,
-        "showUser": true
-      },
-      "title": "Annotation list",
-      "type": "annolist"
-    },
-    {
       "fieldConfig": {
         "defaults": {
           "color": {

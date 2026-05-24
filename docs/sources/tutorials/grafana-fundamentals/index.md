@@ -335,7 +335,7 @@ Manually annotating your dashboard is fine for those single events. For regularl
    {filename="/var/log/tns-app.log"} |= "error"
    ```
 
-1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
+1. Click **Apply**. Grafana adds your new annotation to the dashboard.
 1. Click your dashboard name to return to your dashboard.
 1. At the top of your dashboard, there is now a toggle to display the results of the newly created annotation query. Press it if it's not already enabled.
 1. Click the **Save dashboard** (disk) icon to save the changes.

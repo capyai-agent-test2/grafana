@@ -3857,43 +3857,6 @@
       "label-stat": "İstatistik"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Filtreyi kaldır: {{filterToRemove}}",
-      "filter": "Filtre:",
-      "loading": "Yükleniyor...",
-      "no-annotations-found": "Ek açıklama bulunamadı"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Oluşturan:<br/> {{email}}"
-    },
-    "category-annotation-query": "Ek açıklama sorgusu",
-    "category-display": "Ekran",
-    "category-link-behaviour": "Bağlantı davranışı",
-    "description-tags": "Ek açıklama etiketlerini eşleştir",
-    "link-target-options": {
-      "label-dashboard": "Pano",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Sınırlama",
-    "name-link-target": "Bağlantı hedefi",
-    "name-query-filter": "Sorgu filtresi",
-    "name-show-tags": "Etiketleri göster",
-    "name-show-time": "Zamanı göster",
-    "name-show-user": "Kullanıcıyı göster",
-    "name-tags": "Etiketler",
-    "name-time-after": "Şu tarihten sonra:",
-    "name-time-before": "Şu tarihten önce:",
-    "name-time-range": "Zaman aralığı",
-    "query-filter-options": {
-      "label-all-dashboards": "Tüm panolar",
-      "label-this-dashboard": "Bu pano"
-    },
-    "time-range-options": {
-      "label-none": "Yok",
-      "label-this-dashboard": "Bu pano"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Ek açıklama",

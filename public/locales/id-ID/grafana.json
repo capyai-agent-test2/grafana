@@ -3835,43 +3835,6 @@
       "label-stat": "Stat"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Hapus filter: {{filterToRemove}}",
-      "filter": "Filter:",
-      "loading": "Memuat...",
-      "no-annotations-found": "Tidak ada anotasi yang ditemukan"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Dibuat oleh:<br/> {{email}}"
-    },
-    "category-annotation-query": "Kueri anotasi",
-    "category-display": "Tampilan",
-    "category-link-behaviour": "Perilaku tautan",
-    "description-tags": "Cocokkan tag anotasi",
-    "link-target-options": {
-      "label-dashboard": "Dasbor",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Batas",
-    "name-link-target": "Target tautan",
-    "name-query-filter": "Filter kueri",
-    "name-show-tags": "Tampilkan tag",
-    "name-show-time": "Tampilkan Waktu",
-    "name-show-user": "Tampilkan pengguna",
-    "name-tags": "Tag",
-    "name-time-after": "Waktu setelah",
-    "name-time-before": "Waktu sebelum",
-    "name-time-range": "Rentang waktu",
-    "query-filter-options": {
-      "label-all-dashboards": "Semua dasbor",
-      "label-this-dashboard": "Dasbor ini"
-    },
-    "time-range-options": {
-      "label-none": "Tidak ada",
-      "label-this-dashboard": "Dasbor ini"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Anotasi",

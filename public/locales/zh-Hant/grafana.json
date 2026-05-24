@@ -3835,43 +3835,6 @@
       "label-stat": "統計資料"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "移除篩選條件：{{filterToRemove}}",
-      "filter": "篩選條件：",
-      "loading": "正在載入…",
-      "no-annotations-found": "找不到註解"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "建立者：<br/> {{email}}"
-    },
-    "category-annotation-query": "註解查詢",
-    "category-display": "顯示",
-    "category-link-behaviour": "連結行為",
-    "description-tags": "匹配註解標籤",
-    "link-target-options": {
-      "label-dashboard": "儀表板",
-      "label-panel": "面板"
-    },
-    "name-limit": "限制",
-    "name-link-target": "連結目標",
-    "name-query-filter": "查詢篩選條件",
-    "name-show-tags": "顯示標籤",
-    "name-show-time": "顯示時間",
-    "name-show-user": "顯示使用者",
-    "name-tags": "標籤",
-    "name-time-after": "下列時間之後的時間",
-    "name-time-before": "下列時間之前的時間",
-    "name-time-range": "時間範圍",
-    "query-filter-options": {
-      "label-all-dashboards": "所有儀表板",
-      "label-this-dashboard": "此儀表板"
-    },
-    "time-range-options": {
-      "label-none": "無",
-      "label-this-dashboard": "此儀表板"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "註解",

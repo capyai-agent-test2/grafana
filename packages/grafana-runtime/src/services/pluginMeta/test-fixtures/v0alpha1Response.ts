@@ -683,63 +683,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'annolist',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'annolist',
-          type: 'panel',
-          name: 'Annotations list',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/panel/annolist/img/icn-annolist-panel.svg',
-              large: 'app/plugins/panel/annolist/img/icn-annolist-panel.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'List annotations',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/annotations/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          skipDataQuery: true,
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/annolist',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/panel/annolist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'barchart',
         namespace: 'default',
       },

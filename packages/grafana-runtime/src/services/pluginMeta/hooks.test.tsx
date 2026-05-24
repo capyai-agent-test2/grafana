@@ -473,7 +473,6 @@ describe('useListedPanelPluginIds', () => {
     expect(result.current.value?.some((p) => hidden.includes(p))).toEqual(false);
     expect(result.current.value).toEqual([
       'alertlist',
-      'annolist',
       'barchart',
       'bargauge',
       'candlestick',

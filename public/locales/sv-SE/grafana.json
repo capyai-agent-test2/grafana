@@ -3857,43 +3857,6 @@
       "label-stat": "Stat"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Ta bort filter: {{filterToRemove}}",
-      "filter": "Filter:",
-      "loading": "Laddar …",
-      "no-annotations-found": "Inga kommentarer hittades"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Skapat av:<br/> {{email}}"
-    },
-    "category-annotation-query": "Kommenteringsfråga",
-    "category-display": "Display",
-    "category-link-behaviour": "Länkbeteende",
-    "description-tags": "Matcha kommentarstaggar",
-    "link-target-options": {
-      "label-dashboard": "Instrumentpanel",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Gräns",
-    "name-link-target": "Länkmål",
-    "name-query-filter": "Frågefilter",
-    "name-show-tags": "Visa taggar",
-    "name-show-time": "Visa tid",
-    "name-show-user": "Visa användare",
-    "name-tags": "Taggar",
-    "name-time-after": "Tid efter",
-    "name-time-before": "Tid före",
-    "name-time-range": "Tidsintervall",
-    "query-filter-options": {
-      "label-all-dashboards": "Alla kontrollpaneler",
-      "label-this-dashboard": "Den här instrumentpanelen"
-    },
-    "time-range-options": {
-      "label-none": "Inget",
-      "label-this-dashboard": "Den här instrumentpanelen"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Kommentar",

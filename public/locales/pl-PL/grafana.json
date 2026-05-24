@@ -3901,43 +3901,6 @@
       "label-stat": "Statystyka"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "Usuń filtr: {{filterToRemove}}",
-      "filter": "Filtr:",
-      "loading": "Ładowanie…",
-      "no-annotations-found": "Nie znaleziono adnotacji"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "Utworzone przez:<br/> {{email}}"
-    },
-    "category-annotation-query": "Zapytanie dotyczące adnotacji",
-    "category-display": "Wyświetl",
-    "category-link-behaviour": "Zachowanie linku",
-    "description-tags": "Dopasuj tagi adnotacji",
-    "link-target-options": {
-      "label-dashboard": "Pulpit",
-      "label-panel": "Panel"
-    },
-    "name-limit": "Limit",
-    "name-link-target": "Cel powiązania",
-    "name-query-filter": "Filtr zapytań",
-    "name-show-tags": "Pokaż tagi",
-    "name-show-time": "Pokaż czas",
-    "name-show-user": "Pokaż użytkownika",
-    "name-tags": "Tagi",
-    "name-time-after": "Czas po",
-    "name-time-before": "Czas przed",
-    "name-time-range": "Zakres czasu",
-    "query-filter-options": {
-      "label-all-dashboards": "Wszystkie pulpity",
-      "label-this-dashboard": "Ten pulpit"
-    },
-    "time-range-options": {
-      "label-none": "Brak",
-      "label-this-dashboard": "Ten pulpit"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "Adnotacja",

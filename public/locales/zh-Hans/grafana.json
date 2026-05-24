@@ -3835,43 +3835,6 @@
       "label-stat": "统计"
     }
   },
-  "annolist": {
-    "anno-list-panel": {
-      "aria-label-remove-filter": "移除筛选器：{{filterToRemove}}",
-      "filter": "筛选器：",
-      "loading": "加载中...",
-      "no-annotations-found": "未找到注释"
-    },
-    "annotation-list-item": {
-      "tooltip-created-by": "创建者：<br/>{{email}}"
-    },
-    "category-annotation-query": "注释查询",
-    "category-display": "显示",
-    "category-link-behaviour": "关联行为",
-    "description-tags": "匹配注释标记",
-    "link-target-options": {
-      "label-dashboard": "数据面板",
-      "label-panel": "面板"
-    },
-    "name-limit": "限制",
-    "name-link-target": "关联目标",
-    "name-query-filter": "查询过滤条件",
-    "name-show-tags": "显示标记",
-    "name-show-time": "显示时间",
-    "name-show-user": "显示用户",
-    "name-tags": "标签",
-    "name-time-after": "此后的时间",
-    "name-time-before": "此前的时间",
-    "name-time-range": "时间范围",
-    "query-filter-options": {
-      "label-all-dashboards": "所有数据面板",
-      "label-this-dashboard": "此数据面板"
-    },
-    "time-range-options": {
-      "label-none": "无",
-      "label-this-dashboard": "此数据面板"
-    }
-  },
   "annotations": {
     "annotation-field-mapper": {
       "annotation": "注释",
