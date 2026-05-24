@@ -3,18 +3,22 @@ import { t } from '@grafana/i18n';
 
 import { type SQLQuery } from '../types';
 
-export function getColumnsWithIndices(query: SQLQuery, fields: SelectableValue[]): SelectableValue[] {
+export function getColumnsWithIndices(
+  query: SQLQuery,
+  fields: SelectableValue[],
+  useIndexValue = false
+): SelectableValue[] {
   if (!fields || !query.sql?.columns) {
     return fields;
   }
 
   const options = query.sql.columns.map((c, i) => {
-    const value = c.name
+    const column = c.name
       ? `${c.name}(${c.parameters?.map((p) => p.name).join(', ')})`
       : c.parameters?.map((p) => p.name).join(', ');
     return {
-      value,
-      label: `${i + 1} - ${value}`,
+      value: useIndexValue ? `${i + 1}` : column,
+      label: `${i + 1} - ${column}`,
     };
   });
 
