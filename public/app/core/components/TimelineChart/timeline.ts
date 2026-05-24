@@ -49,6 +49,7 @@ export interface TimelineCoreOptions {
   hasMappedNull: (seriesIdx: number) => boolean;
   hasMappedNaN: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: unknown) => string;
+  getValueMergeKey?: (seriesIdx: number, value: unknown) => unknown;
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: unknown) => string;
@@ -98,6 +99,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     alignValue = 'left',
     getTimeRange,
     getValueColor,
+    getValueMergeKey = (_, value) => value,
     getFieldConfig,
     hoverMulti,
   } = opts;
@@ -236,11 +238,13 @@ export function getConfig(opts: TimelineCoreOptions) {
 
               if (shouldDrawY) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
+                const mergeKey = mergeValues ? getValueMergeKey(sidx, yVal) : yVal;
 
                 let nextIx = ix;
                 while (
                   ++nextIx < dataY.length &&
-                  (dataY[nextIx] === undefined || (mergeValues && dataY[nextIx] === yVal))
+                  (dataY[nextIx] === undefined ||
+                    (mergeValues && getValueMergeKey(sidx, dataY[nextIx]) === mergeKey))
                 ) {}
 
                 // to now (not to end of chart)

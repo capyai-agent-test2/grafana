@@ -116,6 +116,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
     return FALLBACK_COLOR;
   };
+  const getValueMergeKeyFn = (seriesIdx: number, value: unknown) => {
+    const field = frame.fields[seriesIdx];
+
+    if (field?.display) {
+      const disp = field.display(value);
+      return `${disp.text ?? ''}\u0000${disp.color ?? ''}`;
+    }
+
+    return value;
+  };
 
   const opts: TimelineCoreOptions = {
     mode: mode!,
@@ -136,6 +146,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,
     getValueColor: getValueColorFn,
+    getValueMergeKey: getValueMergeKeyFn,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
