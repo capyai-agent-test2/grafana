@@ -25,14 +25,17 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
     getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-    getInstanceSettings: () => ({
-      ...mockDS,
-      meta: {
-        ...mockDS.meta,
-        alerting: true,
-        mixed: true,
-      },
-    }),
+    getInstanceSettings: (dataSource?: { isMissingDatasource?: boolean } | string) =>
+      typeof dataSource === 'object' && dataSource?.isMissingDatasource
+        ? dataSource
+        : {
+            ...mockDS,
+            meta: {
+              ...mockDS.meta,
+              alerting: true,
+              mixed: true,
+            },
+          },
   }),
 }));
 
@@ -127,6 +130,35 @@ describe('QueryGroup', () => {
     renderScenario({});
     expect(await screen.findByText('MD = 100')).toBeInTheDocument();
     expect(await screen.findByText('Interval = 1m')).toBeInTheDocument();
+  });
+
+  it('renders unresolved datasource variables without swapping to the default datasource label', async () => {
+    const unresolvedVariable = {
+      ...mockDS,
+      uid: '${missingDatasource}',
+      name: '${missingDatasource}',
+      rawRef: { type: mockDS.type, uid: mockDS.uid },
+      isMissingDatasource: true,
+    };
+
+    renderScenario({
+      options: {
+        maxDataPoints: 100,
+        minInterval: '1m',
+        queries: [
+          {
+            datasource: unresolvedVariable,
+            refId: 'A',
+          },
+        ],
+        dataSource: unresolvedVariable,
+      },
+    });
+
+    expect(await screen.findByRole('textbox')).toHaveAttribute(
+      'placeholder',
+      `alertmanager - ${unresolvedVariable.uid} (variable not found)`
+    );
   });
 });
 

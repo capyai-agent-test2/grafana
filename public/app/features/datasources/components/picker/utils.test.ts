@@ -1,6 +1,6 @@
 import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
-import { isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
+import { dataSourceLabel, isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
 
 describe('isDataSourceMatch', () => {
   const dataSourceInstanceSettings = { uid: 'a' } as DataSourceInstanceSettings;
@@ -152,5 +152,31 @@ describe('matchDataSourceWithSearch', () => {
     dataSource.name = 'PostgreSQL DB';
     const searchTerm = 'postgre';
     expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
+  });
+});
+
+describe('dataSourceLabel', () => {
+  it('shows missing datasource variables with the datasource type label', () => {
+    expect(
+      dataSourceLabel({
+        uid: '${ds}',
+        name: '${ds}',
+        type: 'prometheus',
+        meta: { name: 'Prometheus' },
+        isMissingDatasource: true,
+      } as unknown as DataSourceInstanceSettings)
+    ).toBe('Prometheus - ${ds} (variable not found)');
+  });
+
+  it('shows missing datasource uids without silently replacing them', () => {
+    expect(
+      dataSourceLabel({
+        uid: 'missing-uid',
+        name: 'missing-uid',
+        type: 'prometheus',
+        meta: { name: 'Prometheus' },
+        isMissingDatasource: true,
+      } as unknown as DataSourceInstanceSettings)
+    ).toBe('Prometheus - (not found)');
   });
 });
