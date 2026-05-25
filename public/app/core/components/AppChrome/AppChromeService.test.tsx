@@ -1,3 +1,5 @@
+import { KioskMode } from 'app/types/dashboard';
+
 import { AppChromeService } from './AppChromeService';
 
 describe('AppChromeService', () => {
@@ -37,5 +39,15 @@ describe('AppChromeService', () => {
       pageNav: { text: 'test', url: 'A', children: [{ text: 'child', active: true }] },
     });
     expect(stateChanges).toBe(4);
+  });
+
+  it('clears kiosk mode when the kiosk query param is removed', () => {
+    const chromeService = new AppChromeService();
+
+    chromeService.setKioskModeFromUrl(true);
+    expect(chromeService.state.getValue().kioskMode).toBe(KioskMode.Full);
+
+    chromeService.setKioskModeFromUrl(null);
+    expect(chromeService.state.getValue().kioskMode).toBeNull();
   });
 });
