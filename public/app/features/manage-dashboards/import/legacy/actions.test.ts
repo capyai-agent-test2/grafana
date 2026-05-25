@@ -1138,6 +1138,7 @@ describe('processV2Datasources', () => {
             ...defaultPanelSpec(),
             id: 1,
             title: 'Panel A',
+            data: undefined,
           },
         },
       },
@@ -1159,6 +1160,51 @@ describe('processV2Datasources', () => {
     })
       .givenThunk(processV2Datasources)
       .whenThunkIsDispatched(dashboardWithoutQueryGroup);
+
+    const setInputsAction = dispatchedActions.find((action) => action.type === 'manageDashboards/setInputs');
+    expect(setInputsAction).toBeDefined();
+    expect(setInputsAction?.payload).toEqual([]);
+  });
+
+  it('Should ignore malformed query entries inside query groups', async () => {
+    const dashboardWithMalformedQuery: DashboardV2Spec = {
+      ...defaultDashboardV2Spec(),
+      elements: {
+        'element-panel-a': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel A',
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                transformations: [],
+                queryOptions: {},
+                queries: [{} as never],
+              },
+            },
+          },
+        },
+      },
+      variables: [],
+      annotations: [],
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [],
+        },
+      },
+    };
+
+    const dispatchedActions = await thunkTester({
+      thunk: processV2Datasources,
+      initialState: {
+        inputs: [],
+      },
+    })
+      .givenThunk(processV2Datasources)
+      .whenThunkIsDispatched(dashboardWithMalformedQuery);
 
     const setInputsAction = dispatchedActions.find((action) => action.type === 'manageDashboards/setInputs');
     expect(setInputsAction).toBeDefined();
