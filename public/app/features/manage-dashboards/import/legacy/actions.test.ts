@@ -182,6 +182,15 @@ describe('validateDashboardModel', () => {
       })
     ).toBe(true);
   });
+
+  it('Should not return true for empty v1 dashboard resources', () => {
+    expect(
+      validateDashboardModel({
+        kind: 'Dashboard',
+        spec: {},
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
 });
 
 describe('processDashboard', () => {

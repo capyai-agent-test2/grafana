@@ -38,7 +38,7 @@ export const validateDashboardJson = (json: string) => {
 export const validateDashboardModel = (dashboard: unknown) => {
   if (
     isDashboardV1Spec(dashboard) ||
-    isDashboardV1Resource(dashboard) ||
+    (isDashboardV1Resource(dashboard) && isDashboardV1Spec(dashboard.spec)) ||
     isDashboardV2Spec(dashboard) ||
     isDashboardV2Resource(dashboard)
   ) {
