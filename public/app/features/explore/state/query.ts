@@ -1330,6 +1330,24 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     return { ...state };
   }
 
+  if (Array.isArray(request.targets)) {
+    const datasourceMatchesCurrentQueries = request.targets.every((target) => {
+      const currentQuery = state.queries.find((query) => query.refId === target.refId);
+      const currentDatasource = currentQuery?.datasource ?? state.datasourceInstance?.getRef();
+      const targetDatasource = target.datasource;
+
+      if (!currentDatasource || !targetDatasource) {
+        return true;
+      }
+
+      return currentDatasource.uid === targetDatasource.uid && currentDatasource.type === targetDatasource.type;
+    });
+
+    if (!datasourceMatchesCurrentQueries) {
+      return { ...state };
+    }
+  }
+
   return {
     ...state,
     queriesChangedIndexAtRun: state.queriesChangedIndex,

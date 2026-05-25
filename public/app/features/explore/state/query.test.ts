@@ -1247,6 +1247,43 @@ describe('reducer', () => {
       ).toBeUndefined();
     });
   });
+  describe('stale query responses', () => {
+    it('ignores responses from a previous datasource after switching datasources', () => {
+      const state = queryReducer(
+        {
+          ...makeExplorePaneState(),
+          datasourceInstance: datasources[1],
+          queries: [{ refId: 'A', datasource: datasources[1].getRef() }],
+        } as ExploreItemState,
+        queryStreamUpdatedAction({
+          exploreId: 'left',
+          response: {
+            request: {
+              targets: [{ refId: 'A', datasource: datasources[0].getRef() }],
+            },
+            state: LoadingState.Done,
+            series: [],
+            timeRange: testRange,
+            graphFrames: [],
+            logsFrames: [],
+            traceFrames: [],
+            nodeGraphFrames: [],
+            flameGraphFrames: [],
+            customFrames: [],
+            tableFrames: [],
+            rawPrometheusFrames: [],
+            rawPrometheusResult: null,
+            graphResult: null,
+            logsResult: null,
+            tableResult: [{ columns: [], rows: [], type: 'table' }],
+          } as unknown as QueryEndedPayload['response'],
+        })
+      );
+
+      expect(state.tableResult).toBeNull();
+      expect(state.queryResponse.state).toBe(LoadingState.NotStarted);
+    });
+  });
   describe('clear live logs', () => {
     it('should clear current log rows', async () => {
       const logRows = makeLogs(10);
