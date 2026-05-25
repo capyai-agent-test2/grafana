@@ -24,6 +24,7 @@ import {
 } from '@grafana/schema';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
+import { extractConfigFromQuery } from '../../../features/transformers/configFromQuery/configFromQuery';
 import type { BarsOptions } from './bars';
 import * as barsModule from './bars';
 import type { Options } from './panelcfg.gen';
@@ -209,6 +210,61 @@ describe('BarChart utils', () => {
         expect(c0).toEqual('#73BF69');
         expect(c1).toEqual('#FADE2A');
         expect(c2).toEqual('#F2495C');
+      });
+
+      it('sets getColor from dynamic threshold colors applied by config from query results', () => {
+        const captured: { getColor?: BarsOptions['getColor'] } = {};
+
+        withGetConfigSpy(
+          (opts) => {
+            captured.getColor = opts.getColor;
+          },
+          () => {
+            const configFrame = createDataFrame({
+              refId: 'config',
+              fields: [
+                { name: 'Max', type: FieldType.number, values: [50] },
+                { name: 'Color', type: FieldType.string, values: ['blue'] },
+              ],
+            });
+
+            const series = createFrameWithThresholds({
+              values: [10, 50, 90],
+              steps: [
+                { value: 0, color: 'green' },
+                { value: 50, color: 'yellow' },
+              ],
+            });
+
+            const transformed = extractConfigFromQuery(
+              {
+                configRefId: 'config',
+                mappings: [
+                  { fieldName: 'Max', handlerKey: 'threshold1' },
+                  { fieldName: 'Color', handlerKey: 'threshold1.color' },
+                ],
+              },
+              [configFrame, series]
+            )[0];
+
+            applyBarChartFieldDefaults(transformed);
+
+            const info = prepBarChartSeries([transformed]);
+            prepConfig(
+              createPrepConfigOpts({
+                series: info.series,
+                totalSeries: 1,
+              })
+            ).builder.getConfig();
+          }
+        );
+
+        const getColor = captured.getColor;
+        if (!getColor) {
+          throw new Error('Expected getColor to be defined');
+        }
+
+        expect(getColor(1, 1, 50)).toEqual('#5794F2');
       });
 
       it('sets getColor from per-bar color when field has value mappings with colors', () => {
