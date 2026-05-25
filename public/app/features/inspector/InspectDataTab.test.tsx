@@ -219,6 +219,12 @@ describe('InspectDataTab', () => {
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
       const props = createProps({
         options: {
+          withTransforms: false,
+          withFieldConfig: false,
+        },
+      });
+      const transformedProps = createProps({
+        options: {
           withTransforms: true,
           withFieldConfig: false,
         },
@@ -226,10 +232,14 @@ describe('InspectDataTab', () => {
 
       const { rerender } = render(<InspectDataTab {...props} />);
 
-      rerender(<InspectDataTab {...props} />);
+      rerender(<InspectDataTab {...transformedProps} />);
 
       expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
-      expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('Maximum update depth exceeded'));
+      expect(
+        consoleError.mock.calls.some((call) =>
+          call.some((arg) => typeof arg === 'string' && arg.includes('Maximum update depth exceeded'))
+        )
+      ).toBe(false);
 
       consoleError.mockRestore();
     });
