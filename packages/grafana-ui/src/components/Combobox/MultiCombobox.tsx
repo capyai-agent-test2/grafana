@@ -270,7 +270,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
-  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+  const { inputRef: containerRef, floatingRef, floatStyles } = useComboboxFloat(options, isOpen);
   const multiStyles = useStyles2(
     getMultiComboboxStyles,
     isOpen,
@@ -389,7 +390,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               options={options}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItems}
-              scrollRef={scrollRef}
+              scrollElement={scrollElement}
+              setScrollElement={setScrollElement}
               getItemProps={getItemProps}
               enableAllOption={enableAllOption}
               isMultiSelect={true}

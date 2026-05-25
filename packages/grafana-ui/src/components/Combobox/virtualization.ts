@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
@@ -88,39 +88,39 @@ export function getAdjustedVirtualRowOffset(
   return logicalStart - logicalScrollOffset + physicalScrollOffset;
 }
 
-export function useComboboxViewportSize(scrollRef: RefObject<HTMLDivElement | null>) {
+export function useComboboxViewportSize(scrollElement: HTMLDivElement | null) {
   const [viewportSize, setViewportSize] = useState(0);
 
   useEffect(() => {
-    const element = scrollRef.current;
-    if (!element) {
+    if (!scrollElement) {
+      setViewportSize(0);
       return;
     }
 
     const updateViewportSize = () => {
-      setViewportSize(element.clientHeight);
+      setViewportSize(scrollElement.clientHeight);
     };
 
     updateViewportSize();
 
     const resizeObserver = new ResizeObserver(updateViewportSize);
-    resizeObserver.observe(element);
+    resizeObserver.observe(scrollElement);
 
     return () => {
       resizeObserver.disconnect();
     };
-  }, [scrollRef]);
+  }, [scrollElement]);
 
   return viewportSize;
 }
 
 export function useComboboxVirtualMetrics<T extends string | number>(
   options: Array<ComboboxOption<T>>,
-  scrollRef: RefObject<HTMLDivElement | null>,
+  scrollElement: HTMLDivElement | null,
   optionHeight: number,
   optionWithDescriptionHeight: number
 ) {
-  const viewportSize = useComboboxViewportSize(scrollRef);
+  const viewportSize = useComboboxViewportSize(scrollElement);
 
   const logicalTotalSize = useMemo(
     () =>

@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo } from 'react';
+import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -237,7 +237,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
     [onIsOpenChangeProp, updateOptions, resetSearch]
   );
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
 
   // Injects the group header for the first rendered item into the range to render.
   // Accepts the range that useVirtualizer wants to render, and then returns indexes
@@ -264,14 +264,14 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const { physicalToLogicalScale } = useComboboxVirtualMetrics(
     filteredOptions,
-    scrollRef,
+    scrollElement,
     MENU_OPTION_HEIGHT,
     MENU_OPTION_HEIGHT_DESCRIPTION
   );
 
   const rowVirtualizer = useVirtualizer({
     count: filteredOptions.length,
-    getScrollElement: () => scrollRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize: (index: number) => {
       return (
         estimateComboboxItemHeight(
@@ -385,7 +385,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     },
   });
 
-  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(filteredOptions, isOpen, scrollRef);
+  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(filteredOptions, isOpen);
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
@@ -470,7 +470,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               options={filteredOptions}
               highlightedIndex={highlightedIndex}
               selectedItems={selectedItem ? [selectedItem] : []}
-              scrollRef={scrollRef}
+              scrollElement={scrollElement}
+              setScrollElement={setScrollElement}
               getItemProps={getItemProps}
               error={asyncError}
               noOptionsMessage={noOptionsMessage}

@@ -21,7 +21,8 @@ interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
   highlightedIndex: number | null;
   selectedItems?: Array<ComboboxOption<T>>;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
+  scrollElement: HTMLDivElement | null;
+  setScrollElement: (element: HTMLDivElement | null) => void;
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
@@ -34,7 +35,8 @@ export const ComboboxList = <T extends string | number>({
   options,
   highlightedIndex,
   selectedItems = [],
-  scrollRef,
+  scrollElement,
+  setScrollElement,
   getItemProps,
   enableAllOption,
   isMultiSelect = false,
@@ -45,7 +47,7 @@ export const ComboboxList = <T extends string | number>({
   const styles = useStyles2(getComboboxStyles);
   const { physicalTotalSize, physicalToLogicalScale } = useComboboxVirtualMetrics(
     options,
-    scrollRef,
+    scrollElement,
     MENU_OPTION_HEIGHT,
     MENU_OPTION_HEIGHT_DESCRIPTION
   );
@@ -66,7 +68,7 @@ export const ComboboxList = <T extends string | number>({
 
   const rowVirtualizer = useVirtualizer({
     count: options.length,
-    getScrollElement: () => scrollRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize,
     getItemKey: (index: number) => options[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
@@ -80,7 +82,7 @@ export const ComboboxList = <T extends string | number>({
   const allItemsSelected = enableAllOption && options.length > 1 && selectedItems.length === options.length - 1;
 
   return (
-    <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
+    <ScrollContainer showScrollIndicators maxHeight="inherit" ref={setScrollElement} padding={0.5}>
       <div style={{ height: physicalTotalSize }} className={styles.menuUlContainer}>
         {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
           const item = options[virtualRow.index];
