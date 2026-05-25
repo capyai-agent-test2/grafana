@@ -42,6 +42,7 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
           </ol>
         </div>
       }
+      tooltipInteractive
     />
   );
 }
