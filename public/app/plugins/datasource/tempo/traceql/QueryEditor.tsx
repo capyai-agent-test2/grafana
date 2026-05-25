@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, InlineLabel, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, TextLink, useStyles2 } from '@grafana/ui';
 
 import { type TempoDatasource } from '../datasource';
 import { defaultQuery, type MyDataSourceOptions, type TempoQuery } from '../types';
@@ -43,12 +43,12 @@ export function QueryEditor(props: Props) {
   return (
     <>
       {inAlerting && alertingWarning}
-      <InlineLabel>
-        Build complex queries using TraceQL to select a list of traces.{' '}
+      <div className={styles.traceQlDescription} data-testid="traceql-description">
+        <span>Build complex queries using TraceQL to select a list of traces.</span>
         <TextLink external href="https://grafana.com/docs/tempo/latest/traceql/">
           Documentation
         </TextLink>
-      </InlineLabel>
+      </div>
       {!showCopyFromSearchButton && (
         <div className={styles.copyContainer}>
           <span>Continue editing the query from the Search tab?</span>
@@ -106,5 +106,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing(0.5, 1),
     fontSize: theme.typography.body.fontSize,
+  }),
+  traceQlDescription: css({
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 1),
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    minHeight: theme.spacing(theme.components.height.md),
   }),
 });
