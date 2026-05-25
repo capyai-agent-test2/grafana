@@ -66,12 +66,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     if (!this.props.data) {
-      this.setState({ transformedData: [] });
+      if (this.state.transformedData.length > 0) {
+        this.setState({ transformedData: [] });
+      }
       return;
     }
 
     if (this.props.options.withTransforms) {
-      this.setState({ transformedData: this.props.data });
+      if (prevProps.data !== this.props.data || !prevProps.options.withTransforms) {
+        this.setState({ transformedData: this.props.data });
+      }
       return;
     }
 
