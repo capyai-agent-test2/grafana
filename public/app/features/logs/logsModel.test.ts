@@ -50,6 +50,7 @@ import {
   logSeriesToLogsModel,
   queryLogsSample,
   queryLogsVolume,
+  STREAM_TRUNCATION_WARNING,
 } from './logsModel';
 
 const FROM = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
@@ -1245,6 +1246,58 @@ describe('dataFrameToLogsModel', () => {
       label: COMMON_LABELS,
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
+    });
+  });
+
+  it('should warn when a single query is truncated separately per stream', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T09:28:12.352440161Z', '2019-04-26T09:28:13.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['A1', 'A2', 'A3'],
+            labels: { filename: 'a.log' },
+          },
+        ],
+        meta: {
+          limit: 3,
+        },
+      }),
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:14.352440161Z', '2019-04-26T09:28:15.352440161Z', '2019-04-26T09:28:16.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['B1', 'B2', 'B3'],
+            labels: { filename: 'b.log' },
+          },
+        ],
+        meta: {
+          limit: 3,
+        },
+      }),
+    ];
+
+    const logsModel = dataFrameToLogsModel(series, 1, { from: 1556270591353, to: 1556289770991 });
+
+    expect(logsModel.meta).toHaveLength(1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: '',
+      value: `6 lines displayed — ${STREAM_TRUNCATION_WARNING}`,
+      kind: LogsMetaKind.String,
     });
   });
 

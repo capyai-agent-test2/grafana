@@ -52,6 +52,8 @@ import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 export const TOTAL_LABEL = 'Total lines';
+export const STREAM_TRUNCATION_WARNING =
+  'Line limit reached in at least one stream; displayed logs may be truncated between streams';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -226,7 +228,7 @@ export function dataFrameToLogsModel(
       logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
-        logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
+        logsModel.meta = adjustMetaInfo(logsModel, logSeries, visibleRangeMs, requestedRangeMs);
       }
     } else {
       logsModel.series = [];
@@ -550,11 +552,24 @@ export function logSeriesToLogsModel(
 }
 
 // Used to add additional information to Line limit meta info
-function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
+function hasStreamReachedLineLimit(logSeries: DataFrame[]): boolean {
+  return logSeries.some((series) => {
+    const limit = series.meta?.custom?.limit ?? series.meta?.limit;
+    return typeof limit === 'number' && limit > 0 && series.length >= limit;
+  });
+}
+
+function adjustMetaInfo(
+  logsModel: LogsModel,
+  logSeries: DataFrame[],
+  visibleRangeMs?: number,
+  requestedRangeMs?: number
+): LogsMetaItem[] {
   if (!logsModel.meta) {
     return [];
   }
   let logsModelMeta = [...logsModel.meta];
+  const streamReachedLineLimit = hasStreamReachedLineLimit(logSeries);
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
   const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
@@ -562,7 +577,9 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
   if (limit && typeof limit === 'number' && limit > 0) {
     let metaLimitValue;
 
-    if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
+    if (streamReachedLineLimit && logsModel.rows.length > limit) {
+      metaLimitValue = `${logsModel.rows.length} lines displayed — ${STREAM_TRUNCATION_WARNING}`;
+    } else if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
       metaLimitValue = `${limit} reached`;
 
       // Scan is a special Loki query direction which potentially returns fewer logs than expected.
