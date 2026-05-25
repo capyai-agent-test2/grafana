@@ -114,4 +114,12 @@ describe('AccordianLogs tests', () => {
     expect(screen.getByRole('switch', { name: '15μs (foo event name)' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: '5μs' })).toBeInTheDocument();
   });
+
+  it('adds the popover background class for non-interactive rendering', () => {
+    const { container } = setup({ interactive: false } as AccordianLogsProps);
+
+    const popoverClasses = container.firstChild as HTMLElement;
+
+    expect(popoverClasses.className).toContain('AccordianLogsPopover');
+  });
 });
