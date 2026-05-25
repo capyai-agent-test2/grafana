@@ -742,7 +742,7 @@ describe('Table', () => {
         ),
       });
 
-      await userEvent.click(within(within(getTable()).getAllByRole('row')[1]).getByLabelText('Expand row'));
+      await userEvent.click(within(within(container).getAllByRole('row')[1]).getByLabelText('Expand row'));
 
       const results = await runAxeForTableRules(container);
 
