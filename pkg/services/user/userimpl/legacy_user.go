@@ -475,19 +475,22 @@ func (s *LegacyService) CreateServiceAccount(ctx context.Context, cmd *user.Crea
 	}
 	usr.Rands = rands
 
-	_, err = s.store.Insert(ctx, usr)
-	if err != nil {
-		return nil, err
-	}
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		_, err = s.store.Insert(ctx, usr)
+		if err != nil {
+			return err
+		}
 
-	// create org user link
-	orgCmd := &org.AddOrgUserCommand{
-		OrgID:                     cmd.OrgID,
-		UserID:                    usr.ID,
-		Role:                      org.RoleType(cmd.DefaultOrgRole),
-		AllowAddingServiceAccount: true,
-	}
-	if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+		// create org user link
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     cmd.OrgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleType(cmd.DefaultOrgRole),
+			AllowAddingServiceAccount: true,
+		}
+		return s.orgService.AddOrgUser(ctx, orgCmd)
+	})
+	if err != nil {
 		return nil, err
 	}
 
