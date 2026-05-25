@@ -60,6 +60,32 @@ describe('field convert type', () => {
     });
   });
 
+  it('will parse string time using the configured timezone', () => {
+    const field = {
+      name: 'timezone aware dates',
+      type: FieldType.string,
+      values: ['2024-03-31 02:30:00.000'],
+      config: {},
+    };
+
+    const utcTimeField = convertFieldType(field, {
+      targetField: 'timezone aware dates',
+      destinationType: FieldType.time,
+      dateFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+      timezone: 'utc',
+    });
+
+    const londonTimeField = convertFieldType(field, {
+      targetField: 'timezone aware dates',
+      destinationType: FieldType.time,
+      dateFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
+      timezone: 'Europe/London',
+    });
+
+    expect(utcTimeField.values).toEqual([1711852200000]);
+    expect(londonTimeField.values).toEqual([1711848600000]);
+  });
+
   it('will not parse improperly formatted date strings', () => {
     const options = { targetField: 'misformatted dates', destinationType: FieldType.time };
 

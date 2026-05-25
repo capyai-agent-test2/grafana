@@ -6,7 +6,6 @@ import {
   type SelectableValue,
   type StandardEditorsRegistryItem,
   type TransformerUIProps,
-  getTimeZones,
 } from '@grafana/data';
 import { type ConvertFieldTypeOptions, type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
 import { t, Trans } from '@grafana/i18n';
@@ -29,20 +28,6 @@ export const ConvertFieldTypeTransformerEditor = ({
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
   const allTypes = getAllFieldTypeIconOptions().filter((v) => v.value !== FieldType.trace);
   const timeZoneOptions: Array<SelectableValue<string>> = getTimezoneOptions(true);
-
-  // Format timezone options
-  const tzs = getTimeZones();
-  timeZoneOptions.push({
-    label: t('transformers.convert-field-type-transformer-editor.label.browser', 'Browser'),
-    value: 'browser',
-  });
-  timeZoneOptions.push({
-    label: t('transformers.convert-field-type-transformer-editor.label.utc', 'UTC'),
-    value: 'utc',
-  });
-  for (const tz of tzs) {
-    timeZoneOptions.push({ label: tz, value: tz });
-  }
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {
@@ -159,21 +144,35 @@ export const ConvertFieldTypeTransformerEditor = ({
                 />
               </InlineField>
               {c.destinationType === FieldType.time && (
-                <InlineField
-                  label={t('transformers.convert-field-type-transformer-editor.label-input-format', 'Input format')}
-                  tooltip={t(
-                    'transformers.convert-field-type-transformer-editor.tooltip-input-format',
-                    'Specify the format of the input field so Grafana can parse the date string correctly.'
-                  )}
-                >
-                  <Input
-                    value={c.dateFormat}
-                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                    placeholder={'e.g. YYYY-MM-DD'}
-                    onChange={onInputFormat(idx)}
-                    width={24}
-                  />
-                </InlineField>
+                <>
+                  <InlineField
+                    label={t('transformers.convert-field-type-transformer-editor.label-input-format', 'Input format')}
+                    tooltip={t(
+                      'transformers.convert-field-type-transformer-editor.tooltip-input-format',
+                      'Specify the format of the input field so Grafana can parse the date string correctly.'
+                    )}
+                  >
+                    <Input
+                      value={c.dateFormat}
+                      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                      placeholder={'e.g. YYYY-MM-DD'}
+                      onChange={onInputFormat(idx)}
+                      width={24}
+                    />
+                  </InlineField>
+                  <InlineField
+                    label={t(
+                      'transformers.convert-field-type-transformer-editor.label-parse-timezone',
+                      'Parse timezone'
+                    )}
+                    tooltip={t(
+                      'transformers.convert-field-type-transformer-editor.tooltip-parse-timezone',
+                      'Interpret the input date values in the selected timezone before converting them to time.'
+                    )}
+                  >
+                    <Select options={timeZoneOptions} value={c.timezone} onChange={onTzChange(idx)} isClearable />
+                  </InlineField>
+                </>
               )}
               {c.destinationType === FieldType.string && (
                 <>
