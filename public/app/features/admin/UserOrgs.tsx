@@ -201,6 +201,7 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
           <td colSpan={1}>
             {canChangeRole && (
               <ChangeOrgButton
+                isChangingRole={isChangingRole}
                 lockMessage={lockMessage}
                 isExternalUser={isExternalUser}
                 onChangeRoleClick={handleChangeRoleClick}
@@ -349,6 +350,7 @@ export const AddToOrgModal = memo(({ isOpen, user, userOrgs, onOrgAdd, onDismiss
 AddToOrgModal.displayName = 'AddToOrgModal';
 
 interface ChangeOrgButtonProps {
+  isChangingRole?: boolean;
   lockMessage?: string;
   isExternalUser?: boolean;
   onChangeRoleClick: () => void;
@@ -374,6 +376,7 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
 });
 
 export function ChangeOrgButton({
+  isChangingRole,
   lockMessage,
   onChangeRoleClick,
   isExternalUser,
@@ -408,15 +411,22 @@ export function ChangeOrgButton({
           </Tooltip>
         </>
       ) : (
-        <ConfirmButton
-          confirmText={t('admin.change-org-button.confirmText-save', 'Save')}
-          onClick={onChangeRoleClick}
-          onCancel={onCancelClick}
-          onConfirm={onOrgRoleSave}
-          disabled={isExternalUser}
-        >
-          {t('admin.user-orgs.change-role-button', 'Change role')}
-        </ConfirmButton>
+        <>
+          {isChangingRole ? (
+            <Stack gap={1}>
+              <Button size="sm" onClick={onOrgRoleSave}>
+                {t('admin.change-org-button.confirmText-save', 'Save')}
+              </Button>
+              <Button size="sm" fill="text" onClick={onCancelClick}>
+                {t('admin.change-org-button.cancel', 'Cancel')}
+              </Button>
+            </Stack>
+          ) : (
+            <Button size="sm" fill="text" onClick={onChangeRoleClick} disabled={isExternalUser}>
+              {t('admin.user-orgs.change-role-button', 'Change role')}
+            </Button>
+          )}
+        </>
       )}
     </div>
   );
