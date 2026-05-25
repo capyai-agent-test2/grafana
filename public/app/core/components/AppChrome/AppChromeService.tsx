@@ -178,7 +178,7 @@ export class AppChromeService {
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {
-    let newKioskMode: KioskMode | undefined;
+    let newKioskMode: KioskMode | null = null;
 
     switch (kiosk) {
       case '1':
@@ -186,7 +186,7 @@ export class AppChromeService {
         newKioskMode = KioskMode.Full;
     }
 
-    if (newKioskMode && newKioskMode !== this.state.getValue().kioskMode) {
+    if (newKioskMode !== this.state.getValue().kioskMode) {
       this.update({ kioskMode: newKioskMode });
     }
   }
