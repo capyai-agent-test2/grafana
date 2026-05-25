@@ -28,8 +28,13 @@ func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 		return nil, err
 	}
 
+	clientHeaderKeys := make(map[string]struct{}, len(headers))
+	for headerKey := range headers {
+		clientHeaderKeys[strings.ToLower(headerKey)] = struct{}{}
+	}
+
 	// fetch team headers from outgoing context.
-	teamHeaders := getTeamHeaders(ctx, logger, plugin)
+	teamHeaders := getTeamHeaders(ctx, logger, plugin, clientHeaderKeys)
 	for k, v := range teamHeaders {
 		headers[k] = v
 	}
@@ -38,7 +43,7 @@ func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 
 // maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
 // x-prom-label-policy is exposed as X-Prom-Label-Policy.
-func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
+func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext, clientHeaderKeys map[string]struct{}) map[string]string {
 	cfg := config.GrafanaConfigFromContext(ctx)
 	if cfg == nil || !cfg.FeatureToggles().IsEnabled("streamingForwardTeamHeadersTempo") {
 		return nil
@@ -58,6 +63,10 @@ func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.Plugi
 
 	headers := map[string]string{}
 	for headerKey, headerVals := range md {
+		if _, exists := clientHeaderKeys[strings.ToLower(headerKey)]; exists {
+			continue
+		}
+
 		joined := strings.Join(headerVals, ",")
 		if headerKey == TeamHttpHeaderKeyLower {
 			headers[TeamHttpHeaderKeyCamel] = joined
