@@ -14,6 +14,7 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
 import { DashboardModel } from '../../state/DashboardModel';
+import { isSameDashboardPath } from '../../utils/isSameDashboardPath';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 
@@ -93,7 +94,7 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
     }
 
     // Are we still on the same dashboard?
-    if (originalPath === location.pathname || !original) {
+    if (isSameDashboardPath(originalPath, location.pathname) || !original) {
       // This is here due to timing reasons we want the exit panel editor state changes to happen before router update
       if (panelInEdit && !search.has('editPanel')) {
         dispatch(exitPanelEditor());

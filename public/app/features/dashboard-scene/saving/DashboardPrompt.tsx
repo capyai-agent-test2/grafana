@@ -12,6 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { isSameDashboardPath } from 'app/features/dashboard/utils/isSameDashboardPath';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
@@ -75,7 +76,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
     }
 
     // Are we still on the same dashboard?
-    if (originalPath === location.pathname) {
+    if (isSameDashboardPath(originalPath, location.pathname)) {
       return true;
     }
 
