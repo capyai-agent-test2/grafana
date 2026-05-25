@@ -308,6 +308,51 @@ func TestIntegrationCreateUser(t *testing.T) {
 	})
 }
 
+func TestIntegrationCreateServiceAccount(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	cfg := setting.NewCfg()
+	ss := db.InitTestDB(t)
+	userStore := &sqlStore{
+		db:      ss,
+		dialect: ss.GetDialect(),
+		logger:  log.NewNopLogger(),
+		cfg:     cfg,
+	}
+
+	t.Run("create service account should roll back created user if org membership cannot be created", func(t *testing.T) {
+		const login = "sa-1-broken-service-account"
+
+		userService := LegacyService{
+			store: userStore,
+			orgService: &orgtest.FakeOrgService{
+				ExpectedError: user.ErrUserNotFound,
+			},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          cfg,
+			db:           ss,
+		}
+		_, err := userService.CreateServiceAccount(context.Background(), &user.CreateUserCommand{
+			Login:          login,
+			OrgID:          1,
+			Name:           "broken service account",
+			DefaultOrgRole: string(org.RoleViewer),
+		})
+		require.ErrorIs(t, err, user.ErrUserNotFound)
+
+		var created user.User
+		err = ss.WithDbSession(context.Background(), func(sess *db.Session) error {
+			has, err := sess.Where("login = ?", login).Get(&created)
+			require.NoError(t, err)
+			require.False(t, has)
+			return nil
+		})
+		require.NoError(t, err)
+	})
+}
+
 type FakeUserStore struct {
 	ExpectedUser                            *user.User
 	ExpectedSignedInUser                    *user.SignedInUser
