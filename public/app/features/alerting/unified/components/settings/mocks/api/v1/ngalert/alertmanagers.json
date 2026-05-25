@@ -1,7 +1,7 @@
 {
   "data": {
-    "activeAlertmanagers": [],
-    "droppedAlertmagers": []
+    "activeAlertManagers": [],
+    "droppedAlertManagers": []
   },
   "status": "success"
 }

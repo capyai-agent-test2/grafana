@@ -28,8 +28,8 @@ interface Context {
   isUpdating: boolean;
 
   // for enabling / disabling Alertmanager datasources as additional receivers
-  enableAlertmanager: (uid: string) => void;
-  disableAlertmanager: (uid: string) => void;
+  enableAlertmanager: (uid: string, options?: { updateDataSourceSettings?: boolean }) => void;
+  disableAlertmanager: (uid: string, options?: { updateDataSourceSettings?: boolean }) => void;
 
   // for updating or resetting the configuration for an Alertmanager
   updateAlertmanagerSettings: (name: string, oldConfig: string, newConfig: string) => void;
@@ -71,7 +71,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
       interestedAlertmanagers.push(alertmanager.dataSourceSettings.uid);
     });
 
-  const enableAlertmanager = (uid: string) => {
+  const enableAlertmanager = (uid: string, options?: { updateDataSourceSettings?: boolean }) => {
     const updatedInterestedAlertmanagers = union([uid], interestedAlertmanagers); // union will give us a unique array of uids
     const newDeliveryMode = determineDeliveryMode(updatedInterestedAlertmanagers);
     if (newDeliveryMode === null) {
@@ -82,12 +82,12 @@ export const SettingsProvider = (props: PropsWithChildren) => {
       updateConfiguration({ alertmanagersChoice: newDeliveryMode });
     }
 
-    if (!isInternalAlertmanager(uid)) {
+    if (!isInternalAlertmanager(uid) && options?.updateDataSourceSettings !== false) {
       enableGrafanaManagedAlerts(uid);
     }
   };
 
-  const disableAlertmanager = (uid: string) => {
+  const disableAlertmanager = (uid: string, options?: { updateDataSourceSettings?: boolean }) => {
     const updatedInterestedAlertmanagers = without(interestedAlertmanagers, uid);
     const newDeliveryMode = determineDeliveryMode(updatedInterestedAlertmanagers);
     if (newDeliveryMode === null) {
@@ -98,7 +98,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
       updateConfiguration({ alertmanagersChoice: newDeliveryMode });
     }
 
-    if (!isInternalAlertmanager(uid)) {
+    if (!isInternalAlertmanager(uid) && options?.updateDataSourceSettings !== false) {
       disableGrafanaManagedAlerts(uid);
     }
   };

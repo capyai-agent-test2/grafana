@@ -35,7 +35,8 @@
     "isDefault": false,
     "jsonData": {
       "httpMethod": "POST",
-      "implementation": "mimir"
+      "implementation": "mimir",
+      "handleGrafanaManagedAlerts": true
     },
     "readOnly": true
   },

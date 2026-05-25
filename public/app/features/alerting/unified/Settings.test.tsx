@@ -122,7 +122,7 @@ describe('Alerting settings', () => {
     });
   });
 
-  it('should correctly render provisioned data sources', async () => {
+  it('should allow enabling a provisioned data source that is already configured to receive Grafana alerts', async () => {
     render(<SettingsPage />);
 
     // wait for loading to be done
@@ -136,11 +136,11 @@ describe('Alerting settings', () => {
     const editConfigButton = ui.editConfigurationButton.get(provisionedCard);
     expect(editConfigButton).toBeInTheDocument();
 
-    // enable / disable should not be avaiable when provisioned
-    const enableButton = ui.enableButton.query(provisionedCard);
+    // provisioned datasources can still be enabled for forwarding when provisioning already opted them in
+    const enableButton = ui.enableButton.get(provisionedCard);
     const disableButton = ui.disableButton.query(provisionedCard);
 
-    expect(enableButton).not.toBeInTheDocument();
+    expect(enableButton).toBeInTheDocument();
     expect(disableButton).not.toBeInTheDocument();
   });
 

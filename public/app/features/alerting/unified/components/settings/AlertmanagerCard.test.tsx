@@ -83,15 +83,13 @@ describe('Alertmanager card', () => {
     expect(onDisable).toHaveBeenCalled();
   });
 
-  it('should not show edit / enable buttons for provisioned alertmanager', () => {
+  it('should not show edit / enable buttons for provisioned alertmanager without actions', () => {
     render(
       <AlertmanagerCard
         name="External Alertmanager"
         receiving={false}
         provisioned={true}
         onEditConfiguration={jest.fn()}
-        onEnable={jest.fn()}
-        onDisable={jest.fn()}
       />
     );
 
@@ -105,6 +103,21 @@ describe('Alertmanager card', () => {
 
     const enableButton = screen.queryByRole('button', { name: 'Enable' });
     expect(enableButton).not.toBeInTheDocument();
+  });
+
+  it('should allow enabling a provisioned alertmanager when only enabling is supported', () => {
+    render(
+      <AlertmanagerCard
+        name="External Alertmanager"
+        receiving={false}
+        provisioned={true}
+        onEditConfiguration={jest.fn()}
+        onEnable={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Enable' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Disable' })).not.toBeInTheDocument();
   });
 
   it('should show correct buttons for read-only (vanilla) alertmanager', () => {
