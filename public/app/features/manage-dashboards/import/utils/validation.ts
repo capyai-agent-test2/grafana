@@ -39,8 +39,8 @@ export const validateDashboardModel = (dashboard: unknown) => {
   if (
     isDashboardV1Spec(dashboard) ||
     (isDashboardV1Resource(dashboard) && isDashboardV1Spec(dashboard.spec)) ||
-    isDashboardV2Spec(dashboard) ||
-    isDashboardV2Resource(dashboard)
+    isValidDashboardV2Model(dashboard) ||
+    (isDashboardV2Resource(dashboard) && isValidDashboardV2Model(dashboard.spec))
   ) {
     return true;
   }
@@ -54,6 +54,26 @@ export const validateDashboardModel = (dashboard: unknown) => {
     'Dashboard JSON must include a dashboard title or dashboard elements'
   );
 };
+
+function isValidDashboardV2Model(dashboard: unknown): boolean {
+  if (!isDashboardV2Spec(dashboard)) {
+    return false;
+  }
+
+  if (!isRecord(dashboard.layout) || typeof dashboard.layout.kind !== 'string' || !isRecord(dashboard.layout.spec)) {
+    return false;
+  }
+
+  if (dashboard.variables !== undefined && !Array.isArray(dashboard.variables)) {
+    return false;
+  }
+
+  if (dashboard.annotations !== undefined && !Array.isArray(dashboard.annotations)) {
+    return false;
+  }
+
+  return true;
+}
 
 export const validateGcomDashboard = (gcomDashboard: string) => {
   // From DashboardImportCtrl

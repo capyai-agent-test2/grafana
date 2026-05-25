@@ -179,6 +179,10 @@ describe('validateDashboardModel', () => {
     expect(
       validateDashboardModel({
         elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
       })
     ).toBe(true);
   });
@@ -188,6 +192,14 @@ describe('validateDashboardModel', () => {
       validateDashboardModel({
         kind: 'Dashboard',
         spec: {},
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards without layout', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
       })
     ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
   });
