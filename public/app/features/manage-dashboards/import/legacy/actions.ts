@@ -169,7 +169,7 @@ export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<vo
         throw new Error('Only panels are currenlty supported in v2 dashboards');
       }
 
-      if (element.spec.data.spec.queries.length > 0) {
+      if (element.spec.data?.kind === 'QueryGroup' && Array.isArray(element.spec.data.spec?.queries)) {
         for (const query of element.spec.data.spec.queries) {
           inputs = await processV2DatasourceInput(query.spec, inputs);
         }

@@ -1127,6 +1127,43 @@ describe('processV2Datasources', () => {
       ])
     );
   });
+
+  it('Should ignore panels without query groups', async () => {
+    const dashboardWithoutQueryGroup: DashboardV2Spec = {
+      ...defaultDashboardV2Spec(),
+      elements: {
+        'element-panel-a': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel A',
+          },
+        },
+      },
+      variables: [],
+      annotations: [],
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [],
+        },
+      },
+    };
+
+    const dispatchedActions = await thunkTester({
+      thunk: processV2Datasources,
+      initialState: {
+        inputs: [],
+      },
+    })
+      .givenThunk(processV2Datasources)
+      .whenThunkIsDispatched(dashboardWithoutQueryGroup);
+
+    const setInputsAction = dispatchedActions.find((action) => action.type === 'manageDashboards/setInputs');
+    expect(setInputsAction).toBeDefined();
+    expect(setInputsAction?.payload).toEqual([]);
+  });
 });
 
 describe('processV2DatasourceInput', () => {
