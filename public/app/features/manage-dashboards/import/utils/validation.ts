@@ -64,11 +64,11 @@ function isValidDashboardV2Model(dashboard: unknown): boolean {
     return false;
   }
 
-  if (dashboard.variables !== undefined && !Array.isArray(dashboard.variables)) {
+  if (!Array.isArray(dashboard.variables)) {
     return false;
   }
 
-  if (dashboard.annotations !== undefined && !Array.isArray(dashboard.annotations)) {
+  if (!Array.isArray(dashboard.annotations)) {
     return false;
   }
 
