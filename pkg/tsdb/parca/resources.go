@@ -25,7 +25,7 @@ type ProfileType struct {
 }
 
 func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := newLogger().FromContext(ctx)
 	ctxLogger.Debug("Getting profile types", "function", logEntrypoint())
 
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callProfileTypes")
@@ -78,7 +78,7 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 }
 
 func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := newLogger().FromContext(ctx)
 	ctxLogger.Debug("Getting label names", "function", logEntrypoint())
 
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callLabelNames")
@@ -111,7 +111,7 @@ func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallR
 }
 
 func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := newLogger().FromContext(ctx)
 	ctxLogger.Debug("Getting label values", "function", logEntrypoint())
 
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.callLabelValues")
