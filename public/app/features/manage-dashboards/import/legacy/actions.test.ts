@@ -219,6 +219,36 @@ describe('validateDashboardModel', () => {
       })
     ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
   });
+
+  it('Should not return true for v2 dashboards with malformed annotations', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [{}],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with malformed elements', () => {
+    expect(
+      validateDashboardModel({
+        elements: {
+          panel: {},
+        },
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
 });
 
 describe('processDashboard', () => {

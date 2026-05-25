@@ -64,7 +64,15 @@ function isValidDashboardV2Model(dashboard: unknown): boolean {
     return false;
   }
 
+  if (!isRecord(dashboard.elements) || !Object.values(dashboard.elements).every(isValidDashboardV2Element)) {
+    return false;
+  }
+
   if (!Array.isArray(dashboard.variables)) {
+    return false;
+  }
+
+  if (!dashboard.variables.every(isValidDashboardV2Variable)) {
     return false;
   }
 
@@ -72,7 +80,31 @@ function isValidDashboardV2Model(dashboard: unknown): boolean {
     return false;
   }
 
+  if (!dashboard.annotations.every(isValidDashboardV2Annotation)) {
+    return false;
+  }
+
   return true;
+}
+
+function isValidDashboardV2Element(element: unknown): boolean {
+  return isRecord(element) && typeof element.kind === 'string' && isRecord(element.spec);
+}
+
+function isValidDashboardV2Variable(variable: unknown): boolean {
+  if (!isRecord(variable) || typeof variable.kind !== 'string' || !isRecord(variable.spec)) {
+    return false;
+  }
+
+  if (variable.kind === 'QueryVariable') {
+    return isRecord(variable.spec.query);
+  }
+
+  return true;
+}
+
+function isValidDashboardV2Annotation(annotation: unknown): boolean {
+  return isRecord(annotation) && typeof annotation.kind === 'string' && isRecord(annotation.spec) && isRecord(annotation.spec.query);
 }
 
 export const validateGcomDashboard = (gcomDashboard: string) => {
