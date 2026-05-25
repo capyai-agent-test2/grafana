@@ -641,6 +641,35 @@ describe('AnnotationsPlugin2', () => {
           expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
           expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
         });
+
+        it('repositions clustered markers after the plot time range changes', () => {
+          setUp({
+            annotations: [mockIRMClusteringAnnotation],
+            options: { clustering: DEFAULT_CLUSTERING_ANNOTATION_SPACING },
+          });
+
+          const initialStyle =
+            screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0].getAttribute('style');
+
+          act(() => {
+            hooks.drawAxes(
+              new uPlot({
+                valToPos: jest.fn(() => 10),
+                scales: {
+                  x: {
+                    min: minTime - 1000000,
+                    max: maxTime + 1000000,
+                  },
+                },
+              })
+            );
+          });
+
+          const updatedStyle =
+            screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0].getAttribute('style');
+
+          expect(updatedStyle).not.toEqual(initialStyle);
+        });
       });
 
       it('should not cluster', async () => {
