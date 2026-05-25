@@ -249,6 +249,51 @@ describe('validateDashboardModel', () => {
       })
     ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
   });
+
+  it('Should not return true for v2 dashboards with query variables missing query group', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [
+          {
+            kind: 'QueryVariable',
+            spec: {
+              query: {},
+            },
+          },
+        ],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with panel query groups missing queries array', () => {
+    expect(
+      validateDashboardModel({
+        elements: {
+          panel: {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: {},
+              },
+            },
+          },
+        },
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
 });
 
 describe('processDashboard', () => {

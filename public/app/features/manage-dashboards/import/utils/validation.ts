@@ -88,7 +88,20 @@ function isValidDashboardV2Model(dashboard: unknown): boolean {
 }
 
 function isValidDashboardV2Element(element: unknown): boolean {
-  return isRecord(element) && typeof element.kind === 'string' && isRecord(element.spec);
+  if (!isRecord(element) || typeof element.kind !== 'string' || !isRecord(element.spec)) {
+    return false;
+  }
+
+  if (element.kind !== 'Panel') {
+    return true;
+  }
+
+  const data = element.spec.data;
+  if (!isRecord(data) || data.kind !== 'QueryGroup') {
+    return true;
+  }
+
+  return isRecord(data.spec) && Array.isArray(data.spec.queries);
 }
 
 function isValidDashboardV2Variable(variable: unknown): boolean {
@@ -97,14 +110,23 @@ function isValidDashboardV2Variable(variable: unknown): boolean {
   }
 
   if (variable.kind === 'QueryVariable') {
-    return isRecord(variable.spec.query);
+    return hasQueryGroup(variable.spec.query);
   }
 
   return true;
 }
 
 function isValidDashboardV2Annotation(annotation: unknown): boolean {
-  return isRecord(annotation) && typeof annotation.kind === 'string' && isRecord(annotation.spec) && isRecord(annotation.spec.query);
+  return (
+    isRecord(annotation) &&
+    typeof annotation.kind === 'string' &&
+    isRecord(annotation.spec) &&
+    hasQueryGroup(annotation.spec.query)
+  );
+}
+
+function hasQueryGroup(query: unknown): boolean {
+  return isRecord(query) && typeof query.group === 'string';
 }
 
 export const validateGcomDashboard = (gcomDashboard: string) => {
