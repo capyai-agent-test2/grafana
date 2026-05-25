@@ -649,7 +649,7 @@ describe('AnnotationsPlugin2', () => {
           });
 
           const initialStyle =
-            screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[1].getAttribute('style');
+            screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0].getAttribute('style');
 
           act(() => {
             hooks.drawAxes(
@@ -666,7 +666,7 @@ describe('AnnotationsPlugin2', () => {
           });
 
           const updatedStyle =
-            screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[1].getAttribute('style');
+            screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)[0].getAttribute('style');
 
           expect(updatedStyle).not.toEqual(initialStyle);
         });
