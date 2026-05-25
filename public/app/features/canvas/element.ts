@@ -1,6 +1,6 @@
 import { type ComponentType } from 'react';
 
-import { type DataLink, type RegistryItem, type Action } from '@grafana/data';
+import { type Action, type DataLink, type InterpolateFunction, type RegistryItem } from '@grafana/data';
 import { type PanelOptionsSupplier } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { type ColorDimensionConfig, type ScaleDimensionConfig, type DirectionDimensionConfig } from '@grafana/schema';
@@ -84,6 +84,9 @@ export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
 
   // If the element is currently selected
   isSelected?: boolean;
+
+  // Panel-scoped variable interpolation
+  replaceVariables?: InterpolateFunction;
 }
 
 /**

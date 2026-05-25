@@ -1108,7 +1108,13 @@ export class ElementState implements LayerElement {
           tabIndex={0}
           style={{ userSelect: 'none' }}
         >
-          <item.display key={this.UID} config={this.options.config} data={this.data} isSelected={isSelected} />
+          <item.display
+            key={this.UID}
+            config={this.options.config}
+            data={this.data}
+            isSelected={isSelected}
+            replaceVariables={scene?.panel.props.replaceVariables}
+          />
         </div>
         {this.showActionConfirmation && this.renderActionsConfirmModal(this.getPrimaryAction())}
         {this.showActionVarsModal && this.renderVariablesInputModal(this.getPrimaryAction())}

@@ -1,4 +1,4 @@
-import { AppEvents, textUtil } from '@grafana/data';
+import { AppEvents, type InterpolateFunction, textUtil } from '@grafana/data';
 import { type BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { createAbsoluteUrl, type RelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -10,13 +10,17 @@ import { type APIEditorConfig } from './APIEditor';
 
 type IsLoadingCallback = (loading: boolean) => void;
 
-export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
+export const callApi = (
+  api: APIEditorConfig,
+  updateLoadingStateCallback?: IsLoadingCallback,
+  replaceVariables?: InterpolateFunction
+) => {
   if (!api.endpoint) {
     appEvents.emit(AppEvents.alertError, ['API endpoint is not defined.']);
     return;
   }
 
-  const request = getRequest(api);
+  const request = getRequest(api, replaceVariables);
 
   getBackendSrv()
     .fetch(request)
@@ -34,13 +38,17 @@ export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoa
     });
 };
 
-export const interpolateVariables = (text: string) => {
+export const interpolateVariables = (text: string, replaceVariables?: InterpolateFunction) => {
+  if (replaceVariables) {
+    return replaceVariables(text);
+  }
+
   const panel = getDashboardSrv().getCurrent()?.panelInEdit;
   return getTemplateSrv().replace(text, panel?.scopedVars);
 };
 
-export const getRequest = (api: APIEditorConfig) => {
-  const endpoint = getEndpoint(interpolateVariables(api.endpoint));
+export const getRequest = (api: APIEditorConfig, replaceVariables?: InterpolateFunction) => {
+  const endpoint = getEndpoint(interpolateVariables(api.endpoint, replaceVariables));
   const url = new URL(endpoint);
 
   const requestHeaders: Record<string, string> = {};
@@ -48,19 +56,19 @@ export const getRequest = (api: APIEditorConfig) => {
   let request: BackendSrvRequest = {
     url: url.toString(),
     method: api.method,
-    data: getData(api),
+    data: getData(api, replaceVariables),
     headers: requestHeaders,
   };
 
   if (api.headerParams) {
     api.headerParams.forEach(([name, value]) => {
-      requestHeaders[interpolateVariables(name)] = interpolateVariables(value);
+      requestHeaders[interpolateVariables(name, replaceVariables)] = interpolateVariables(value, replaceVariables);
     });
   }
 
   if (api.queryParams) {
     api.queryParams?.forEach(([name, value]) => {
-      url.searchParams.append(interpolateVariables(name), interpolateVariables(value));
+      url.searchParams.append(interpolateVariables(name, replaceVariables), interpolateVariables(value, replaceVariables));
     });
 
     request.url = url.toString();
@@ -76,8 +84,8 @@ export const getRequest = (api: APIEditorConfig) => {
   return request;
 };
 
-const getData = (api: APIEditorConfig) => {
-  let data: string | undefined = api.data ? interpolateVariables(api.data) : '{}';
+const getData = (api: APIEditorConfig, replaceVariables?: InterpolateFunction) => {
+  let data: string | undefined = api.data ? interpolateVariables(api.data, replaceVariables) : '{}';
   if (api.method === HttpRequestMethod.GET) {
     data = undefined;
   }
