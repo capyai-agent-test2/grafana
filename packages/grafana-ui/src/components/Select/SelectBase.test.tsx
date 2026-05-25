@@ -160,7 +160,7 @@ describe('SelectBase', () => {
             />
           );
 
-          expect(screen.queryAllByText(/option/i).length).toBe(5);
+          expect(screen.getAllByLabelText('Remove')).toHaveLength(5);
           expect(screen.queryByText(/\(\+2\)/i)).not.toBeInTheDocument();
         });
       });
@@ -258,6 +258,43 @@ describe('SelectBase', () => {
         name: undefined,
         removedValue: { label: 'Option 1', value: 1 },
       });
+    });
+
+    it('keeps expanded multi-value remove buttons clickable when the menu is open', async () => {
+      const value = [
+        { label: 'Option 1', value: 1 },
+        { label: 'Option 2', value: 2 },
+        { label: 'Option 3', value: 3 },
+        { label: 'Option 4', value: 4 },
+      ];
+
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          options={[...value]}
+          isMulti={true}
+          value={value}
+          isOpen={true}
+          maxVisibleValues={3}
+          showAllSelectedWhenOpen={true}
+          aria-label="Expanded multi select"
+        />
+      );
+
+      await userEvent.click(screen.getAllByLabelText('Remove')[3]);
+
+      expect(onChangeHandler).toHaveBeenCalledWith(
+        [
+          { label: 'Option 1', value: 1 },
+          { label: 'Option 2', value: 2 },
+          { label: 'Option 3', value: 3 },
+        ],
+        {
+          action: 'remove-value',
+          name: undefined,
+          removedValue: { label: 'Option 4', value: 4 },
+        }
+      );
     });
 
     it('does not allow deleting selected values when disabled', async () => {
