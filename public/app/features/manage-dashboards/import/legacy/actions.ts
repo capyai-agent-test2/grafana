@@ -158,6 +158,21 @@ function processElements(dashboardJson?: { __elements?: Record<string, LibraryEl
   };
 }
 
+function hasV2QuerySpec(query: unknown): query is { spec: PanelQueryKind['spec'] } {
+  return (
+    typeof query === 'object' &&
+    query !== null &&
+    'spec' in query &&
+    typeof query.spec === 'object' &&
+    query.spec !== null &&
+    'query' in query.spec &&
+    typeof query.spec.query === 'object' &&
+    query.spec.query !== null &&
+    'group' in query.spec.query &&
+    typeof query.spec.query.group === 'string'
+  );
+}
+
 export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
   return async function (dispatch) {
     const { elements, variables, annotations } = dashboard;
@@ -169,9 +184,11 @@ export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<vo
         throw new Error('Only panels are currenlty supported in v2 dashboards');
       }
 
-      if (element.spec.data.spec.queries.length > 0) {
+      if (element.spec.data?.kind === 'QueryGroup' && Array.isArray(element.spec.data.spec?.queries)) {
         for (const query of element.spec.data.spec.queries) {
-          inputs = await processV2DatasourceInput(query.spec, inputs);
+          if (hasV2QuerySpec(query)) {
+            inputs = await processV2DatasourceInput(query.spec, inputs);
+          }
         }
       }
     }

@@ -16,7 +16,7 @@ import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { type LibraryElementDTO } from '../../../library-panels/types';
 import { type DashboardJson, type DataSourceInput, type ImportDashboardDTO, InputType } from '../../types';
 import { getLibraryPanelInputs } from '../utils/inputs';
-import { validateDashboardJson } from '../utils/validation';
+import { validateDashboardJson, validateDashboardModel } from '../utils/validation';
 
 import { importDashboard, processDashboard, processV2DatasourceInput, processV2Datasources } from './actions';
 import { initialImportDashboardState } from './reducers';
@@ -167,6 +167,158 @@ describe('validateDashboardJson', () => {
     const jsonImportInvalidJson = '{"schemaVersion": 36,"tags": {"tag", "nested tag"}, "title": "Nested lists"}';
     const validateDashboardJsonNotValid = await validateDashboardJson(jsonImportInvalidJson);
     expect(validateDashboardJsonNotValid).toBe('Not valid JSON');
+  });
+  it('Should not return true if JSON is an empty object', async () => {
+    const validateDashboardJsonEmptyDashboard = await validateDashboardJson('{}');
+    expect(validateDashboardJsonEmptyDashboard).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+});
+
+describe('validateDashboardModel', () => {
+  it('Should return true for v2-style dashboards without a title', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe(true);
+  });
+
+  it('Should not return true for empty v1 dashboard resources', () => {
+    expect(
+      validateDashboardModel({
+        kind: 'Dashboard',
+        spec: {},
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards without layout', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards without variables and annotations arrays', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with malformed annotations', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [{}],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with malformed elements', () => {
+    expect(
+      validateDashboardModel({
+        elements: {
+          panel: {},
+        },
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with query variables missing query group', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [
+          {
+            kind: 'QueryVariable',
+            spec: {
+              query: {},
+            },
+          },
+        ],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with panel query groups missing queries array', () => {
+    expect(
+      validateDashboardModel({
+        elements: {
+          panel: {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: {},
+              },
+            },
+          },
+        },
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+
+  it('Should not return true for v2 dashboards with malformed panel queries', () => {
+    expect(
+      validateDashboardModel({
+        elements: {
+          panel: {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [{}],
+                },
+              },
+            },
+          },
+        },
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
   });
 });
 
@@ -974,6 +1126,89 @@ describe('processV2Datasources', () => {
         }),
       ])
     );
+  });
+
+  it('Should ignore panels without query groups', async () => {
+    const dashboardWithoutQueryGroup: DashboardV2Spec = {
+      ...defaultDashboardV2Spec(),
+      elements: {
+        'element-panel-a': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel A',
+            data: undefined,
+          },
+        },
+      },
+      variables: [],
+      annotations: [],
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [],
+        },
+      },
+    };
+
+    const dispatchedActions = await thunkTester({
+      thunk: processV2Datasources,
+      initialState: {
+        inputs: [],
+      },
+    })
+      .givenThunk(processV2Datasources)
+      .whenThunkIsDispatched(dashboardWithoutQueryGroup);
+
+    const setInputsAction = dispatchedActions.find((action) => action.type === 'manageDashboards/setInputs');
+    expect(setInputsAction).toBeDefined();
+    expect(setInputsAction?.payload).toEqual([]);
+  });
+
+  it('Should ignore malformed query entries inside query groups', async () => {
+    const dashboardWithMalformedQuery: DashboardV2Spec = {
+      ...defaultDashboardV2Spec(),
+      elements: {
+        'element-panel-a': {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id: 1,
+            title: 'Panel A',
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                transformations: [],
+                queryOptions: {},
+                queries: [{} as never],
+              },
+            },
+          },
+        },
+      },
+      variables: [],
+      annotations: [],
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [],
+        },
+      },
+    };
+
+    const dispatchedActions = await thunkTester({
+      thunk: processV2Datasources,
+      initialState: {
+        inputs: [],
+      },
+    })
+      .givenThunk(processV2Datasources)
+      .whenThunkIsDispatched(dashboardWithMalformedQuery);
+
+    const setInputsAction = dispatchedActions.find((action) => action.type === 'manageDashboards/setInputs');
+    expect(setInputsAction).toBeDefined();
+    expect(setInputsAction?.payload).toEqual([]);
   });
 });
 
