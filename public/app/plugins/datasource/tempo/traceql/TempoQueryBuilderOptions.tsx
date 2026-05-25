@@ -100,7 +100,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
 
     return (
       <EditorRow>
-        <div className={styles.options}>
+        <div className={styles.options} data-testid="tempo-query-builder-options">
           {!isAlerting && (
             <QueryOptionGroup
               title="Search Options"
@@ -227,11 +227,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     options: css({
       display: 'flex',
-      width: '-webkit-fill-available',
+      width: '100%',
       gap: theme.spacing(1),
+      flexWrap: 'wrap',
+      alignItems: 'flex-start',
 
       '> div': {
-        width: 'auto',
+        flex: '1 1 320px',
+        minWidth: 0,
       },
     }),
   };
