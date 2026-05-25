@@ -555,7 +555,7 @@ export function logSeriesToLogsModel(
 function hasStreamReachedLineLimit(logSeries: DataFrame[]): boolean {
   return logSeries.some((series) => {
     const limit = series.meta?.custom?.limit ?? series.meta?.limit;
-    return typeof limit === 'number' && limit > 0 && series.length >= limit;
+    return typeof limit === 'number' && limit > 0 && series.length === limit;
   });
 }
 
