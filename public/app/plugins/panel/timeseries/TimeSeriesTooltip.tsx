@@ -77,7 +77,8 @@ export const TimeSeriesTooltip = ({
   const pluginContext = usePluginContext();
 
   const xField = series.fields[0];
-  let xVal = xField.values[dataIdxs[0]!];
+  const xDataIdx = seriesIdx != null && mode === TooltipDisplayMode.Single ? dataIdxs[seriesIdx] : dataIdxs[0];
+  let xVal = xField.values[xDataIdx!];
 
   if (compareDiffMs != null && xField.type === FieldType.time) {
     xVal += compareDiffMs[seriesIdx ?? 1];
