@@ -117,9 +117,9 @@ function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
   };
 
   Object.assign(props, propOverrides);
-  const { rerender } = render(<Table {...props} />);
+  const { rerender, container } = render(<Table {...props} />);
 
-  return { rerender, onSortByChange, onCellFilterAdded, onColumnResize };
+  return { rerender, container, onSortByChange, onCellFilterAdded, onColumnResize };
 }
 
 function getTable(): HTMLElement {
@@ -136,6 +136,18 @@ function getColumnHeader(name: string | RegExp): HTMLElement {
 
 function getLinks(row: HTMLElement): HTMLElement[] {
   return within(row).getAllByRole('link');
+}
+
+async function runAxeForTableRules(container: HTMLElement) {
+  // eslint-disable-next-line import/no-extraneous-dependencies
+  const axe = await import('axe-core');
+
+  return axe.run(container, {
+    runOnly: {
+      type: 'rule',
+      values: ['aria-required-children', 'aria-required-parent', 'empty-table-header'],
+    },
+  });
 }
 
 function getRowsData(rows: HTMLElement[]): Object[] {
@@ -225,6 +237,23 @@ describe('Table', () => {
       expect(getTable()).toBeInTheDocument();
       expect(getFooter()).toBeInTheDocument();
     });
+
+    it('uses table footer semantics instead of empty headers', () => {
+      const footerValues = ['a', undefined, 'c'];
+      getTestContext({ footerValues });
+
+      expect(getFooter()).toHaveAttribute('role', 'row');
+      expect(within(getFooter()).getAllByRole('cell')).toHaveLength(3);
+      expect(within(getFooter()).queryByRole('columnheader')).not.toBeInTheDocument();
+    });
+
+    it('has no footer accessibility violations for required children rules', async () => {
+      const { container } = getTestContext({ footerValues: ['a', undefined, 'c'] });
+
+      const results = await runAxeForTableRules(container);
+
+      expect(results.violations).toEqual([]);
+    });
   });
 
   describe('when sorting with column header', () => {
@@ -308,13 +337,13 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('7');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('3');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('3');
     });
 
     it('should filter rows and recalculate footer values when multiple filter values are selected', async () => {
@@ -337,17 +366,17 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(8);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('13');
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(9);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('13');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('2'));
       await userEvent.click(screen.getByLabelText('3'));
       await userEvent.click(screen.getByText('Ok'));
 
-      //4 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('10');
+      //4 rows + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('10');
     });
 
     it('should reset when clear filters button is pressed', async () => {
@@ -375,15 +404,15 @@ describe('Table', () => {
       await userEvent.click(screen.getByText('Ok'));
 
       //3 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('3');
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('3');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByText('Clear filter'));
 
       //5 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(7);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('7');
     });
   });
 
@@ -408,9 +437,9 @@ describe('Table', () => {
         }),
       });
 
-      //5 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      //5 rows + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(7);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('7');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
@@ -448,9 +477,9 @@ describe('Table', () => {
 
       rerender(<Table {...props} />);
 
-      //4 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('5');
+      //4 rows + header row + footer row
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('5');
     });
   });
 
@@ -500,7 +529,7 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('4');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('4');
     });
 
     it('should show count of rows when `count rows` is selected', async () => {
@@ -523,8 +552,8 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('Count');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[1]).toHaveTextContent('5');
     });
 
     it('should show correct counts when turning `count rows` on and off', async () => {
@@ -547,8 +576,8 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('Count');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[1]).toHaveTextContent('5');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
@@ -586,7 +615,7 @@ describe('Table', () => {
 
       rerender(<Table {...props} />);
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('4');
+      expect(within(getFooter()).getByRole('cell').getElementsByTagName('span')[0]).toHaveTextContent('4');
     });
   });
 
@@ -635,6 +664,7 @@ describe('Table', () => {
     it('then correct rows should be rendered and new table is rendered when expander is clicked', async () => {
       expect(getTable()).toBeInTheDocument();
       expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+      expect(screen.getAllByRole('columnheader')[0]).toHaveAttribute('aria-label', 'Expand nested rows');
       expect(getColumnHeader(/time/)).toBeInTheDocument();
       expect(getColumnHeader(/temperature/)).toBeInTheDocument();
       expect(getColumnHeader(/img/)).toBeInTheDocument();
@@ -670,6 +700,53 @@ describe('Table', () => {
       expect(within(subTableRows1[1]).getByText(/ok_1/)).toBeInTheDocument();
       expect(within(subTableRows1[2]).getByText(/17%_1/)).toBeInTheDocument();
       expect(within(subTableRows1[2]).getByText(/humid_1/)).toBeInTheDocument();
+    });
+
+    it('has no nested table accessibility violations for required children rules', async () => {
+      const createNestedFrame = (idx: number) =>
+        applyOverrides(
+          toDataFrame({
+            name: `nested_frame${idx}`,
+            fields: [
+              {
+                name: `humidity_${idx}`,
+                type: FieldType.string,
+                values: [`3%_${idx}`, `17%_${idx}`],
+              },
+              {
+                name: `status_${idx}`,
+                type: FieldType.string,
+                values: [`ok_${idx}`, `humid_${idx}`],
+              },
+            ],
+          })
+        );
+
+      const { container } = getTestContext({
+        data: getDataFrame(
+          toDataFrame({
+            ...dataFrameData,
+            fields: [
+              ...dataFrameData.fields,
+              {
+                name: 'nested',
+                type: FieldType.nestedFrames,
+                values: [
+                  [createNestedFrame(0), createNestedFrame(1)],
+                  [createNestedFrame(2), createNestedFrame(3)],
+                ],
+                config: {},
+              },
+            ],
+          })
+        ),
+      });
+
+      await userEvent.click(within(within(getTable()).getAllByRole('row')[1]).getByLabelText('Expand row'));
+
+      const results = await runAxeForTableRules(container);
+
+      expect(results.violations).toEqual([]);
     });
 
     it('then properly handle row expansion and sorting', async () => {

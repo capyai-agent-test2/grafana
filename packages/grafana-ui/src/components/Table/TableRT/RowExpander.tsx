@@ -1,3 +1,5 @@
+import { type Cell } from 'react-table';
+
 import { t } from '@grafana/i18n';
 
 import { Icon } from '../../Icon/Icon';
@@ -8,11 +10,15 @@ import { type TableStyles } from './styles';
 export interface Props {
   row: GrafanaTableRow;
   tableStyles: TableStyles;
+  cell?: Cell;
 }
 
-export function RowExpander({ row, tableStyles }: Props) {
+export function RowExpander({ row, tableStyles, cell }: Props) {
+  const cellProps = cell?.getCellProps() ?? {};
+  const { key, ...rest } = cellProps;
+
   return (
-    <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
+    <div key={key} className={tableStyles.expanderCell} {...rest} role="cell" {...row.getToggleRowExpandedProps()}>
       <Icon
         aria-label={
           row.isExpanded

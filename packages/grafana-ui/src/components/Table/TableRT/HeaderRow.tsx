@@ -47,6 +47,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
   const { key, ...headerProps } = column.getHeaderProps();
   const field: Field = column.field ?? null;
   const tableFieldOptions: TableFieldOptions | undefined = field?.config.custom;
+  const expanderHeaderLabel = t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows');
 
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
@@ -58,9 +59,16 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
 
   let headerContent = column.render('Header');
 
+  if (column.id === 'expander') {
+    headerProps['aria-label'] = expanderHeaderLabel;
+    headerContent = <div className="sr-only">{expanderHeaderLabel}</div>;
+  }
+
   const ariaLabel =
     typeof headerContent === 'string'
       ? getAriaLabel(headerContent, column.isSortedDesc, column.isSorted, t)
+      : column.id === 'expander'
+        ? expanderHeaderLabel
       : t('grafana-ui.table.sort-column', 'Sort column');
 
   let sortHeaderContent = column.canSort && (

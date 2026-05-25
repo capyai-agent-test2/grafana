@@ -22,6 +22,7 @@ export function FooterRow(props: FooterRowProps) {
 
   return (
     <div
+      role="rowgroup"
       style={{
         position: isPaginationVisible ? 'relative' : 'absolute',
         width: totalColumnsWidth ? `${totalColumnsWidth}px` : '100%',
@@ -31,7 +32,13 @@ export function FooterRow(props: FooterRowProps) {
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
+          <div
+            className={tableStyles.tfoot}
+            {...footerGroupProps}
+            key={key}
+            data-testid={e2eSelectorsTable.footer}
+            role="row"
+          >
             {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}
           </div>
         );
@@ -41,7 +48,7 @@ export function FooterRow(props: FooterRowProps) {
 }
 
 function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
-  const { key, ...footerProps } = column.getHeaderProps();
+  const { key, ...footerProps } = column.getFooterProps();
 
   if (!footerProps) {
     return null;
@@ -52,7 +59,7 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   footerProps.style.justifyContent = (column as any).justifyContent;
 
   return (
-    <div key={key} className={tableStyles.headerCell} {...footerProps}>
+    <div key={key} className={tableStyles.headerCell} {...footerProps} role="cell">
       {column.render('Footer')}
     </div>
   );
