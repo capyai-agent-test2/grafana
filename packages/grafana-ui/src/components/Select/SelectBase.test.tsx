@@ -297,6 +297,44 @@ describe('SelectBase', () => {
       );
     });
 
+    it('keeps expanded multi-value remove buttons clickable in uncontrolled open state', async () => {
+      const user = userEvent.setup();
+      const value = [
+        { label: 'Option 1', value: 1 },
+        { label: 'Option 2', value: 2 },
+        { label: 'Option 3', value: 3 },
+        { label: 'Option 4', value: 4 },
+      ];
+
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          options={[...value]}
+          isMulti={true}
+          value={value}
+          maxVisibleValues={3}
+          showAllSelectedWhenOpen={true}
+          aria-label="Uncontrolled expanded multi select"
+        />
+      );
+
+      await user.click(screen.getByLabelText('Uncontrolled expanded multi select'));
+      await user.click(screen.getAllByLabelText('Remove')[3]);
+
+      expect(onChangeHandler).toHaveBeenCalledWith(
+        [
+          { label: 'Option 1', value: 1 },
+          { label: 'Option 2', value: 2 },
+          { label: 'Option 3', value: 3 },
+        ],
+        {
+          action: 'remove-value',
+          name: undefined,
+          removedValue: { label: 'Option 4', value: 4 },
+        }
+      );
+    });
+
     it('does not allow deleting selected values when disabled', async () => {
       const value = [
         {
