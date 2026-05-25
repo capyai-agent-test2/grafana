@@ -132,6 +132,9 @@ export const AnnotationsPlugin2Cluster = ({
     });
 
     config.addHook('drawAxes', (u) => {
+      xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
+      plotRef.current = u;
+
       const newFrom = u.scales?.x?.min ?? -1;
       const newTo = u?.scales?.x?.max ?? -1;
 
