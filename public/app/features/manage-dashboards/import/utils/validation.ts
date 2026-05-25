@@ -1,7 +1,13 @@
 import { t } from '@grafana/i18n';
+import { isRecord } from 'app/core/utils/isRecord';
 import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
+import {
+  isDashboardV1Resource,
+  isDashboardV1Spec,
+  isDashboardV2Resource,
+  isDashboardV2Spec,
+} from 'app/features/dashboard/api/utils';
 
 import { validationSrv } from '../../services/ValidationSrv';
 
@@ -26,7 +32,27 @@ export const validateDashboardJson = (json: string) => {
       return t('dashboard.validation.tags-expected-array', 'tags expected array');
     }
   }
-  return true;
+  return validateDashboardModel(dashboard);
+};
+
+export const validateDashboardModel = (dashboard: unknown) => {
+  if (
+    isDashboardV1Spec(dashboard) ||
+    isDashboardV1Resource(dashboard) ||
+    isDashboardV2Spec(dashboard) ||
+    isDashboardV2Resource(dashboard)
+  ) {
+    return true;
+  }
+
+  if (!isRecord(dashboard)) {
+    return t('dashboard.validation.invalid-dashboard-object', 'Dashboard JSON must be an object');
+  }
+
+  return t(
+    'dashboard.validation.missing-dashboard-definition',
+    'Dashboard JSON must include a dashboard title or dashboard elements'
+  );
 };
 
 export const validateGcomDashboard = (gcomDashboard: string) => {

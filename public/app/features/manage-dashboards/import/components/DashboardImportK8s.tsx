@@ -12,6 +12,7 @@ import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashb
 
 import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
+import { validateDashboardModel } from '../utils/validation';
 
 import { ImportOverview } from './ImportOverview';
 import { ImportSourceForm } from './ImportSourceForm';
@@ -89,6 +90,11 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     try {
       const json = JSON.parse(String(result));
+      const validationResult = validateDashboardModel(json);
+      if (validationResult !== true) {
+        appEvents.emit(AppEvents.alertError, ['Import failed', validationResult]);
+        return;
+      }
       await processDashboardJson(json);
     } catch (error) {
       if (error instanceof Error) {
@@ -101,6 +107,11 @@ export function DashboardImportK8s({ queryParams }: Props) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'json_pasted' });
 
     const json = JSON.parse(formData.dashboardJson);
+    const validationResult = validateDashboardModel(json);
+    if (validationResult !== true) {
+      appEvents.emit(AppEvents.alertError, ['Import failed', validationResult]);
+      return;
+    }
 
     if ((json.spec?.elements || json.elements) && !config.featureToggles.dashboardNewLayouts) {
       appEvents.emit(AppEvents.alertError, [

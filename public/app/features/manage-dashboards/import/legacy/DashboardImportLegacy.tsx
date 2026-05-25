@@ -21,6 +21,7 @@ import { GcomDashboardInfo } from '../components/GcomDashboardInfo';
 import { ImportForm } from '../components/ImportForm';
 import { ImportSourceForm } from '../components/ImportSourceForm';
 import { detectExportFormat } from '../utils/inputs';
+import { validateDashboardModel } from '../utils/validation';
 
 import {
   clearLoadedDashboard,
@@ -189,6 +190,11 @@ class UnthemedDashboardImportLegacy extends PureComponent<Props> {
 
     try {
       const json = JSON.parse(String(result));
+      const validationResult = validateDashboardModel(json);
+      if (validationResult !== true) {
+        appEvents.emit(AppEvents.alertError, ['Import failed', validationResult]);
+        return;
+      }
 
       if (json.spec?.elements) {
         return dispatch(importDashboardV2Json(json.spec));
@@ -216,6 +222,10 @@ class UnthemedDashboardImportLegacy extends PureComponent<Props> {
     });
 
     const dashboard = JSON.parse(formData.dashboardJson);
+    const validationResult = validateDashboardModel(dashboard);
+    if (validationResult !== true) {
+      return appEvents.emit(AppEvents.alertError, ['Import failed', validationResult]);
+    }
 
     if ((dashboard.spec?.elements || dashboard.elements) && !config.featureToggles.dashboardNewLayouts) {
       return appEvents.emit(AppEvents.alertError, [

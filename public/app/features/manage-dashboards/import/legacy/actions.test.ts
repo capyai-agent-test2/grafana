@@ -16,7 +16,7 @@ import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { type LibraryElementDTO } from '../../../library-panels/types';
 import { type DashboardJson, type DataSourceInput, type ImportDashboardDTO, InputType } from '../../types';
 import { getLibraryPanelInputs } from '../utils/inputs';
-import { validateDashboardJson } from '../utils/validation';
+import { validateDashboardJson, validateDashboardModel } from '../utils/validation';
 
 import { importDashboard, processDashboard, processV2DatasourceInput, processV2Datasources } from './actions';
 import { initialImportDashboardState } from './reducers';
@@ -167,6 +167,20 @@ describe('validateDashboardJson', () => {
     const jsonImportInvalidJson = '{"schemaVersion": 36,"tags": {"tag", "nested tag"}, "title": "Nested lists"}';
     const validateDashboardJsonNotValid = await validateDashboardJson(jsonImportInvalidJson);
     expect(validateDashboardJsonNotValid).toBe('Not valid JSON');
+  });
+  it('Should not return true if JSON is an empty object', async () => {
+    const validateDashboardJsonEmptyDashboard = await validateDashboardJson('{}');
+    expect(validateDashboardJsonEmptyDashboard).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
+});
+
+describe('validateDashboardModel', () => {
+  it('Should return true for v2-style dashboards without a title', () => {
+    expect(
+      validateDashboardModel({
+        elements: {},
+      })
+    ).toBe(true);
   });
 });
 
