@@ -55,6 +55,15 @@ describe('editor/element/utils', () => {
 
       expect(result).toBe('test value');
     });
+
+    it('should prefer panel replaceVariables when provided', () => {
+      const panelReplaceVariables = jest.fn((text: string) => text.replace('${var}', 'row-1'));
+
+      const result = interpolateVariables('test ${var}', panelReplaceVariables);
+
+      expect(panelReplaceVariables).toHaveBeenCalledWith('test ${var}');
+      expect(result).toBe('test row-1');
+    });
   });
 
   describe('getRequest', () => {
@@ -204,6 +213,29 @@ describe('editor/element/utils', () => {
       const result = getRequest(createMockApiConfig(api));
 
       expect(result.data).toBe('{"user": "john"}');
+    });
+
+    it('should interpolate all request fields with panel-scoped variables when provided', () => {
+      const panelReplaceVariables = jest.fn((text: string) => text.replace('${var}', '1'));
+
+      const api: Partial<APIEditorConfig> = {
+        endpoint: 'https://api.example.com/${var}',
+        method: HttpRequestMethod.POST,
+        queryParams: [['status', '${var}']],
+        headerParams: [['X-Panel', '${var}']],
+        data: '{"row":"${var}"}',
+        contentType: 'application/json',
+      };
+
+      const result = getRequest(createMockApiConfig(api), panelReplaceVariables);
+
+      expect(result.url).toBe('https://api.example.com/1?status=1');
+      expect(result.headers).toMatchObject({
+        'Content-Type': 'application/json',
+        'X-Grafana-Action': '1',
+        'X-Panel': '1',
+      });
+      expect(result.data).toBe('{"row":"1"}');
     });
 
     it('should handle empty query params array', () => {

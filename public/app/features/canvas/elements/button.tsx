@@ -45,7 +45,7 @@ export const defaultStyleConfig: ButtonStyleConfig = {
   variant: 'primary',
 };
 
-const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) => {
+const ButtonDisplay = ({ data, replaceVariables }: CanvasElementProps<ButtonConfig, ButtonData>) => {
   const styles = useStyles2(getStyles, data);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ const ButtonDisplay = ({ data }: CanvasElementProps<ButtonConfig, ButtonData>) =
   const onClick = () => {
     if (data?.api && data?.api?.endpoint) {
       setIsLoading(true);
-      callApi(data.api, updateLoadingStateCallback);
+      callApi(data.api, updateLoadingStateCallback, replaceVariables);
     }
   };
 
