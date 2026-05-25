@@ -294,6 +294,32 @@ describe('validateDashboardModel', () => {
       })
     ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
   });
+
+  it('Should not return true for v2 dashboards with malformed panel queries', () => {
+    expect(
+      validateDashboardModel({
+        elements: {
+          panel: {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [{}],
+                },
+              },
+            },
+          },
+        },
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {},
+        },
+        variables: [],
+        annotations: [],
+      })
+    ).toBe('Dashboard JSON must include a dashboard title or dashboard elements');
+  });
 });
 
 describe('processDashboard', () => {
