@@ -214,5 +214,24 @@ describe('InspectDataTab', () => {
       );
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
+
+    it('does not loop when panel transformations are enabled', () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const props = createProps({
+        options: {
+          withTransforms: true,
+          withFieldConfig: false,
+        },
+      });
+
+      const { rerender } = render(<InspectDataTab {...props} />);
+
+      rerender(<InspectDataTab {...props} />);
+
+      expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
+      expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('Maximum update depth exceeded'));
+
+      consoleError.mockRestore();
+    });
   });
 });
