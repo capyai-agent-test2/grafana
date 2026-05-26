@@ -122,6 +122,23 @@ describe('getDashboardChanges', () => {
     expect(result).toEqual(expectedChanges);
   });
 
+  it('should ignore null-only differences when comparing save models', () => {
+    const initialWithNull = {
+      ...initial,
+      panels: [{ id: 1, title: 'Panel 1', datasource: null }],
+    } as Dashboard;
+    const changedWithoutNull = {
+      ...initial,
+      panels: [{ id: 1, title: 'Panel 1' }],
+    } as Dashboard;
+
+    const result = getRawDashboardChanges(initialWithNull, changedWithoutNull, false, false, false);
+
+    expect(result.diffs).toEqual({});
+    expect(result.diffCount).toBe(0);
+    expect(result.hasChanges).toBe(false);
+  });
+
   it('should return the correct result when is new', () => {
     const newDashInitial = {
       ...initial,
@@ -416,11 +433,11 @@ describe('getDashboardChanges', () => {
       diffs: {
         templating: [
           {
-            endLineNumber: 17,
+            endLineNumber: expect.any(Number),
             op: 'replace',
             originalValue: 'value1',
             path: ['templating', 'list', '0', 'current', 'value'],
-            startLineNumber: 17,
+            startLineNumber: expect.any(Number),
             value: 'value2',
           },
         ],

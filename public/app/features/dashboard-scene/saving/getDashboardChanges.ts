@@ -6,6 +6,7 @@ import {
   type Spec as DashboardV2Spec,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
@@ -57,7 +58,7 @@ export function getRawDashboardV2Changes(
   }
 
   // Calculate differences using the non-transformed to v2 spec values to be able to compare the initial and changed dashboard values
-  const diff = jsonDiff(initial, changedSaveModel);
+  const diff = jsonDiff(normalizeSaveModelForComparison(initial), normalizeSaveModelForComparison(changedSaveModel));
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
@@ -107,7 +108,10 @@ export function getRawDashboardChanges(
     changedSaveModel.refresh = initialSaveModel.refresh;
   }
 
-  const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diff = jsonDiff(
+    normalizeSaveModelForComparison(initialSaveModel),
+    normalizeSaveModelForComparison(changedSaveModel)
+  );
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
@@ -121,6 +125,10 @@ export function getRawDashboardChanges(
     hasVariableValueChanges,
     hasRefreshChange: hasRefreshChanged,
   };
+}
+
+export function normalizeSaveModelForComparison<T extends Dashboard | DashboardV2Spec>(saveModel: T): T {
+  return sortedDeepCloneWithoutNulls(saveModel);
 }
 
 interface DefaultPersistedTimeValue {
