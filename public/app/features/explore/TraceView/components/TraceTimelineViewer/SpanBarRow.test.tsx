@@ -162,6 +162,12 @@ describe('<SpanBarRow>', () => {
     expect(screen.queryByTestId('SpanBarRow-adaptiveTracesRestored')).not.toBeInTheDocument();
   });
 
+  it('shows a visible error badge when span is marked as error', () => {
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} showErrorIcon={true} />);
+
+    expect(screen.getByText('Error')).toBeInTheDocument();
+  });
+
   it('render referenced to by multiple span', () => {
     render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const span = Object.assign(
