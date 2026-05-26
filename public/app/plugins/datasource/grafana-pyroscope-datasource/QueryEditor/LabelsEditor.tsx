@@ -153,6 +153,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'LabelsEditorWrapper',
       display: 'flex',
       flex: 1,
+      position: 'relative',
+      zIndex: theme.zIndex.dropdown,
       border: '1px solid rgba(36, 41, 46, 0.3)',
       borderRadius: theme.shape.radius.default,
     }),
