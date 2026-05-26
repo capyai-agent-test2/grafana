@@ -73,6 +73,10 @@ var (
 		Reason:     "provisioned dashboard cannot be deleted",
 		StatusCode: 400,
 	}
+	ErrProvisionedDashboardLibraryPanelsNotSupported = dashboardaccess.DashboardErr{
+		Reason:     "provisioned dashboards do not support library panels",
+		StatusCode: 400,
+	}
 	ErrDashboardIdentifierNotSet = dashboardaccess.DashboardErr{
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,

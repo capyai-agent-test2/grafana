@@ -172,7 +172,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     tooltip,
     xTickLabelRotation,
     xTickLabelMaxLength,
-    xTickLabelSpacing = 0,
+    xTickLabelSpacing = 100,
     legend,
     fullHighlight,
   } = options;

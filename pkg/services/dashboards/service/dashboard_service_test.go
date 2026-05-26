@@ -835,6 +835,36 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dashboard)
 	k8sCliMock.AssertExpectations(t)
+
+	t.Run("Should reject provisioned dashboards with library panels", func(t *testing.T) {
+		query := &dashboards.SaveDashboardDTO{
+			OrgID: 1,
+			User:  &user.SignedInUser{UserID: 1},
+			Dashboard: &dashboards.Dashboard{
+				UID:   "uid",
+				Title: "testing library panels",
+				Slug:  "testing-library-panels",
+				OrgID: 1,
+				Data: simplejson.NewFromAny(map[string]any{
+					"title": "testing library panels",
+					"uid":   "uid",
+					"panels": []any{
+						map[string]any{
+							"type": "text",
+							"libraryPanel": map[string]any{
+								"uid":  "lib-panel-uid",
+								"name": "Library panel",
+							},
+						},
+					},
+				}),
+			},
+		}
+
+		dashboard, err := service.SaveProvisionedDashboard(context.Background(), query, &dashboards.DashboardProvisioning{})
+		require.ErrorIs(t, err, dashboards.ErrProvisionedDashboardLibraryPanelsNotSupported)
+		require.Nil(t, dashboard)
+	})
 }
 
 func TestSaveDashboard(t *testing.T) {

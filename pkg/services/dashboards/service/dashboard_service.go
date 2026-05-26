@@ -995,6 +995,10 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		dto.Dashboard.Data.Set("refresh", dr.cfg.MinRefreshInterval)
 	}
 
+	if containsLibraryPanelRef(dto.Dashboard.Data) {
+		return nil, dashboards.ErrProvisionedDashboardLibraryPanelsNotSupported
+	}
+
 	ctx, ident := identity.WithServiceIdentity(ctx, dto.OrgID)
 	dto.User = ident
 
@@ -1016,6 +1020,25 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	}
 
 	return dash, nil
+}
+
+func containsLibraryPanelRef(dashboardData *simplejson.Json) bool {
+	return containsLibraryPanelRefInPanels(dashboardData.Get("panels").MustArray())
+}
+
+func containsLibraryPanelRefInPanels(panels []any) bool {
+	for _, panel := range panels {
+		panelJSON := simplejson.NewFromAny(panel)
+		if panelJSON.Get("libraryPanel").Interface() != nil {
+			return true
+		}
+
+		if panelJSON.Get("type").MustString() == "row" && containsLibraryPanelRefInPanels(panelJSON.Get("panels").MustArray()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *folder.CreateFolderCommand, readerName string) (*folder.Folder, error) {
