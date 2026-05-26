@@ -53,6 +53,20 @@ describe('value equals to matcher', () => {
 
     expect(matcher(valueIndex, field, frame, data)).toBeTruthy();
   });
+
+  it('should match when a multi-select variable expands to a glob list', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 4;
+    const multiMatcher = getValueMatcher({
+      id: ValueMatcherID.equal,
+      options: {
+        value: '{10,23}',
+      },
+    });
+
+    expect(multiMatcher(valueIndex, field, frame, data)).toBeTruthy();
+  });
 });
 
 describe('value not equals matcher', () => {
@@ -104,5 +118,19 @@ describe('value not equals matcher', () => {
     const valueIndex = 4;
 
     expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
+  });
+
+  it('should not match when a multi-select variable expands to a glob list containing the value', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 4;
+    const multiMatcher = getValueMatcher({
+      id: ValueMatcherID.notEqual,
+      options: {
+        value: '{10,23}',
+      },
+    });
+
+    expect(multiMatcher(valueIndex, field, frame, data)).toBeFalsy();
   });
 });

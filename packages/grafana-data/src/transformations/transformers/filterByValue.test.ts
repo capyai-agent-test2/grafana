@@ -1,6 +1,22 @@
+import {
+  SceneDataNode,
+  SceneDataTransformer,
+  type SceneDeactivationHandler,
+  SceneFlexItem,
+  SceneFlexLayout,
+  sceneGraph,
+  type SceneObject,
+  SceneObjectBase,
+  type SceneVariable,
+  SceneVariableSet,
+  TestVariable,
+} from '@grafana/scenes';
+import { type DataTransformerConfig, LoadingState } from '@grafana/schema';
+
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
-import { type DataTransformerConfig, type MatcherConfig } from '../../types/transformations';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
+import { type MatcherConfig } from '../../types/transformations';
+import { getDefaultTimeRange } from '../../types/time';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ValueMatcherID } from '../matchers/ids';
 import { type BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
@@ -355,4 +371,116 @@ describe('FilterByValue transformer', () => {
       ]);
     });
   });
+
+  it('matches any selected value from a multi-select variable with equals', async () => {
+    const cfg = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'name',
+            config: {
+              id: ValueMatcherID.equal,
+              options: { value: '$var' },
+            },
+          },
+        ],
+      },
+    };
+
+    const data = await setupTransformationScene(
+      toDataFrame({
+        fields: [
+          { name: 'name', type: FieldType.string, values: ['alice', 'bob', 'carol', 'dave'] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3, 4] },
+        ],
+      }),
+      cfg,
+      [new TestVariable({ name: 'var', value: ['alice', 'carol'] })]
+    );
+
+    expect(data).toHaveLength(1);
+    expect(data[0].fields).toEqual([
+      {
+        config: {},
+        name: 'name',
+        type: FieldType.string,
+        values: ['alice', 'carol'],
+        state: {},
+      },
+      {
+        config: {},
+        name: 'value',
+        type: FieldType.number,
+        values: [1, 3],
+        state: {},
+      },
+    ]);
+  });
 });
+
+function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
+  const deactivationHandlers: SceneDeactivationHandler[] = [];
+
+  // Important that variables are activated before other children
+  if (scene.state.$variables) {
+    deactivationHandlers.push(activateFullSceneTree(scene.state.$variables));
+  }
+
+  scene.forEachChild((child) => {
+    if ('setContainerWidth' in child) {
+      // @ts-expect-error
+      child.setContainerWidth(500);
+    }
+    deactivationHandlers.push(activateFullSceneTree(child));
+  });
+
+  deactivationHandlers.push(scene.activate());
+
+  return () => {
+    for (const handler of deactivationHandlers) {
+      handler();
+    }
+  };
+}
+
+async function setupTransformationScene(
+  inputData: DataFrame,
+  cfg: DataTransformerConfig,
+  variables: SceneVariable[]
+): Promise<DataFrame[]> {
+  class TestSceneObject extends SceneObjectBase<{}> {}
+  const dataNode = new SceneDataNode({
+    data: {
+      state: LoadingState.Loading,
+      timeRange: getDefaultTimeRange(),
+      series: [inputData],
+    },
+  });
+
+  const transformationNode = new SceneDataTransformer({
+    transformations: [cfg],
+  });
+
+  const consumer = new TestSceneObject({
+    $data: transformationNode,
+  });
+
+  const scene = new SceneFlexLayout({
+    $data: dataNode,
+    $variables: new SceneVariableSet({ variables }),
+    children: [new SceneFlexItem({ body: consumer })],
+  });
+
+  activateFullSceneTree(scene);
+
+  return new Promise<DataFrame[]>((resolve) => {
+    const dataProvider = sceneGraph.getData(consumer);
+    const sub = dataProvider.subscribeToState((state) => {
+      sub.unsubscribe();
+      resolve(state.data?.series ?? []);
+    });
+  });
+}
