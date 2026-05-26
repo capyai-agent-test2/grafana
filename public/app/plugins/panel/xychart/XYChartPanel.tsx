@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, PanelDataErrorView } from '@grafana/runtime';
+import { VisibilityMode } from '@grafana/schema';
 import {
   TooltipDisplayMode,
   TooltipPlugin2,
@@ -76,6 +77,10 @@ export const XYChartPanel2 = (props: Props2) => {
           yAxis: 1, // TODO: pull from y field
           label: s.name.value,
           color: colorManipulator.alpha(s.color.fixed ?? FALLBACK_COLOR, 1),
+          pointShape: s.pointShape,
+          showLine: s.showLine,
+          showPoints: s.showPoints === VisibilityMode.Always,
+          lineStyle: s.showLine ? s.lineStyle : undefined,
           getItemKey: () => `${idx}-${s.name.value}`,
           fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,

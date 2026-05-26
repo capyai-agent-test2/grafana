@@ -45,6 +45,13 @@ describe('LegendTableItem', () => {
     expect(screen.getByText('10')).toBeInTheDocument();
   });
 
+  it('renders a point marker when symbol metadata is provided', () => {
+    renderInTable({
+      item: makeItem({ pointShape: 'circle', showLine: false, showPoints: true }),
+    });
+    expect(screen.getByTestId('series-icon-point')).toBeInTheDocument();
+  });
+
   it('fires click, mouseover, and mouseout callbacks', async () => {
     const onLabelClick = jest.fn();
     const onLabelMouseOver = jest.fn();

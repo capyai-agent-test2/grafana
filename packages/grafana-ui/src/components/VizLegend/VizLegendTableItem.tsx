@@ -78,6 +78,9 @@ export const LegendTableItem = ({
             seriesName={item.fieldName ?? item.label}
             readonly={readonly}
             lineStyle={item.lineStyle}
+            pointShape={item.pointShape}
+            showLine={item.showLine}
+            showPoints={item.showPoints}
           />
           <button
             disabled={readonly}

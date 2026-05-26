@@ -11,10 +11,13 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color?: string;
   gradient?: string;
   lineStyle?: LineStyle;
+  pointShape?: 'circle' | 'square';
+  showLine?: boolean;
+  showPoints?: boolean;
 }
 
-export const SeriesIcon = React.memo(
-  React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, lineStyle, ...restProps }, ref) => {
+const SeriesIconBase = React.forwardRef<HTMLDivElement, Props>(
+  ({ color, className, gradient, lineStyle, pointShape, showLine, showPoints, ...restProps }, ref) => {
     const theme = useTheme2();
     const styles = useStyles2(getStyles);
 
@@ -33,8 +36,14 @@ export const SeriesIcon = React.memo(
     }
 
     let customStyle: CSSProperties;
+    const renderLine = showLine ?? true;
+    const renderPoint = showPoints ?? false;
 
-    if (lineStyle?.fill === 'dot' && !gradient) {
+    if (!renderLine && renderPoint) {
+      customStyle = {
+        background: 'transparent',
+      };
+    } else if (lineStyle?.fill === 'dot' && !gradient) {
       // make a circle bg image and repeat it
       customStyle = {
         backgroundImage: `radial-gradient(circle at 2px 2px, ${color} 2px, transparent 0)`,
@@ -62,21 +71,56 @@ export const SeriesIcon = React.memo(
         className={cx(className, styles.forcedColors, styles.container)}
         style={customStyle}
         {...restProps}
-      />
+      >
+        {renderPoint && (
+          <span
+            data-testid="series-icon-point"
+            className={cx(
+              styles.point,
+              pointShape === 'square' ? styles.squarePoint : styles.circlePoint,
+              renderLine && styles.pointWithLine
+            )}
+            style={{ background: color }}
+          />
+        )}
+      </div>
     );
-  })
+  }
 );
+
+SeriesIconBase.displayName = 'SeriesIconBase';
+
+export const SeriesIcon = React.memo(SeriesIconBase);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
+    position: 'relative',
     display: 'inline-block',
     width: '14px',
-    height: '4px',
+    height: '8px',
+    marginTop: '1px',
   }),
   forcedColors: css({
     '@media (forced-colors: active)': {
       forcedColorAdjust: 'none',
     },
+  }),
+  point: css({
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: '8px',
+    height: '8px',
+    transform: 'translate(-50%, -50%)',
+  }),
+  pointWithLine: css({
+    boxShadow: `0 0 0 1px ${theme.colors.background.primary}`,
+  }),
+  circlePoint: css({
+    borderRadius: theme.shape.radius.circle,
+  }),
+  squarePoint: css({
+    borderRadius: theme.shape.radius.default,
   }),
 });
 
