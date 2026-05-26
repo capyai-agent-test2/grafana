@@ -3,19 +3,24 @@ import { useEffect, type ReactNode } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { configureStore } from 'app/store/configureStore';
 
 import { DashboardTabs } from './DashboardTabs';
 import { type HomepageTabExtensionProps } from './types';
 
 setBackendSrv(backendSrv);
 setupMockServer();
+
+jest.mock('app/core/components/AppChrome/MegaMenu/hooks', () => ({
+  usePinnedItems: jest.fn(() => ['/explore']),
+}));
 
 const impressionKey = `dashboard_impressions-${contextSrv.user.orgId}`;
 
@@ -38,6 +43,17 @@ const starredHits: DashboardHit[] = [
   makeDashboardHit({ name: 'starred-3', title: 'Starred Dashboard 3' }),
 ];
 
+const navBarTree: NavModelItem[] = [
+  { id: 'home', text: 'Home', url: '/' },
+  { id: 'explore', text: 'Explore', url: '/explore', subTitle: 'Inspect your telemetry' },
+  { id: 'bookmarks', text: 'Bookmarks', url: '/bookmarks' },
+  {
+    id: 'starred',
+    text: 'Starred',
+    children: [{ id: 'starred-1', text: 'Starred Dashboard 1', url: '/d/starred-1/starred-dashboard-1' }],
+  },
+];
+
 function seedRecent(uids: string[]) {
   window.localStorage.setItem(impressionKey, JSON.stringify(uids));
 }
@@ -51,6 +67,8 @@ beforeEach(() => {
   window.localStorage.removeItem(impressionKey);
   seedStars([]);
 });
+
+const renderDashboardTabs = () => render(<DashboardTabs />, { store: configureStore({ navBarTree }) });
 
 const createDashboardTabsExtensionComponent = (
   pluginId: string,
@@ -76,7 +94,7 @@ describe('DashboardTabs', () => {
     seedRecent(['recent-1', 'recent-2']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
-    render(<DashboardTabs />);
+    renderDashboardTabs();
 
     expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
 
@@ -86,48 +104,54 @@ describe('DashboardTabs', () => {
     });
   });
 
-  it('switches to Starred tab and shows starred dashboards', async () => {
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
-    server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
+  it('switches to Bookmarks tab and shows bookmarked pages and starred dashboards', async () => {
+    const { user } = renderDashboardTabs();
 
-    const { user } = render(<DashboardTabs />);
+    await user.click(screen.getByRole('tab', { name: /bookmarks/i }));
 
-    await user.click(screen.getByRole('tab', { name: /starred/i }));
-
-    expect(screen.getByRole('tab', { name: /starred/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: /bookmarks/i })).toHaveAttribute('aria-selected', 'true');
 
     await waitFor(() => {
+      expect(screen.getByText('Explore')).toBeInTheDocument();
       expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
-      expect(screen.getByText('Starred Dashboard 2')).toBeInTheDocument();
-      expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
     });
   });
 
-  it('shows empty state when no recent dashboards', async () => {
-    render(<DashboardTabs />);
+  it('shows empty state when no recent dashboards after switching back to Recent', async () => {
+    const { user } = renderDashboardTabs();
+
+    await user.click(screen.getByRole('tab', { name: /recent/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
     });
   });
 
-  it('shows empty state when no starred dashboards', async () => {
-    seedStars([]);
-    const { user } = render(<DashboardTabs />);
+  it('shows empty state when no bookmarks exist', async () => {
+    const { usePinnedItems } = jest.requireMock('app/core/components/AppChrome/MegaMenu/hooks');
+    usePinnedItems.mockReturnValueOnce([]);
 
-    await user.click(screen.getByRole('tab', { name: /starred/i }));
+    const emptyStore = configureStore({
+      navBarTree: [
+        { id: 'home', text: 'Home', url: '/' },
+        { id: 'bookmarks', text: 'Bookmarks', url: '/bookmarks' },
+        { id: 'starred', text: 'Starred', children: [] },
+      ],
+    });
+    const { user } = render(<DashboardTabs />, { store: emptyStore });
+
+    await user.click(screen.getByRole('tab', { name: /bookmarks/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Your starred dashboards will appear here.')).toBeInTheDocument();
+      expect(screen.getByText('Your bookmarks will appear here.')).toBeInTheDocument();
     });
   });
 
   it('shows counter badges with correct counts', async () => {
     seedRecent(['recent-1', 'recent-2']);
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
-    server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
+    server.use(getCustomSearchHandler([...recentHits]));
 
-    render(<DashboardTabs />);
+    renderDashboardTabs();
 
     await waitFor(() => {
       const recentTab = screen.getByRole('tab', { name: /recent/i });
@@ -135,22 +159,15 @@ describe('DashboardTabs', () => {
     });
 
     await waitFor(() => {
-      const starredTab = screen.getByRole('tab', { name: /starred/i });
-      expect(starredTab).toHaveTextContent('3');
+      const bookmarksTab = screen.getByRole('tab', { name: /bookmarks/i });
+      expect(bookmarksTab).toHaveTextContent('2');
     });
   });
 
-  it('refetches starred dashboards when star is toggled', async () => {
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
-    server.use(getCustomSearchHandler(starredHits));
+  it('auto-switches to Bookmarks when recent dashboards are empty', async () => {
+    renderDashboardTabs();
 
-    const { user } = render(<DashboardTabs />);
-
-    await user.click(screen.getByRole('tab', { name: /starred/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('tab', { name: /bookmarks/i, selected: true })).toBeInTheDocument();
   });
 
   it('renders extension tabs from plugins', async () => {
@@ -175,12 +192,9 @@ describe('DashboardTabs', () => {
       isLoading: false,
     }));
 
-    const { user } = render(<DashboardTabs />);
+    const { user } = renderDashboardTabs();
 
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: 'Plugin Tab 1' })).toHaveAttribute('aria-selected', 'true');
-    });
 
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();

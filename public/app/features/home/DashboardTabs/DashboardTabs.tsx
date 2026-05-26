@@ -1,24 +1,25 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { usePluginComponents } from '@grafana/runtime';
 import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { getCombinedBookmarkItems } from 'app/core/utils/bookmarkItems';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { useSelector } from 'app/types/store';
 
+import { BookmarksTab } from './BookmarksTab';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
-import { StarredDashboardsTab } from './StarredDashboardsTab';
 import { type HomepageTabExtensionProps, type HomepageTab, validateHomepageTab } from './types';
 
 const RECENT_TAB_ID = 'recent';
-const STARRED_TAB_ID = 'starred';
+const BOOKMARKS_TAB_ID = 'bookmarks';
 const MAX_RECENT = 20;
-const MAX_STARRED = 30;
 
 function DashboardExtensionTab({
   Component,
@@ -52,6 +53,9 @@ export function DashboardTabs() {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
+  const navTree = useSelector((state) => state.navBarTree);
+  const pinnedItems = usePinnedItems();
+  const bookmarkItems = useMemo(() => getCombinedBookmarkItems(navTree, pinnedItems), [navTree, pinnedItems]);
 
   const {
     value: recentDashboards,
@@ -60,19 +64,7 @@ export function DashboardTabs() {
     retry: recentRetry,
   } = useAsyncRetry(() => getRecentlyViewedDashboards(MAX_RECENT), []);
 
-  const {
-    value: starredDashboards,
-    loading: starredLoading,
-    error: starredError,
-    retry: starredRetry,
-  } = useAsyncRetry(async () => {
-    const response = await getGrafanaSearcher().starred({ limit: MAX_STARRED });
-    return response.view.toArray();
-  }, []);
-
-  const { foldersByUid } = useDashboardLocationInfo(
-    (recentDashboards?.length ?? 0) > 0 || (starredDashboards?.length ?? 0) > 0
-  );
+  const { foldersByUid } = useDashboardLocationInfo((recentDashboards?.length ?? 0) > 0);
 
   const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
     extensionPointId: PluginExtensionPoints.HomepageTabs,
@@ -86,26 +78,26 @@ export function DashboardTabs() {
   // Auto-switch to the non-empty tab when initial data finishes loading
   const didAutoSwitch = useRef(false);
   useEffect(() => {
-    if (didAutoSwitch.current || recentLoading || starredLoading) {
+    if (didAutoSwitch.current || recentLoading) {
       return;
     }
 
     const recentEmpty = !recentDashboards?.length;
-    const starredEmpty = !starredDashboards?.length;
+    const bookmarksEmpty = bookmarkItems.length === 0;
 
-    if (activeTab === RECENT_TAB_ID && recentEmpty && !starredEmpty) {
-      setActiveTab(STARRED_TAB_ID);
+    if (activeTab === RECENT_TAB_ID && recentEmpty && !bookmarksEmpty) {
+      setActiveTab(BOOKMARKS_TAB_ID);
       didAutoSwitch.current = true;
       return;
     }
 
-    if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
+    if (activeTab === BOOKMARKS_TAB_ID && bookmarksEmpty && !recentEmpty) {
       setActiveTab(RECENT_TAB_ID);
       didAutoSwitch.current = true;
       return;
     }
 
-    if ((activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && recentEmpty && starredEmpty) {
+    if ((activeTab === RECENT_TAB_ID || activeTab === BOOKMARKS_TAB_ID) && recentEmpty && bookmarksEmpty) {
       const extensionTab = extensionTabs.find((tab) => !tab.href);
       if (extensionTab) {
         setActiveTab(extensionTab.id);
@@ -113,7 +105,7 @@ export function DashboardTabs() {
         return;
       }
     }
-  }, [recentLoading, starredLoading, recentDashboards, starredDashboards, extensionTabs, activeTab]);
+  }, [recentLoading, recentDashboards, bookmarkItems, extensionTabs, activeTab]);
 
   const builtInTabs: HomepageTab[] = [
     {
@@ -123,10 +115,10 @@ export function DashboardTabs() {
       counter: recentDashboards?.length,
     },
     {
-      id: STARRED_TAB_ID,
-      label: t('home.dashboard-tabs.starred', 'Starred'),
-      activeLabel: t('home.dashboard-tabs.starred-active', 'Starred dashboards'),
-      counter: starredDashboards?.length,
+      id: BOOKMARKS_TAB_ID,
+      label: t('home.dashboard-tabs.bookmarks', 'Bookmarks'),
+      activeLabel: t('home.dashboard-tabs.bookmarks-active', 'Bookmarks'),
+      counter: bookmarkItems.length,
     },
   ];
 
@@ -154,7 +146,7 @@ export function DashboardTabs() {
         ))}
       </TabsBar>
 
-      {(activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && (
+      {(activeTab === RECENT_TAB_ID || activeTab === BOOKMARKS_TAB_ID) && (
         <TabContent className={styles.tabContent}>
           <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
             {activeTab === RECENT_TAB_ID && (
@@ -166,15 +158,7 @@ export function DashboardTabs() {
                 foldersByUid={foldersByUid}
               />
             )}
-            {activeTab === STARRED_TAB_ID && (
-              <StarredDashboardsTab
-                dashboards={starredDashboards ?? []}
-                loading={starredLoading}
-                error={starredError}
-                retry={starredRetry}
-                foldersByUid={foldersByUid}
-              />
-            )}
+            {activeTab === BOOKMARKS_TAB_ID && <BookmarksTab items={bookmarkItems} />}
           </ScrollContainer>
         </TabContent>
       )}

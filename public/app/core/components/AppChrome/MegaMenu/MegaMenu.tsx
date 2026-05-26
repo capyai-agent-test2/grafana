@@ -11,13 +11,14 @@ import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { getCombinedBookmarkItems } from 'app/core/utils/bookmarkItems';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
-import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
+import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '300px';
 
@@ -38,17 +39,16 @@ export const MegaMenu = memo(
 
     // Remove profile + help from tree
     const navItems = navTree
-      .filter((item) => item.id !== 'profile' && item.id !== 'help')
+      .filter((item) => item.id !== 'profile' && item.id !== 'help' && item.id !== 'starred')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
     if (bookmarksItem) {
-      // Add children to the bookmarks section
-      bookmarksItem.children = pinnedItems.reduce((acc: NavModelItem[], url) => {
-        const item = findByUrl(navItems, url);
+      bookmarksItem.children = getCombinedBookmarkItems(navTree, pinnedItems).reduce((acc: NavModelItem[], item) => {
         if (!item) {
           return acc;
         }
+
         const newItem = {
           id: item.id,
           text: item.text,

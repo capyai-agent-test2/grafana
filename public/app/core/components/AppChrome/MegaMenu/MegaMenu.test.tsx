@@ -8,6 +8,10 @@ import { configureStore } from 'app/store/configureStore';
 
 import { MegaMenu } from './MegaMenu';
 
+jest.mock('./hooks', () => ({
+  usePinnedItems: jest.fn(() => ['section/child2']),
+}));
+
 const setup = () => {
   const navBarTree: NavModelItem[] = [
     {
@@ -28,6 +32,16 @@ const setup = () => {
       text: 'Profile',
       id: 'profile',
       url: 'profile',
+    },
+    {
+      text: 'Bookmarks',
+      id: 'bookmarks',
+      url: '/bookmarks',
+    },
+    {
+      text: 'Starred',
+      id: 'starred',
+      children: [{ text: 'Starred dash', id: 'starred/abc', url: '/d/abc/starred-dash' }],
     },
   ];
 
@@ -66,5 +80,16 @@ describe('MegaMenu', () => {
     setup();
 
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
+  });
+
+  it('shows starred dashboards inside bookmarks instead of a separate section', async () => {
+    setup();
+
+    expect(screen.queryByRole('link', { name: 'Starred' })).not.toBeInTheDocument();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Bookmarks' }));
+
+    expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Starred dash' })).toBeInTheDocument();
   });
 });
