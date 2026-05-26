@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
+import { canShowVersionsPage } from 'app/features/dashboard/utils/canShowVersionsPage';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
@@ -65,7 +66,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if ((dashboard.state.uid || dashboard.state.meta.isDashboardTemplate) && dashboard.state.meta.canSave) {
+  if (canShowVersionsPage(dashboard.state.uid, dashboard.state.meta)) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),
       url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),

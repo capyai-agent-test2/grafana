@@ -15,6 +15,7 @@ import { DashboardMetaChangedEvent } from 'app/types/events';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { type DashboardModel } from '../../state/DashboardModel';
+import { canShowVersionsPage } from '../../utils/canShowVersionsPage';
 import { AccessControlDashboardPermissions } from '../DashboardPermissions/AccessControlDashboardPermissions';
 import { SaveDashboardAsButton, SaveDashboardButton } from '../SaveDashboard/SaveDashboardButton';
 
@@ -134,7 +135,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
   }
 
-  if (dashboard.uid && dashboard.meta.canSave) {
+  if (canShowVersionsPage(dashboard.uid, dashboard.meta)) {
     pages.push({
       title: t('dashboard-settings.versions.title', 'Versions'),
       id: 'versions',
