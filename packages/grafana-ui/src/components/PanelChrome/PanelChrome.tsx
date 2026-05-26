@@ -634,7 +634,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.success.text,
       },
 
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      [theme.transitions.handleMotion('no-preference')]: {
         animation: `${streamingPulse} 1.6s ease-in-out infinite`,
       },
     }),
