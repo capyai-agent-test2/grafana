@@ -70,6 +70,8 @@ export {
   InteractiveTable,
   type FetchDataArgs,
   type FetchDataFunc,
+  type SortByChangeHandler,
+  type SortByState,
 } from './components/InteractiveTable/InteractiveTable';
 export { TagsInput } from './components/TagsInput/TagsInput';
 export { AutoSaveField } from './components/AutoSaveField/AutoSaveField';

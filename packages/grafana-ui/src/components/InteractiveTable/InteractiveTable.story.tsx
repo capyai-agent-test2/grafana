@@ -9,7 +9,12 @@ import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { Text } from '../Text/Text';
 
-import { type FetchDataArgs, InteractiveTable, type InteractiveTableHeaderTooltip } from './InteractiveTable';
+import {
+  type FetchDataArgs,
+  InteractiveTable,
+  type InteractiveTableHeaderTooltip,
+  type SortByState,
+} from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
@@ -274,6 +279,7 @@ export const WithHeaderTooltips: TableStoryObj = {
 
 export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   const [data, setData] = useState(pageableData);
+  const [sortBy, setSortBy] = useState<SortByState<CarData>>([]);
 
   const fetchData = useCallback(({ sortBy }: FetchDataArgs<CarData>) => {
     if (!sortBy?.length) {
@@ -297,7 +303,16 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
     }, 300);
   }, []);
 
-  return <InteractiveTable {...args} data={data} pageSize={15} fetchData={fetchData} />;
+  return (
+    <InteractiveTable
+      {...args}
+      data={data}
+      pageSize={15}
+      fetchData={fetchData}
+      sortBy={sortBy}
+      onSortByChange={setSortBy}
+    />
+  );
 };
 
 export const WithCustomHeader: TableStoryObj = {

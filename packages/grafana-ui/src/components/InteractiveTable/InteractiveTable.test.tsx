@@ -370,6 +370,57 @@ describe('InteractiveTable', () => {
 
       expect(fetchData).toHaveBeenCalledWith({ sortBy: [{ id: 'id', desc: false }] });
     });
+
+    it('should call onSortByChange with the next sort state', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'value', header: 'Value', sortType: 'string' }];
+      const data: TableData[] = [{ id: '1', value: 'b' }, { id: '2', value: 'a' }];
+      const onSortByChange = jest.fn();
+      render(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          sortBy={[]}
+          onSortByChange={onSortByChange}
+        />
+      );
+
+      const valueColumnHeader = screen.getByRole('button', {
+        name: /value/i,
+      });
+
+      await userEvent.click(valueColumnHeader);
+
+      expect(onSortByChange).toHaveBeenCalledWith([{ id: 'value', desc: false }]);
+    });
+
+    it('should follow externally controlled sort state', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'value', header: 'Value', sortType: 'string' }];
+      const data: TableData[] = [{ id: '1', value: 'b' }, { id: '2', value: 'a' }];
+      const { rerender } = render(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} sortBy={[]} />
+      );
+
+      const getVisibleValues = () =>
+        screen
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent)
+          .filter((text): text is string => Boolean(text));
+
+      expect(getVisibleValues()).toEqual(['b', 'a']);
+
+      rerender(
+        <InteractiveTable
+          columns={columns}
+          data={data}
+          getRowId={getRowId}
+          sortBy={[{ id: 'value', desc: false }]}
+        />
+      );
+
+      expect(getVisibleValues()).toEqual(['a', 'b']);
+      expect(screen.getByRole('columnheader', { name: 'Value' })).toHaveAttribute('aria-sort', 'ascending');
+    });
   });
 
   describe('custom header rendering', () => {

@@ -115,7 +115,9 @@ export type InteractiveTableHeaderTooltip = {
   iconName?: IconName;
 };
 
-export type FetchDataArgs<Data> = { sortBy: Array<SortingRule<Data>> };
+export type SortByState<Data> = Array<SortingRule<Data>>;
+export type SortByChangeHandler<Data> = (sortBy: SortByState<Data>) => void;
+export type FetchDataArgs<Data> = { sortBy: SortByState<Data> };
 export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
 
 interface BaseProps<TableData extends object> {
@@ -151,7 +153,15 @@ interface BaseProps<TableData extends object> {
   /**
    * Optional way to set how the table is sorted from the beginning. Must be memoized.
    */
-  initialSortBy?: Array<SortingRule<TableData>>;
+  initialSortBy?: SortByState<TableData>;
+  /**
+   * Optional way to control the current sort state. Must be memoized.
+   */
+  sortBy?: SortByState<TableData>;
+  /**
+   * Called when the sort state changes. Useful for syncing with external state such as URL params.
+   */
+  onSortByChange?: SortByChangeHandler<TableData>;
   /**
    * Disable the ability to remove sorting on columns (none -> asc -> desc -> asc)
    */
@@ -197,6 +207,8 @@ export function InteractiveTable<TableData extends object>({
   showExpandAll = false,
   fetchData,
   initialSortBy = [],
+  sortBy: controlledSortBy,
+  onSortByChange,
   disableSortRemove,
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
@@ -212,6 +224,7 @@ export function InteractiveTable<TableData extends object>({
   );
 
   const tableHooks: Array<PluginHook<TableData>> = [useSortBy, useExpanded];
+  const isSortControlled = controlledSortBy !== undefined;
 
   const multiplePages = data.length > pageSize;
   const paginationEnabled = pageSize > 0;
@@ -232,6 +245,23 @@ export function InteractiveTable<TableData extends object>({
       manualSortBy: Boolean(fetchData),
       disableSortRemove,
       getRowId,
+      stateReducer: (newState, _action, previousState) => {
+        if (newState.sortBy !== previousState.sortBy) {
+          onSortByChange?.(newState.sortBy);
+        }
+
+        return newState;
+      },
+      useControlledState: (state) => {
+        if (!isSortControlled) {
+          return state;
+        }
+
+        return {
+          ...state,
+          sortBy: controlledSortBy,
+        };
+      },
       initialState: {
         hiddenColumns: [
           !renderExpandedRow && EXPANDER_CELL_ID,
