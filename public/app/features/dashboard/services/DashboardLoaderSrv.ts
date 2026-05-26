@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
@@ -19,6 +19,8 @@ import { DashboardVersionError, type DashboardWithAccessInfo } from '../api/type
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
+
+const globalJQuery = window.jQuery;
 
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
@@ -94,8 +96,8 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       moment,
       window,
       document,
-      $,
-      $,
+      globalJQuery,
+      globalJQuery,
       services
     );
 
