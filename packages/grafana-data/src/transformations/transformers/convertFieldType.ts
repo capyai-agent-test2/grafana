@@ -103,7 +103,7 @@ export function convertFieldTypes(options: ConvertFieldTypeTransformerOptions, f
 export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): Field {
   switch (opts.destinationType) {
     case FieldType.time:
-      return ensureTimeField(field, opts.dateFormat);
+      return ensureTimeField(field, opts.dateFormat, opts.timezone);
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
@@ -125,8 +125,8 @@ const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]
 /**
  * @internal
  */
-export function fieldToTimeField(field: Field, dateFormat?: string): Field {
-  let opts = dateFormat ? { format: dateFormat } : undefined;
+export function fieldToTimeField(field: Field, dateFormat?: string, timezone?: TimeZone): Field {
+  const opts = dateFormat || timezone ? { format: dateFormat, timeZone: timezone } : undefined;
 
   const timeValues = field.values.slice();
 
@@ -264,7 +264,7 @@ function fieldToComplexField(field: Field): Field {
  *
  * @public
  */
-export function ensureTimeField(field: Field, dateFormat?: string): Field {
+export function ensureTimeField(field: Field, dateFormat?: string, timezone?: TimeZone): Field {
   const firstValueTypeIsNumber = typeof field.values[0] === 'number';
   // if the format is unix seconds, we don't want to skip formatting
   const isUnixSecondsFormat = dateFormat === 'X';
@@ -278,7 +278,7 @@ export function ensureTimeField(field: Field, dateFormat?: string): Field {
       type: FieldType.time, //assumes it should be time
     };
   }
-  return fieldToTimeField(field, dateFormat);
+  return fieldToTimeField(field, dateFormat, timezone);
 }
 
 function fieldToEnumField(field: Field, config?: EnumFieldConfig): Field {
