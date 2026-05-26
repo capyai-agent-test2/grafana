@@ -1,11 +1,12 @@
 import { render, screen } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { configureStore } from 'app/store/configureStore';
 
 import HomePage from './HomePage';
 
@@ -15,6 +16,18 @@ setupMockServer();
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 });
+
+jest.mock('app/core/components/AppChrome/MegaMenu/hooks', () => ({
+  usePinnedItems: jest.fn(() => []),
+}));
+
+const navBarTree: NavModelItem[] = [
+  { id: 'home', text: 'Home', url: '/' },
+  { id: 'bookmarks', text: 'Bookmarks', url: '/bookmarks' },
+  { id: 'starred', text: 'Starred', children: [{ id: 'starred-1', text: 'Starred Dashboard 1', url: '/d/1' }] },
+];
+
+const renderHomePage = () => render(<HomePage />, { store: configureStore({ navBarTree }) });
 
 const createHomepageExtensionComponent = (
   pluginId: string,
@@ -40,38 +53,36 @@ describe('HomePage', () => {
   });
 
   it('renders the greeting', async () => {
-    render(<HomePage />);
+    renderHomePage();
     expect(await screen.findByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
   });
 
   it('renders the OSS welcome message', async () => {
     config.buildInfo.edition = GrafanaEdition.OpenSource;
 
-    render(<HomePage />);
+    renderHomePage();
     expect(await screen.findByText('Welcome to Grafana.')).toBeInTheDocument();
   });
 
-  it('renders dashboard tabs and auto-switches to starred', async () => {
-    render(<HomePage />);
+  it('renders dashboard tabs and auto-switches to bookmarks', async () => {
+    renderHomePage();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /starred/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /bookmarks/i })).toBeInTheDocument();
 
-    // Default mocks have starred dashboards but no recent impressions,
-    // so auto-switch activates the Starred tab
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /bookmarks/i, selected: true })).toBeInTheDocument();
   });
 
   it('renders the Enterprise welcome message', async () => {
     config.buildInfo.edition = GrafanaEdition.Enterprise;
 
-    render(<HomePage />);
+    renderHomePage();
     expect(await screen.findByText('Welcome to Grafana Enterprise.')).toBeInTheDocument();
   });
 
   it('renders the Cloud welcome message', async () => {
     config.namespace = 'stacks-12345';
 
-    render(<HomePage />);
+    renderHomePage();
     expect(await screen.findByText('Welcome to Grafana Cloud.')).toBeInTheDocument();
   });
 
@@ -95,7 +106,7 @@ describe('HomePage', () => {
           : [],
     }));
 
-    render(<HomePage />);
+    renderHomePage();
 
     expect(await screen.findByText('Homepage pre extension')).toBeInTheDocument();
     expect(screen.queryByText('Untrusted homepage pre extension')).not.toBeInTheDocument();
@@ -126,7 +137,7 @@ describe('HomePage', () => {
           : [],
     }));
 
-    render(<HomePage />);
+    renderHomePage();
 
     expect(await screen.findByText('Homepage extra extension 1')).toBeInTheDocument();
     expect(await screen.findByText('Homepage extra extension 2')).toBeInTheDocument();

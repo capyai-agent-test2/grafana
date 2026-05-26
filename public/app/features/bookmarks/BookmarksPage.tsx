@@ -1,26 +1,19 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmptyState, useStyles2 } from '@grafana/ui';
 import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
-import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { NavLandingPageCard } from 'app/core/components/NavLandingPage/NavLandingPageCard';
 import { Page } from 'app/core/components/Page/Page';
+import { getCombinedBookmarkItems } from 'app/core/utils/bookmarkItems';
 import { useSelector } from 'app/types/store';
 
 export function BookmarksPage() {
   const styles = useStyles2(getStyles);
   const pinnedItems = usePinnedItems();
   const navTree = useSelector((state) => state.navBarTree);
-
-  const validItems = pinnedItems.reduce((acc: NavModelItem[], url) => {
-    const item = findByUrl(navTree, url);
-    if (item) {
-      acc.push(item);
-    }
-    return acc;
-  }, []);
+  const validItems = getCombinedBookmarkItems(navTree, pinnedItems);
 
   return (
     <Page navId="bookmarks">
@@ -31,7 +24,7 @@ export function BookmarksPage() {
             message={t('bookmarks-page.empty.message', 'It looks like you haven’t created any bookmarks yet')}
           >
             <Trans i18nKey="bookmarks-page.empty.tip">
-              Hover over any item in the nav menu and click on the bookmark icon to add it here.
+              Hover over any item in the nav menu and click the bookmark icon, or star a dashboard to add it here.
             </Trans>
           </EmptyState>
         ) : (
