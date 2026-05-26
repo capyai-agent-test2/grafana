@@ -63,10 +63,25 @@ jest.mock('@grafana/ui', () => {
         Legend: ({ children }: { children: ReactNode }) => <div data-testid="viz-layout-legend">{children}</div>,
       }
     ),
-    VizLegend: (props: { items?: Array<{ label: string; color: string }> }) => (
+    VizLegend: (props: {
+      items?: Array<{
+        label: string;
+        color: string;
+        pointShape?: string;
+        showLine?: boolean;
+        showPoints?: boolean;
+      }>;
+    }) => (
       <div data-testid="viz-legend">
         {props.items?.map((item, i) => (
-          <span key={i} data-testid={`legend-item-${i}`} data-color={item.color}>
+          <span
+            key={i}
+            data-testid={`legend-item-${i}`}
+            data-color={item.color}
+            data-point-shape={item.pointShape}
+            data-show-line={String(item.showLine)}
+            data-show-points={String(item.showPoints)}
+          >
             {item.label}
           </span>
         ))}
@@ -227,6 +242,20 @@ describe('XYChartPanel2', () => {
 
       expect(screen.getByText('cpu')).toBeVisible();
       expect(screen.getByText('mem')).toBeVisible();
+    });
+
+    it('passes point and line symbol metadata to legend items', () => {
+      const series = makeSeries({
+        pointShape: PointShape.Square,
+        showPoints: VisibilityMode.Always,
+        showLine: true,
+      });
+
+      renderPanel(undefined, [series]);
+
+      expect(screen.getByTestId('legend-item-0')).toHaveAttribute('data-point-shape', PointShape.Square);
+      expect(screen.getByTestId('legend-item-0')).toHaveAttribute('data-show-line', 'true');
+      expect(screen.getByTestId('legend-item-0')).toHaveAttribute('data-show-points', 'true');
     });
 
     it('excludes series with hideFrom.legend true', () => {

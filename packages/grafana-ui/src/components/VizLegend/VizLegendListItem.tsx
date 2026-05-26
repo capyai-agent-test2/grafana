@@ -87,6 +87,9 @@ export const VizLegendListItem = <T = unknown,>({
         gradient={item.gradient}
         readonly={readonly}
         lineStyle={item.lineStyle}
+        pointShape={item.pointShape}
+        showLine={item.showLine}
+        showPoints={item.showPoints}
       />
       <button
         disabled={readonly}

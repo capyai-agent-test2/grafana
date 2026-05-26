@@ -59,4 +59,11 @@ describe('VizLegendListItem', () => {
     });
     expect(screen.getByText(/Min:/)).toBeInTheDocument();
   });
+
+  it('renders a point marker when symbol metadata is provided', () => {
+    renderItem({
+      item: makeItem({ pointShape: 'square', showLine: false, showPoints: true }),
+    });
+    expect(screen.getByTestId('series-icon-point')).toBeInTheDocument();
+  });
 });

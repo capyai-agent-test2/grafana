@@ -47,6 +47,9 @@ export interface VizLegendItem<T = any> {
   label: string;
   color?: string;
   gradient?: string;
+  pointShape?: 'circle' | 'square';
+  showLine?: boolean;
+  showPoints?: boolean;
   yAxis: number;
   disabled?: boolean;
   // displayValues?: DisplayValue[];
