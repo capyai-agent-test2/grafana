@@ -804,6 +804,7 @@ export const dataQueriesToGrafanaQueries = async (
           datasourceUid: datasourceSettings.uid,
           model: {
             ...interpolatedTarget,
+            interval: minInterval ?? interpolatedTarget.interval,
             maxDataPoints,
             intervalMs,
           },

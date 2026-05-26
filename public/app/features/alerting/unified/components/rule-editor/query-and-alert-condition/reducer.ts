@@ -21,7 +21,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { getDefaultQueries, getInstantFromDataQuery } from '../../../utils/rule-form';
+import { getDefaultQueries, getInstantFromDataQuery, getIntervals } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
@@ -49,6 +49,11 @@ const findDataSourceFromExpression = (queries: AlertQuery[], refId: string): Ale
 
 const initialState: QueriesAndExpressionsState = {
   queries: [],
+};
+
+const getQueryIntervalMs = (query: AlertQuery, maxDataPoints?: number, minInterval?: string) => {
+  const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
+  return getIntervals(range, minInterval, maxDataPoints).intervalMs;
 };
 
 export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
@@ -121,6 +126,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
               model: {
                 ...query.model,
                 maxDataPoints: action.payload.maxDataPoints,
+                intervalMs: getQueryIntervalMs(query, action.payload.maxDataPoints, query.model.interval),
               },
             }
           : query;
@@ -133,7 +139,8 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
               ...query,
               model: {
                 ...query.model,
-                intervalMs: action.payload.minInterval ? rangeUtil.intervalToMs(action.payload.minInterval) : undefined,
+                interval: action.payload.minInterval,
+                intervalMs: getQueryIntervalMs(query, query.model.maxDataPoints, action.payload.minInterval),
               },
             }
           : query;
