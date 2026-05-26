@@ -38,6 +38,8 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { pluginImporter } from './importer/pluginImporter';
 
+type MissingDataSourceInstanceSettings = DataSourceInstanceSettings & { isMissingDatasource: true };
+
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
@@ -141,7 +143,7 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       if (!dsSettings) {
-        return undefined;
+        return isDatasourceRef(ref) ? this.getMissingInstanceSettings(ref, nameOrUid) : undefined;
       }
 
       // Return an instance with un-interpolated values for name and uid
@@ -154,7 +156,14 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
+    const dsSettings =
+      this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
+
+    if (dsSettings) {
+      return dsSettings;
+    }
+
+    return isDatasourceRef(ref) ? this.getMissingInstanceSettings(ref, nameOrUid) : undefined;
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
@@ -197,6 +206,13 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(this.datasources[nameOrUid]);
     }
 
+    if (isDatasourceRef(ref) && ref.type) {
+      const ds = this.findDatasourceByType(ref.type);
+      if (ds) {
+        return this.get(ds.uid);
+      }
+    }
+
     return this.loadDatasource(nameOrUid);
   }
 
@@ -210,6 +226,29 @@ export class DatasourceSrv implements DataSourceService {
       return undefined;
     }
     return settings.find((v) => v.isDefault) ?? settings[0];
+  }
+
+  private getMissingInstanceSettings(
+    ref: DataSourceRef,
+    unresolvedRef: string
+  ): MissingDataSourceInstanceSettings | undefined {
+    if (!ref.type) {
+      return undefined;
+    }
+
+    const dsSettings = this.findDatasourceByType(ref.type);
+    if (!dsSettings) {
+      return undefined;
+    }
+
+    return {
+      ...dsSettings,
+      isDefault: false,
+      name: ref.uid ?? unresolvedRef,
+      uid: ref.uid ?? unresolvedRef,
+      rawRef: { type: dsSettings.type, uid: dsSettings.uid },
+      isMissingDatasource: true,
+    } as MissingDataSourceInstanceSettings;
   }
 
   async loadDatasource(key: string): Promise<DataSourceApi> {

@@ -136,7 +136,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     defaultQueries?: DataQuery[] | GrafanaQuery[]
   ) => {
     const { dsSettings } = this.state;
-    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
+    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.rawRef?.uid ?? dsSettings.uid) : undefined;
     const nextDS = await getDataSourceSrv().get(newSettings.uid);
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value

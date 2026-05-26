@@ -45,7 +45,7 @@ composableKinds: PanelCfg: {
 					xTickLabelMaxLength: int32 & >=0
 					// Controls the spacing between x axis labels.
 					// negative values indicate backwards skipping behavior
-					xTickLabelSpacing?: int32 | *0
+					xTickLabelSpacing?: int32 | *100
 					// Controls whether bars are stacked or not, either normally or in percent mode.
 					stacking: common.StackingMode & (*"none" | _)
 					// This controls whether values are shown on top or to the left of bars.

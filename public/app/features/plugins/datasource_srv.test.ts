@@ -336,6 +336,26 @@ describe('datasource_srv', () => {
         expect(settings?.type).toBe(datasource.type);
         expect(settings?.name).toBe('Jaeger');
       });
+
+      it('should preserve unresolved datasource variables when type is available', () => {
+        const ds = dataSourceSrv.getInstanceSettings({ uid: '${missingDatasource}', type: 'test-db' });
+
+        expect(ds?.uid).toBe('${missingDatasource}');
+        expect(ds?.name).toBe('${missingDatasource}');
+        expect(ds?.type).toBe('test-db');
+        expect(ds?.rawRef).toEqual({ type: 'test-db', uid: 'uid-code-BBB' });
+        expect((ds as DataSourceInstanceSettings & { isMissingDatasource?: boolean })?.isMissingDatasource).toBe(true);
+      });
+
+      it('should preserve missing datasource uids when type is available', () => {
+        const ds = dataSourceSrv.getInstanceSettings({ uid: 'missing-uid', type: 'test-db' });
+
+        expect(ds?.uid).toBe('missing-uid');
+        expect(ds?.name).toBe('missing-uid');
+        expect(ds?.type).toBe('test-db');
+        expect(ds?.rawRef).toEqual({ type: 'test-db', uid: 'uid-code-BBB' });
+        expect((ds as DataSourceInstanceSettings & { isMissingDatasource?: boolean })?.isMissingDatasource).toBe(true);
+      });
     });
 
     describe('when loading datasource', () => {

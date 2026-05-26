@@ -35,6 +35,15 @@ export function dataSourceLabel(
   }
 
   if ('name' in dataSource) {
+    if ('isMissingDatasource' in dataSource && dataSource.isMissingDatasource) {
+      const typeLabel = dataSource.meta.name || dataSource.type;
+      if (dataSource.uid?.startsWith('$')) {
+        return `${typeLabel} - ${dataSource.uid} (variable not found)`;
+      }
+
+      return `${typeLabel} - (not found)`;
+    }
+
     return dataSource.name;
   }
 
