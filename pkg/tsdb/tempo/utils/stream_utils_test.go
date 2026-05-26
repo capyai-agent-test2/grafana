@@ -27,7 +27,7 @@ func TestGetTeamHeaders_NoMetadata_ReturnsNil(t *testing.T) {
 		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
 	}))
 
-	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
+	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx, nil))
 }
 
 func TestGetTeamHeaders_FeatureToggleOff_ReturnsNil(t *testing.T) {
@@ -40,7 +40,7 @@ func TestGetTeamHeaders_FeatureToggleOff_ReturnsNil(t *testing.T) {
 		"x-custom-forward", "extra",
 	)
 
-	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
+	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx, nil))
 }
 
 func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
@@ -56,7 +56,7 @@ func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
 		"x-custom-forward", "extra",
 	)
 
-	got := getTeamHeaders(ctx, testLogger(), pluginCtx)
+	got := getTeamHeaders(ctx, testLogger(), pluginCtx, nil)
 	require.NotNil(t, got)
 	assert.Equal(t, "policy-a,policy-b", got[TeamHttpHeaderKeyCamel])
 	assert.Equal(t, "extra", got["x-custom-forward"])
@@ -76,10 +76,32 @@ func TestGetTeamHeaders_FallsBackToIncomingMetadata(t *testing.T) {
 		"x-custom-forward", "extra",
 	))
 
-	got := getTeamHeaders(ctx, testLogger(), pluginCtx)
+	got := getTeamHeaders(ctx, testLogger(), pluginCtx, nil)
 	require.NotNil(t, got)
 	assert.Equal(t, "policy-a,policy-b", got[TeamHttpHeaderKeyCamel])
 	assert.Equal(t, "extra", got["x-custom-forward"])
+}
+
+func TestGetTeamHeaders_SkipsClientHeaderConflicts_CaseInsensitive(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
+		"x-scope-orgid", "internal-org-id",
+		"x-custom-forward", "extra",
+	))
+
+	got := getTeamHeaders(ctx, testLogger(), pluginCtx, map[string]struct{}{
+		"x-scope-orgid": {},
+	})
+	require.NotNil(t, got)
+	assert.Equal(t, "extra", got["x-custom-forward"])
+	_, ok := got["x-scope-orgid"]
+	assert.False(t, ok)
 }
 
 func TestGetHeadersFromIncomingContext_WithoutFeatureFlag_OnlyClientHeaders(t *testing.T) {
@@ -170,6 +192,36 @@ func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *te
 	assert.Equal(t, "policy-a,policy-b", headers[TeamHttpHeaderKeyCamel])
 	assert.Equal(t, "extra", headers["x-custom-forward"])
 	assert.Equal(t, "client-value-a,client-value-b", headers["X-Client"])
+}
+
+func TestGetHeadersFromIncomingContext_PrefersClientHeadersOverConflictingTeamHeaders(t *testing.T) {
+	jsonData := []byte(`{
+		"httpHeaderName1": "X-Scope-Orgid"
+	}`)
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			JSONData: jsonData,
+			DecryptedSecureJSONData: map[string]string{
+				"httpHeaderValue1": "datasource-org-id",
+			},
+		},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
+		"x-scope-orgid", "internal-org-id",
+		"x-custom-forward", "extra",
+	))
+
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
+	require.NoError(t, err)
+
+	assert.Equal(t, "datasource-org-id", headers["X-Scope-Orgid"])
+	assert.Equal(t, "extra", headers["x-custom-forward"])
+	_, ok := headers["x-scope-orgid"]
+	assert.False(t, ok)
 }
 
 func TestGetClientOptionsHeaders_ParsesHeaders(t *testing.T) {
