@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-function setup(app: CoreApp): RenderResult {
+function setup(app: CoreApp, expr = ''): RenderResult {
   const dataSource = createLokiDatasource();
   dataSource.metadataRequest = jest.fn();
 
@@ -26,7 +26,7 @@ function setup(app: CoreApp): RenderResult {
       onChange={noop}
       onRunQuery={noop}
       datasource={dataSource}
-      query={{ refId: 'A', expr: '' }}
+      query={{ refId: 'A', expr }}
     />
   );
 }
@@ -37,6 +37,11 @@ describe('LokiQueryEditorByApp', () => {
 
     expect(await screen.findByTestId(alertingTestIds.editor)).toBeInTheDocument();
     expect(screen.queryByTestId(regularTestIds.editor)).toBeNull();
+  });
+
+  it('should show an error for log queries in cloud alerting', async () => {
+    setup(CoreApp.CloudAlerting, '{job="grafana"}');
+    expect(await screen.findByText('Alert queries must return metrics')).toBeInTheDocument();
   });
 
   it('should render regular query editor for unknown apps', async () => {
