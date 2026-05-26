@@ -39,6 +39,12 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 }
 
+const loggerName = "tsdb.tempo"
+
+func newLogger() log.Logger {
+	return backend.NewLoggerWith("logger", loggerName)
+}
+
 type DatasourceInfo struct {
 	HTTPClient      *http.Client
 	StreamingClient tempopb.StreamingQuerierClient
@@ -48,7 +54,7 @@ type DatasourceInfo struct {
 func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	s := &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
+		logger: newLogger(),
 		tracer: tracer,
 	}
 
@@ -63,7 +69,7 @@ func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer
 
 func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		ctxLogger := backend.NewLoggerWith("logger", "tsdb.tempo").FromContext(ctx)
+		ctxLogger := newLogger().FromContext(ctx)
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
 			ctxLogger.Error("Failed to get HTTP client options", "error", err, "function", logEntrypoint())

@@ -30,8 +30,6 @@ import (
 )
 
 var (
-	logger = backend.NewLoggerWith("logger", "tsdb.tempo")
-
 	// gRPC client metrics - initialized lazily
 	grpcRequestsTotal    *prometheus.CounterVec
 	grpcRequestDuration  *prometheus.HistogramVec
@@ -83,6 +81,7 @@ func initGRPCMetrics() {
 // Using other library like connect-go isn't possible right now because Tempo uses non-standard proto compiler which
 // makes generating different client difficult. See https://github.com/grafana/grafana/pull/81683
 func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
+	logger := newLogger()
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
 		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
@@ -139,6 +138,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 // getDialOpts creates options and interceptors (middleware) this should roughly match what we do in
 // http_client_provider.go for standard http requests.
 func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSettings, secure bool, opts httpclient.Options) ([]grpc.DialOption, error) {
+	logger := newLogger()
 	// TODO: Still missing some middleware compared to HTTP client:
 	// - OAuth token forwarding (OAuthTokenMiddleware equivalent - requires integration with oauthtoken.OAuthTokenService)
 	// - Response limits (not applicable to gRPC streaming)
@@ -261,6 +261,7 @@ func UserAgentStreamInterceptor() grpc.StreamClientInterceptor {
 // This creates proper OpenTelemetry spans with attributes and error handling.
 func TracingStreamInterceptor() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		logger := newLogger()
 		// Start an OpenTelemetry span for the gRPC call
 		ctx, span := tracing.DefaultTracer().Start(ctx, "tempo.grpc.stream",
 			trace.WithAttributes(
@@ -302,6 +303,7 @@ func grpcStatusLabel(err error) string {
 // This provides similar functionality to the DataSourceMetricsMiddleware for HTTP clients.
 func MetricsStreamInterceptor() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		logger := newLogger()
 		// Initialize metrics lazily
 		initGRPCMetrics()
 

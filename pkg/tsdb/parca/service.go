@@ -33,7 +33,11 @@ type Service struct {
 	logger log.Logger
 }
 
-var logger = backend.NewLoggerWith("logger", "tsdb.parca")
+const loggerName = "tsdb.parca"
+
+func newLogger() log.Logger {
+	return backend.NewLoggerWith("logger", loggerName)
+}
 
 // Return the file, line, and (full-path) function name of the caller
 func getRunContext() (string, int, string) {
@@ -66,7 +70,7 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		logger: logger,
+		logger: newLogger(),
 	}
 }
 

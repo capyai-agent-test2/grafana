@@ -37,7 +37,7 @@ const (
 
 // query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	ctxLogger := logger.FromContext(ctx)
+	ctxLogger := newLogger().FromContext(ctx)
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
 	defer span.End()
 
