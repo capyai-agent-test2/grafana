@@ -257,6 +257,19 @@ describe('InteractiveTable', () => {
       expect(screen.getByText('Canada')).toBeInTheDocument();
     });
 
+    it('ignores non-finite controlled page values', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={Number.NaN} />);
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
+    });
+
     it('calls onPageChange with the current page', () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
       const data: TableData[] = [
