@@ -9,4 +9,5 @@ export type ComboboxOption<T extends string | number = string> = {
   group?: string;
   infoOption?: boolean;
   icon?: IconName;
+  imgUrl?: string;
 };
