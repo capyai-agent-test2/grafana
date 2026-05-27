@@ -21,6 +21,7 @@ describe('DashboardRow', () => {
   let panel: PanelModel, dashboardMock: any;
 
   beforeEach(() => {
+    window.location.hash = '';
     dashboardMock = {
       toggleRow: jest.fn(),
       on: jest.fn(),
@@ -63,6 +64,36 @@ describe('DashboardRow', () => {
     render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     expect(screen.getByRole('button', { name: 'Delete row' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Row options' })).toBeInTheDocument();
+  });
+
+  it('should expose a stable anchor id based on the title', () => {
+    panel = new PanelModel({ id: 17, collapsed: false, title: 'Traces Instance Stats' });
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    expect(screen.getByRole('button', { name: /Traces Instance Stats/ }).closest('#traces-instance-stats-row-17')).toBeTruthy();
+  });
+
+  it('should expand a collapsed row when the hash targets it', () => {
+    window.location.hash = '#traces-instance-stats-row-17';
+    panel = new PanelModel({ id: 17, collapsed: true, title: 'Traces Instance Stats' });
+
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+
+    expect(dashboardMock.toggleRow).toHaveBeenCalledTimes(1);
+  });
+
+  it('should use unique anchors for duplicate titles', () => {
+    const firstPanel = new PanelModel({ id: 17, collapsed: false, title: 'Repeated Row' });
+    const secondPanel = new PanelModel({ id: 18, collapsed: false, title: 'Repeated Row' });
+
+    const { container } = render(
+      <>
+        <DashboardRow panel={firstPanel} dashboard={dashboardMock} />
+        <DashboardRow panel={secondPanel} dashboard={dashboardMock} />
+      </>
+    );
+
+    expect(container.querySelector('#repeated-row-row-17')).toBeTruthy();
+    expect(container.querySelector('#repeated-row-row-18')).toBeTruthy();
   });
 
   it('should not show row drag handle when cannot edit', () => {

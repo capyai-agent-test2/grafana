@@ -183,6 +183,19 @@ describe('locationUtil', () => {
           )
         ).toEqual('/');
       });
+
+      it('preserves hash fragments', () => {
+        expect(
+          locationUtil.getUrlForPartial(
+            {
+              ...mockLocation,
+              hash: '#target-row',
+              search: '?a=1',
+            },
+            { b: '2' }
+          )
+        ).toEqual('/?a=1&b=2#target-row');
+      });
     });
 
     describe('when appSubUrl is configured', () => {
@@ -224,6 +237,19 @@ describe('locationUtil', () => {
             { a: null }
           )
         ).toEqual('/subpath/');
+      });
+
+      it('preserves hash fragments', () => {
+        expect(
+          locationUtil.getUrlForPartial(
+            {
+              ...mockLocation,
+              hash: '#target-row',
+              search: '?a=1',
+            },
+            { b: '2' }
+          )
+        ).toEqual('/subpath/?a=1&b=2#target-row');
       });
     });
   });

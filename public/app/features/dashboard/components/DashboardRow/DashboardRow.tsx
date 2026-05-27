@@ -17,6 +17,7 @@ import grabLightSvg from 'img/grab_light.svg';
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';
+import { doesRowAnchorMatchLocation, getRowAnchorId } from '../../utils/rowAnchor';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
 
 export interface DashboardRowProps extends Themeable2 {
@@ -29,6 +30,10 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
 
   componentDidMount() {
     this.sub = this.props.dashboard.events.subscribe(RefreshEvent, this.onVariableUpdated);
+
+    if (this.props.panel.collapsed && doesRowAnchorMatchLocation(this.getTitle(), `row-${this.props.panel.id}`)) {
+      this.onToggle();
+    }
   }
 
   componentWillUnmount() {
@@ -98,16 +103,20 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
     );
   };
 
+  getTitle = () => getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
+
   render() {
-    const title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
+    const title = this.getTitle();
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
     const canEdit = this.props.dashboard.meta.canEdit === true;
     const collapsed = this.props.panel.collapsed;
     const styles = getStyles(this.props.theme);
+    const rowAnchorId = getRowAnchorId(title, `row-${this.props.panel.id}`);
 
     return (
       <div
+        id={rowAnchorId}
         className={cx(styles.dashboardRow, {
           [styles.dashboardRowCollapsed]: collapsed,
         })}
