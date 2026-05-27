@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
 
@@ -138,6 +139,40 @@ func TestNotify(t *testing.T) {
 						"text":     "Grafana v" + appVersion,
 					},
 					"title": strings.Repeat("A", discordMaxTitleLen-1) + "…",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Mentions remain in content while body moves into embed description",
+			settings: Config{
+				Title:              templates.DefaultMessageTitleEmbed,
+				Message:            "@everyone investigate <@1234567890> immediately",
+				AvatarURL:          "",
+				WebhookURL:         "http://localhost",
+				UseDiscordUsername: false,
+			},
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"content": "@everyone <@1234567890>",
+				"embeds": []interface{}{map[string]interface{}{
+					"color":       1.4037554e+07,
+					"description": "@everyone investigate <@1234567890> immediately",
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
+						"text":     "Grafana v" + appVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
 					"type":  "rich",
 				}},
@@ -880,5 +915,77 @@ Silence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=aler
 		delete(firstEmbed, "description")
 
 		require.Equal(tt, expEmbeds, embeds)
+	})
+
+	t.Run("embed length budget should be respected", func(tt *testing.T) {
+		config := Config{
+			Title:              strings.Repeat("T", discordMaxTitleLen),
+			Message:            strings.Repeat("D", discordMaxDescriptionLen),
+			AvatarURL:          "",
+			WebhookURL:         "http://localhost",
+			UseDiscordUsername: false,
+		}
+
+		tokenStore := images.NewFakeTokenStore(9)
+		imageProvider := images.NewTokenProvider(tokenStore, log.NewNopLogger())
+
+		var alerts []*types.Alert
+		for token := range tokenStore.Images {
+			alert := types.Alert{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": model.LabelValue(strings.Repeat(token, 40)), "lbl1": "val"},
+					Annotations: model.LabelSet{models.ImageTokenAnnotation: model.LabelValue(token)},
+				},
+			}
+			alerts = append(alerts, &alert)
+		}
+
+		slices.SortFunc(alerts, func(a, b *types.Alert) int {
+			return strings.Compare(a.Name(), b.Name())
+		})
+
+		webhookSender := receivers.MockNotificationService()
+		dn := &Notifier{
+			Base:       receivers.NewBase(receivers.Metadata{}, log.NewNopLogger()),
+			ns:         webhookSender,
+			tmpl:       tmpl,
+			settings:   config,
+			images:     imageProvider,
+			appVersion: appVersion,
+		}
+
+		ctx := notify.WithGroupKey(context.Background(), "alertname")
+		ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+		ok, err := dn.Notify(ctx, alerts...)
+		require.NoError(tt, err)
+		require.True(tt, ok)
+
+		mediaType, params, err := mime.ParseMediaType(webhookSender.Webhook.ContentType)
+		require.NoError(tt, err)
+		require.Equal(tt, "multipart/form-data", mediaType)
+
+		reader := multipart.NewReader(strings.NewReader(webhookSender.Webhook.Body), params["boundary"])
+		form, err := reader.ReadForm(32 << 20)
+		require.NoError(tt, err)
+
+		var payloadMap map[string]interface{}
+		require.NoError(tt, json.Unmarshal([]byte(form.Value["payload_json"][0]), &payloadMap))
+
+		embeds := payloadMap["embeds"].([]interface{})
+		totalEmbedChars := 0
+		for _, rawEmbed := range embeds {
+			embed := rawEmbed.(map[string]interface{})
+			if title, ok := embed["title"].(string); ok {
+				totalEmbedChars += utf8.RuneCountInString(title)
+			}
+			if description, ok := embed["description"].(string); ok {
+				totalEmbedChars += utf8.RuneCountInString(description)
+			}
+			if footer, ok := embed["footer"].(map[string]interface{}); ok {
+				totalEmbedChars += utf8.RuneCountInString(footer["text"].(string))
+			}
+		}
+
+		require.LessOrEqual(tt, totalEmbedChars, discordMaxEmbedTotalLen)
 	})
 }

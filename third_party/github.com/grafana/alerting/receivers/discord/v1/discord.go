@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
+	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/alertmanager/notify"
@@ -35,7 +37,10 @@ const (
 	// title (256) + description (4096) + footer (~30) stays well under 6000.
 	discordMaxTitleLen       = 256
 	discordMaxDescriptionLen = 4096
+	discordMaxEmbedTotalLen  = 6000
 )
+
+var discordMentionTokenPattern = regexp.MustCompile(`(<@!?[0-9]+>|<@&[0-9]+>|@everyone|@here)`)
 
 type discordMessage struct {
 	Username  string             `json:"username,omitempty"`
@@ -126,10 +131,7 @@ func (d Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) 
 		// Reset tmplErr for templating other fields.
 		tmplErr = nil
 	}
-	messageText, truncated := receivers.TruncateInRunes(messageText, discordMaxDescriptionLen)
-	if truncated {
-		level.Warn(l).Log("msg", "Truncated content", "key", key, "max_runes", discordMaxDescriptionLen)
-	}
+	msg.Content = extractDiscordMentionContent(messageText)
 
 	if d.settings.AvatarURL != "" {
 		msg.AvatarURL = tmpl(d.settings.AvatarURL)
@@ -146,6 +148,8 @@ func (d Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) 
 	}
 
 	var linkEmbed discordLinkEmbed
+	var truncated bool
+	remainingEmbedLen := discordMaxEmbedTotalLen - utf8.RuneCountInString(footer.Text)
 
 	title := tmpl(d.settings.Title)
 	if tmplErr != nil {
@@ -157,8 +161,14 @@ func (d Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) 
 	if truncated {
 		level.Warn(l).Log("msg", "Truncated title", "key", key, "max_runes", discordMaxTitleLen)
 	}
+	remainingEmbedLen -= utf8.RuneCountInString(linkEmbed.Title)
 
+	messageText, truncated = receivers.TruncateInRunes(messageText, min(discordMaxDescriptionLen, remainingEmbedLen))
+	if truncated {
+		level.Warn(l).Log("msg", "Truncated content", "key", key, "max_runes", min(discordMaxDescriptionLen, remainingEmbedLen))
+	}
 	linkEmbed.Description = messageText
+	remainingEmbedLen -= utf8.RuneCountInString(linkEmbed.Description)
 	linkEmbed.Footer = footer
 	linkEmbed.Type = discordRichEmbed
 
@@ -172,10 +182,11 @@ func (d Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) 
 
 	attachments := d.constructAttachments(ctx, as, discordMaxEmbeds-1, l)
 	for _, a := range attachments {
-		embedTitle, truncated := receivers.TruncateInRunes(a.alertName, discordMaxTitleLen)
+		embedTitle, truncated := receivers.TruncateInRunes(a.alertName, min(discordMaxTitleLen, remainingEmbedLen))
 		if truncated {
 			level.Warn(l).Log("msg", "Truncated image embed title", "key", key, "alert", a.alertName, "max_runes", discordMaxTitleLen)
 		}
+		remainingEmbedLen -= utf8.RuneCountInString(embedTitle)
 
 		embed := discordLinkEmbed{
 			Image: &discordImage{
@@ -225,6 +236,25 @@ func (d Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) 
 		return false, err
 	}
 	return true, nil
+}
+
+func extractDiscordMentionContent(message string) string {
+	matches := discordMentionTokenPattern.FindAllString(message, -1)
+	if len(matches) == 0 {
+		return ""
+	}
+
+	mentions := make([]string, 0, len(matches))
+	seen := make(map[string]struct{}, len(matches))
+	for _, match := range matches {
+		if _, ok := seen[match]; ok {
+			continue
+		}
+		seen[match] = struct{}{}
+		mentions = append(mentions, match)
+	}
+
+	return strings.Join(mentions, " ")
 }
 
 func (d Notifier) SendResolved() bool {
