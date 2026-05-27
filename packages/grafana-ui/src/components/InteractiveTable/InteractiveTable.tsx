@@ -259,7 +259,7 @@ export function InteractiveTable<TableData extends object>({
   const normalizedPage =
     page == null || !Number.isFinite(page)
       ? undefined
-      : Math.max(1, Math.min(Math.floor(page), tableInstance.pageOptions.length || 1));
+      : Math.max(1, Math.min(Math.floor(page), tableInstance.pageOptions?.length || 1));
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
   const lastReportedPageRef = useRef<number | undefined>(undefined);
   const currentPage = tableInstance.state.pageIndex + 1;

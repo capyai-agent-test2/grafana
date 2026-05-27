@@ -270,6 +270,19 @@ describe('InteractiveTable', () => {
       expect(screen.queryByText('Belgium')).not.toBeInTheDocument();
     });
 
+    it('ignores controlled page values when pagination is disabled', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} page={2} />);
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+    });
+
     it('calls onPageChange with the current page', () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
       const data: TableData[] = [
