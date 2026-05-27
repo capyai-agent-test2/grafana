@@ -4,7 +4,7 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { getTimeSrv, setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
-import { type TemplateSrv } from '../../templating/template_srv';
+import { getTemplateSrv, type TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { intervalBuilder } from '../shared/testing/builders';
 import { updateOptions } from '../state/actions';
@@ -42,7 +42,7 @@ describe('interval actions', () => {
         .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toKeyedVariableIdentifier(interval)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: undefined })),
+        toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: interval.query })),
         toKeyedAction(
           'key',
           setCurrentVariableValue({
@@ -52,6 +52,38 @@ describe('interval actions', () => {
           })
         )
       );
+    });
+
+    it('interpolates dependent variables before building options', async () => {
+      const replaceSpy = jest.spyOn(getTemplateSrv(), 'replace').mockReturnValue('5m,1h');
+
+      const interval = intervalBuilder()
+        .withId('0')
+        .withRootStateKey('key')
+        .withQuery('$intervals')
+        .withAuto(false)
+        .build();
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
+        )
+        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toKeyedVariableIdentifier(interval)), true);
+
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', createIntervalOptions({ type: 'interval', id: '0', data: '5m,1h' })),
+        toKeyedAction(
+          'key',
+          setCurrentVariableValue({
+            type: 'interval',
+            id: '0',
+            data: { option: { text: '5m', value: '5m', selected: false } },
+          })
+        )
+      );
+
+      replaceSpy.mockRestore();
     });
   });
 
@@ -96,7 +128,9 @@ describe('interval actions', () => {
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         const expectedNumberOfActions = 4;
         expect(dispatchedActions[0]).toEqual(toKeyedAction('key', variableStateFetching(toVariablePayload(interval))));
-        expect(dispatchedActions[1]).toEqual(toKeyedAction('key', createIntervalOptions(toVariablePayload(interval))));
+        expect(dispatchedActions[1]).toEqual(
+          toKeyedAction('key', createIntervalOptions(toVariablePayload(interval, interval.query)))
+        );
         expect(dispatchedActions[2]).toEqual(
           toKeyedAction(
             'key',
