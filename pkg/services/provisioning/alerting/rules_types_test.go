@@ -199,6 +199,23 @@ func TestRules(t *testing.T) {
 		require.NotNil(t, ruleMapped.NotificationSettings)
 		require.Equal(t, models.NotificationSettingsFromContact(models.ContactPointRouting{Receiver: "test-receiver"}), *ruleMapped.NotificationSettings)
 	})
+	t.Run("a rule should interpolate environment variables in annotations", func(t *testing.T) {
+		t.Setenv("ANNOTATION_URL", "https://runbooks.example.com")
+		t.Setenv("REGION", "eu-west-1")
+
+		rule := validRuleV1(t)
+		rule.Annotations = stringToStringMapValue(t, map[string]string{
+			"runbook": "$ANNOTATION_URL/$REGION",
+			"summary": "Alert fired for {{ $$labels.instance }}",
+		})
+
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{
+			"runbook": "https://runbooks.example.com/eu-west-1",
+			"summary": "Alert fired for {{ $labels.instance }}",
+		}, ruleMapped.Annotations)
+	})
 }
 
 func TestRecordingRules(t *testing.T) {
@@ -363,5 +380,16 @@ func stringToStringValue(s string) values.StringValue {
 	if err != nil {
 		panic(err)
 	}
+	return result
+}
+
+func stringToStringMapValue(t *testing.T, m map[string]string) values.StringMapValue {
+	t.Helper()
+
+	result := values.StringMapValue{}
+	data, err := yaml.Marshal(m)
+	require.NoError(t, err)
+	err = yaml.Unmarshal(data, &result)
+	require.NoError(t, err)
 	return result
 }
