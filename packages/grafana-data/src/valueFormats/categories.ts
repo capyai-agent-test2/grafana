@@ -54,7 +54,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       {
         name: t('grafana-data.valueFormats.categories.misc.formats.name-short', 'short'),
         id: 'short',
-        fn: scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']),
+        fn: scaledUnits(1000, ['', ' K', ' M', ' B', ' T', ' Q', ' Quin', ' Sext', ' Sept']),
       },
       {
         name: t('grafana-data.valueFormats.categories.misc.formats.name-si-short', 'SI short'),
