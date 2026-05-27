@@ -138,6 +138,7 @@ describe('QueryVariableEditor', () => {
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(queryEditor).toBeInTheDocument();
     expect(queryEditor).toHaveValue('my-query');
+    expect(renderer.getByText('Query *')).toBeInTheDocument();
     expect(regexInput).toBeInTheDocument();
     expect(regexInput).toHaveValue('.*');
     expect(sortSelect).toBeInTheDocument();
