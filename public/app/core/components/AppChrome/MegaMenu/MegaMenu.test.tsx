@@ -43,26 +43,23 @@ describe('MegaMenu', () => {
     setup();
 
     expect(await screen.findByTestId(selectors.components.NavMenu.Menu)).toBeInTheDocument();
-    expect(await screen.findByRole('tree')).toBeInTheDocument();
-    expect(await screen.findByRole('treeitem', { name: 'Section name' })).toHaveAttribute('aria-level', '1');
-    expect(await screen.findByRole('treeitem', { name: 'Section name' })).toHaveAttribute('aria-expanded', 'false');
+    expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
   });
 
   it('should render children', async () => {
     setup();
     await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
-    expect(await screen.findByRole('treeitem', { name: 'Section name' })).toHaveAttribute('aria-expanded', 'true');
-    expect(await screen.findByRole('treeitem', { name: 'Child1' })).toBeInTheDocument();
-    expect(await screen.findByRole('treeitem', { name: 'Child2' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
 
   it('should render grandchildren', async () => {
     setup();
     await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
-    expect(await screen.findByRole('treeitem', { name: 'Child1' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Child1' }));
-    expect(await screen.findByRole('treeitem', { name: 'Grandchild1' })).toBeInTheDocument();
-    expect(await screen.findByRole('treeitem', { name: 'Child2' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
 
   it('should filter out profile', async () => {

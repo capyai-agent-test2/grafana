@@ -108,7 +108,7 @@ export const MegaMenu = memo(
         <nav className={styles.content}>
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
-              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')} role="tree">
+              <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
                 {navItems.map((link, index) => (
                   <MegaMenuItem
                     key={link.text}

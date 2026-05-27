@@ -10,8 +10,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 export interface Props {
   children: React.ReactNode;
   isActive?: boolean;
-  isExpanded?: boolean;
-  level: number;
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
@@ -23,8 +21,6 @@ export interface Props {
 export function MegaMenuItemText({
   children,
   isActive,
-  isExpanded,
-  level,
   onClick,
   target,
   url,
@@ -52,9 +48,6 @@ export function MegaMenuItemText({
     <div className={cx(styles.wrapper, isActive && styles.wrapperActive)}>
       <LinkComponent
         data-testid={selectors.components.NavMenu.item}
-        role="treeitem"
-        aria-expanded={isExpanded}
-        aria-level={level}
         className={styles.container}
         href={url}
         target={target}
