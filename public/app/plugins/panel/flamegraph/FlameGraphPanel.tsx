@@ -1,5 +1,5 @@
 import { CoreApp, type PanelProps } from '@grafana/data';
-import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
+import { FlameGraph, checkFields, getMessageCheckFieldsResult, SelectedView } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
 
 import { type Options } from './types';
@@ -26,6 +26,8 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
       stickyHeader={false}
       getTheme={() => config.theme2}
       showFlameGraphOnly={props.options?.showFlameGraphOnly ?? false}
+      initialSelectedView={props.options?.defaultView ?? (props.options?.showFlameGraphOnly ? SelectedView.FlameGraph : undefined)}
+      initialColorScheme={props.options?.colorScheme}
       onTableSymbolClick={() => interaction('table_item_selected')}
       onViewSelected={(view: string) => interaction('view_selected', { view })}
       onTextAlignSelected={(align: string) => interaction('text_align_selected', { align })}

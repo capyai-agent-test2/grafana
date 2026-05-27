@@ -19,7 +19,15 @@ import {
   FLAMEGRAPH_CONTAINER_HEIGHT,
 } from './constants';
 import { useColorScheme } from './hooks';
-import { type ClickedItemData, PaneView, SelectedView, type TextAlign, ViewMode } from './types';
+import {
+  type ClickedItemData,
+  type ColorScheme,
+  type ColorSchemeDiff,
+  PaneView,
+  SelectedView,
+  type TextAlign,
+  ViewMode,
+} from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
@@ -77,6 +85,16 @@ export type Props = {
   showFlameGraphOnly?: boolean;
 
   /**
+   * Initial selected view for the legacy header UI.
+   */
+  initialSelectedView?: SelectedView;
+
+  /**
+   * Initial color scheme for the flamegraph.
+   */
+  initialColorScheme?: ColorScheme | ColorSchemeDiff;
+
+  /**
    * Disable behaviour where similar items in the same stack will be collapsed into single item.
    */
   disableCollapsing?: boolean;
@@ -110,6 +128,8 @@ const FlameGraphContainer = ({
   extraHeaderElements,
   vertical,
   showFlameGraphOnly,
+  initialSelectedView,
+  initialColorScheme,
   disableCollapsing,
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
@@ -131,6 +151,8 @@ const FlameGraphContainer = ({
         extraHeaderElements={extraHeaderElements}
         vertical={vertical}
         showFlameGraphOnly={showFlameGraphOnly}
+        initialSelectedView={initialSelectedView}
+        initialColorScheme={initialColorScheme}
         disableCollapsing={disableCollapsing}
         keepFocusOnDataChange={keepFocusOnDataChange}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -151,6 +173,8 @@ const FlameGraphContainer = ({
       extraHeaderElements={extraHeaderElements}
       vertical={vertical}
       showFlameGraphOnly={showFlameGraphOnly}
+      initialSelectedView={initialSelectedView}
+      initialColorScheme={initialColorScheme}
       disableCollapsing={disableCollapsing}
       keepFocusOnDataChange={keepFocusOnDataChange}
       getExtraContextMenuButtons={getExtraContextMenuButtons}
@@ -170,6 +194,8 @@ type InternalProps = {
   extraHeaderElements?: React.ReactNode;
   vertical?: boolean;
   showFlameGraphOnly?: boolean;
+  initialSelectedView?: SelectedView;
+  initialColorScheme?: ColorScheme | ColorSchemeDiff;
   disableCollapsing?: boolean;
   keepFocusOnDataChange?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
@@ -187,6 +213,8 @@ const LegacyContainer = ({
   extraHeaderElements,
   vertical,
   showFlameGraphOnly,
+  initialSelectedView = SelectedView.Both,
+  initialColorScheme,
   disableCollapsing,
   keepFocusOnDataChange,
   getExtraContextMenuButtons,
@@ -197,7 +225,7 @@ const LegacyContainer = ({
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
-  const [selectedView, setSelectedView] = useState(SelectedView.Both);
+  const [selectedView, setSelectedView] = useState(initialSelectedView);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
@@ -212,6 +240,10 @@ const LegacyContainer = ({
   onTableSymbolClickRef.current = onTableSymbolClick;
   onTableSortRef.current = onTableSort;
 
+  useEffect(() => {
+    setSelectedView(initialSelectedView);
+  }, [initialSelectedView]);
+
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
       return;
@@ -221,7 +253,7 @@ const LegacyContainer = ({
     setCollapsedMap(container.getCollapsedMap());
     return container;
   }, [data, theme, disableCollapsing]);
-  const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
+  const [colorScheme, setColorScheme] = useColorScheme(dataContainer, initialColorScheme);
   const styles = getStyles(theme);
   const matchedLabels = useLabelSearch(search, dataContainer);
 
