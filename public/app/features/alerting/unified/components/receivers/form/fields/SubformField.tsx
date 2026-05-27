@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Text, useStyles2 } from '@grafana/ui';
 import {
   type NotificationChannelOption,
   type NotificationChannelSecureFields,
@@ -56,7 +56,9 @@ export const SubformField = ({
 
   return (
     <div className={styles.wrapper} data-testid={`${name}.container`}>
-      <h6>{option.label}</h6>
+      <Text element="p" variant="h6">
+        {option.label}
+      </Text>
       {option.description && <p className={styles.description}>{option.description}</p>}
       {show && (
         <>

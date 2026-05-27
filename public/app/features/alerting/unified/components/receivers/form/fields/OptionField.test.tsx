@@ -313,6 +313,7 @@ describe('OptionField', () => {
 
       // The subform should be rendered with the nested field
       expect(screen.getByText('Test Subform')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Test Subform' })).not.toBeInTheDocument();
 
       // Verify that getOptionMeta was called for the nested field
       // This ensures it was passed through to the SubformField component
