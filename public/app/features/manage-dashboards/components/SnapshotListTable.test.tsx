@@ -11,6 +11,7 @@ jest.mock('@grafana/runtime', () => ({
         key: 'JRXqfKihKZek70FM6Xaq502NxH7OyyEs',
         external: true,
         externalUrl: 'https://www.externalSnapshotUrl.com',
+        created: '2025-08-04T17:47:48Z',
       },
       {
         id: 3,
@@ -18,6 +19,7 @@ jest.mock('@grafana/runtime', () => ({
         key: 'RziRfhlBDTjwyYGoHAjnWyrMNQ1zUg3j',
         external: false,
         externalUrl: '',
+        created: '2025-08-25T08:21:34Z',
       },
     ]),
   }),
@@ -32,6 +34,7 @@ describe('getSnapshots', () => {
     expect(results).toMatchInlineSnapshot(`
       [
         {
+          "created": "2025-08-04T17:47:48Z",
           "external": true,
           "externalUrl": "https://www.externalSnapshotUrl.com",
           "key": "JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
@@ -39,6 +42,7 @@ describe('getSnapshots', () => {
           "url": "http://snapshots.grafana.com/dashboard/snapshot/JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
         },
         {
+          "created": "2025-08-25T08:21:34Z",
           "external": false,
           "externalUrl": "",
           "id": 3,

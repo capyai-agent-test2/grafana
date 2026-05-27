@@ -10,10 +10,11 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 export interface Props {
   snapshot: Snapshot;
+  createdAt?: string;
   onRemove: () => void;
 }
 
-const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
+const SnapshotListTableRowComponent = ({ snapshot, createdAt, onRemove }: Props) => {
   const url = snapshot.externalUrl || snapshot.url;
   const hasDeletePermission = contextSrv.hasPermission(AccessControlAction.SnapshotsDelete);
   const deleteTooltip = hasDeletePermission
@@ -27,6 +28,7 @@ const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
       <td>
         <a href={url}>{url}</a>
       </td>
+      <td>{createdAt ?? '—'}</td>
       <td>
         {snapshot.external && (
           <span className="query-keyword">
@@ -62,6 +64,9 @@ const SnapshotListTableRowSkeleton: SkeletonComponent = ({ rootProps }) => {
       </td>
       <td>
         <Skeleton width={240} />
+      </td>
+      <td>
+        <Skeleton width={120} />
       </td>
       <td></td>
       <td>

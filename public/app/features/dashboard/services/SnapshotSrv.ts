@@ -12,6 +12,7 @@ export interface Snapshot {
   external: boolean;
   externalUrl?: string;
   url?: string;
+  created?: string;
 }
 
 export interface SnapshotSharingOptions {
@@ -111,6 +112,7 @@ class K8sAPI implements DashboardSnapshotSrv {
         name: r.spec.title,
         external: r.spec.external,
         externalUrl: r.spec.externalUrl,
+        created: r.metadata.creationTimestamp,
       };
     });
   }
