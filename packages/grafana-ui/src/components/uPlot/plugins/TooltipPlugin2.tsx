@@ -779,6 +779,8 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
+    display: 'flex',
+    flexDirection: 'column',
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
@@ -787,7 +789,10 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
+    maxHeight: `calc(100vh - ${theme.spacing(4)})`,
     maxWidth: maxWidth ?? 'none',
+    overflowX: 'hidden',
+    overflowY: 'auto',
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,
