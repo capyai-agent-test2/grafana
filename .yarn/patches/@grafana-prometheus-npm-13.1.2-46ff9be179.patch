@@ -1,0 +1,26 @@
+diff --git a/dist/cjs/querybuilder/shared/OperationParamEditorRegistry.cjs b/dist/cjs/querybuilder/shared/OperationParamEditorRegistry.cjs
+index ce42df5d40a23e2c1ebc65d9dfd88be904c5576d..59d8b7228b7fd36aafa94743c2fe86fbc13830fa 100644
+--- a/dist/cjs/querybuilder/shared/OperationParamEditorRegistry.cjs
++++ b/dist/cjs/querybuilder/shared/OperationParamEditorRegistry.cjs
+@@ -100,7 +100,7 @@ function SelectInputParamEditor({
+     /* @__PURE__ */ jsxRuntime.jsx(
+       ui.Select,
+       {
+-        id: param_utils.getOperationParamId(operationId, index),
++        inputId: param_utils.getOperationParamId(operationId, index),
+         value: valueOption,
+         options: selectOptions,
+         placeholder: paramDef.placeholder,
+diff --git a/dist/esm/querybuilder/shared/OperationParamEditorRegistry.mjs b/dist/esm/querybuilder/shared/OperationParamEditorRegistry.mjs
+index 6b0f1b835875c209dc1ecf339e538912ecb3f95b..24e4359bd19303d69cd03d9674bebb444bb5cd8a 100644
+--- a/dist/esm/querybuilder/shared/OperationParamEditorRegistry.mjs
++++ b/dist/esm/querybuilder/shared/OperationParamEditorRegistry.mjs
+@@ -96,7 +96,7 @@ function SelectInputParamEditor({
+     /* @__PURE__ */ jsx(
+       Select,
+       {
+-        id: getOperationParamId(operationId, index),
++        inputId: getOperationParamId(operationId, index),
+         value: valueOption,
+         options: selectOptions,
+         placeholder: paramDef.placeholder,
