@@ -366,19 +366,21 @@ function getClassicPaletteOverride(field: Field, theme: GrafanaTheme2, enforceCo
     .filter((color): color is string => typeof color === 'string' && color.trim().length > 0)
     .map((color) => theme.visualization.getColorByName(color.trim()));
 
-  if (colors.length === 0) {
+  const validColors = colors.filter((color) => tinycolor(color).isValid());
+
+  if (validColors.length === 0) {
     return undefined;
   }
 
   if (!enforceContrast) {
-    return colors;
+    return validColors;
   }
 
-  const filteredColors = colors.filter(
+  const filteredColors = validColors.filter(
     (color) => getContrastRatio(color, theme.colors.background.primary) >= theme.colors.contrastThreshold
   );
 
-  return filteredColors.length > 0 ? filteredColors : colors;
+  return filteredColors.length > 0 ? filteredColors : validColors;
 }
 
 /** @beta */

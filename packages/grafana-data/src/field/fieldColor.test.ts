@@ -148,6 +148,17 @@ describe('fieldColorModeRegistry', () => {
     expect(['#111111', '#C4162A']).toContain(calcFn1(12, 34, undefined));
   });
 
+  it('Palette by name ignores invalid custom palette entries', () => {
+    const calcFn = getCalculator({
+      mode: FieldColorModeId.PaletteClassicByName,
+      seriesIndex: 0,
+      name: 'same name',
+      classicPalette: ['not-a-color', 'dark-red'],
+    });
+
+    expect(calcFn(12, 34, undefined)).toEqual('#C4162A');
+  });
+
   it('When color.seriesBy is set to last use that instead of v', () => {
     const field = getTestField('continuous-GrYlRd');
 
