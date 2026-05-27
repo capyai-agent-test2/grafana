@@ -113,7 +113,7 @@ export function OwnersFilter({ values, onChange }: OwnersFilterProps) {
           // We don't send ALL_TEAMS_VALUE upstream, so we map it to actual list of all the teams.
           onChange(
             !hasMoreTeamsThanLimit && values.includes(ALL_TEAMS_VALUE)
-              ? [...values.filter((value) => value !== ALL_TEAMS_VALUE), ...allTeamReferences]
+              ? [...new Set([...values.filter((value) => value !== ALL_TEAMS_VALUE), ...allTeamReferences])]
               : values
           );
         }}
