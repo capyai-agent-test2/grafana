@@ -95,6 +95,8 @@ const useGrafanaAlertmanagerIntervals = () =>
     },
   });
 
+const shouldUseLegacyNameFallback = (name: string) => /[^A-Za-z0-9_-]/.test(name);
+
 /**
  * Imported time intervals (provenance: converted_prometheus) are marked with canUse: false
  * by the backend because they belong to external Mimir-kind resources and should not be
@@ -220,9 +222,8 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
         try {
           await getGrafanaTimeInterval({ name: nameToFind }, true).unwrap();
         } catch {
-          const legacyResourceName = base64UrlEncode(nameToFind);
-
-          if (legacyResourceName !== nameToFind) {
+          if (shouldUseLegacyNameFallback(nameToFind)) {
+            const legacyResourceName = base64UrlEncode(nameToFind);
             void getGrafanaTimeInterval({ name: legacyResourceName }, true);
           }
         }

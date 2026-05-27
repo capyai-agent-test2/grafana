@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode } from 'react';
+import { HttpResponse, http } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
 import { base64UrlEncode } from '@grafana/alerting';
@@ -19,7 +20,7 @@ const wrapper = ({ children }: { children: ReactNode }) => {
   return <ProviderWrapper>{children}</ProviderWrapper>;
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 describe('useMuteTimings', () => {
   beforeEach(() => {
@@ -132,6 +133,43 @@ describe('useMuteTimings', () => {
       expect(result.current.data).toBeDefined();
       expect(result.current.data?.name).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
       expect(result.current.data?.id).toBe(base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH));
+      expect(result.current.isError).toBe(false);
+    });
+
+    it('should fall back to encoded metadata.name for legacy display names with reserved URL characters', async () => {
+      const legacyName = 'legacy/name';
+      const encodedLegacyName = base64UrlEncode(legacyName);
+
+      server.use(
+        http.get(`*/timeintervals/${legacyName}`, () => HttpResponse.json({}, { status: 404 })),
+        http.get(`*/timeintervals/${encodedLegacyName}`, () =>
+          HttpResponse.json({
+            apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+            kind: 'TimeInterval',
+            metadata: { name: encodedLegacyName },
+            spec: { name: legacyName, time_intervals: [] },
+          })
+        )
+      );
+
+      const { result } = renderHook(
+        () =>
+          useGetMuteTiming({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            name: legacyName,
+          }),
+        {
+          wrapper,
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data).toBeDefined();
+      expect(result.current.data?.name).toBe(legacyName);
+      expect(result.current.data?.id).toBe(encodedLegacyName);
       expect(result.current.isError).toBe(false);
     });
   });
