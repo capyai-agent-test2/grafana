@@ -18,16 +18,7 @@ export interface Props {
   itemName: string;
 }
 
-export function MegaMenuItemText({
-  children,
-  isActive,
-  onClick,
-  target,
-  url,
-  onPin,
-  isPinned,
-  itemName,
-}: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
