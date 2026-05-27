@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 
 import { type ComboboxOption } from '../Combobox/types';
 
-export const getQuickOptions: () => TimeOption[] = () => [
+export const quickOptions: () => TimeOption[] = () => [
   { from: 'now-5m', to: 'now', display: t('grafana-ui.date-time-pickers.quick-options.last-5-mins', 'Last 5 minutes') },
   {
     from: 'now-15m',
@@ -117,6 +117,8 @@ export const getQuickOptions: () => TimeOption[] = () => [
     display: t('grafana-ui.date-time-pickers.quick-options.this-fiscal-year', 'This fiscal year'),
   },
 ];
+
+export const getQuickOptions = quickOptions;
 
 export const getMonthOptions: () => Array<ComboboxOption<number>> = () => [
   { label: t('grafana-ui.date-time-pickers.month-options.label-january', 'January'), value: 0 },
