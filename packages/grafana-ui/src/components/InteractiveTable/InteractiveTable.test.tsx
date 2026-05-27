@@ -226,6 +226,69 @@ describe('InteractiveTable', () => {
       expect(screen.getByText('Belgium')).toBeInTheDocument();
     });
 
+    it('renders the requested page when the page prop is set', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} />);
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Belgium')).toBeInTheDocument();
+    });
+
+    it('navigates to a different page when the page prop changes', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+        { id: '3', value: '3', country: 'Canada' },
+      ];
+      const { rerender } = render(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={1} />
+      );
+
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+
+      rerender(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={3} />);
+
+      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      expect(screen.getByText('Canada')).toBeInTheDocument();
+    });
+
+    it('calls onPageChange with the current page', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const onPageChange = jest.fn();
+      render(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} onPageChange={onPageChange} />
+      );
+
+      expect(onPageChange).toHaveBeenLastCalledWith(2);
+    });
+
+    it('calls onPageChange after user pagination', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const onPageChange = jest.fn();
+      const { user } = setup(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} onPageChange={onPageChange} />
+      );
+
+      expect(onPageChange).toHaveBeenLastCalledWith(1);
+
+      await user.click(screen.getByRole('button', { name: /2/i }));
+
+      expect(onPageChange).toHaveBeenLastCalledWith(2);
+    });
+
     it('does not reset page number after modifying table data', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
       const data: TableData[] = [
