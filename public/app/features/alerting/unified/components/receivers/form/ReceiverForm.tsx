@@ -32,7 +32,7 @@ interface Props<R extends ChannelValues> {
   defaultItem: R;
   alertManagerSourceName: string;
   onTestChannel?: (channel: R) => void;
-  onSubmit: (values: ReceiverFormValues<R>) => Promise<void>;
+  onSubmit: (values: ReceiverFormValues<R>) => Promise<void> | void;
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
   isEditable: boolean;
@@ -46,6 +46,8 @@ interface Props<R extends ChannelValues> {
   contactPointId?: string;
   canManagePermissions?: boolean;
   canEditProtectedFields: boolean;
+  submitButtonText?: string;
+  cancelHref?: string;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -63,6 +65,8 @@ export function ReceiverForm<R extends ChannelValues>({
   contactPointId,
   canManagePermissions,
   canEditProtectedFields,
+  submitButtonText,
+  cancelHref,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -97,6 +101,7 @@ export function ReceiverForm<R extends ChannelValues>({
   } = formAPI;
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
+  const resolvedCancelHref = cancelHref ?? makeAMLink('/alerting/notifications', alertManagerSourceName);
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
     try {
@@ -234,17 +239,14 @@ export function ReceiverForm<R extends ChannelValues>({
               )}
               {!isSubmitting && (
                 <Button type="submit">
-                  <Trans i18nKey="alerting.receiver-form.save-contact-point">Save contact point</Trans>
+                  {submitButtonText ?? (
+                    <Trans i18nKey="alerting.receiver-form.save-contact-point">Save contact point</Trans>
+                  )}
                 </Button>
               )}
             </>
           )}
-          <LinkButton
-            disabled={isSubmitting}
-            variant="secondary"
-            data-testid="cancel-button"
-            href={makeAMLink('/alerting/notifications', alertManagerSourceName)}
-          >
+          <LinkButton disabled={isSubmitting} variant="secondary" data-testid="cancel-button" href={resolvedCancelHref}>
             <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
           </LinkButton>
         </div>

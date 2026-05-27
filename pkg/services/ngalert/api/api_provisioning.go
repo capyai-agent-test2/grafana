@@ -186,6 +186,15 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	return exportResponse(c, e)
 }
 
+func (srv *ProvisioningSrv) RoutePostContactPointsExport(c *contextmodel.ReqContext, cps definitions.ContactPoints) response.Response {
+	e, err := AlertingFileExportFromEmbeddedContactPoints(c.GetOrgID(), cps)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+	}
+
+	return exportResponse(c, e)
+}
+
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	provenance := determineProvenance(c)
 	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.GetOrgID(), c.SignedInUser, cp, alerting_models.Provenance(provenance))

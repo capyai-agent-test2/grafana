@@ -402,6 +402,27 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0,
     }),
+    exportContactPointFromPayload: build.mutation<
+      string,
+      {
+        contactPoints: Array<{
+          uid?: string;
+          name: string;
+          type: string;
+          settings: Record<string, unknown>;
+          disableResolveMessage?: boolean;
+        }>;
+        format: ExportFormats;
+      }
+    >({
+      query: ({ contactPoints, format }) => ({
+        url: `/api/v1/provisioning/contact-points/export/`,
+        params: { format: format },
+        data: contactPoints,
+        method: 'POST',
+        responseType: 'text',
+      }),
+    }),
     exportPolicies: build.query<string, { routeName?: string; format: ExportFormats }>({
       query: ({ routeName, format }) => ({
         url: `/api/v1/provisioning/policies/export/`,

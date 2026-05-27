@@ -19,6 +19,7 @@ import {
 } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { makeAMLink } from '../../utils/misc';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
@@ -84,6 +85,10 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   const contactPointIsDeleteable = !isProvisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
   const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
+  const modifyExportUrl = makeAMLink(
+    `/alerting/notifications/receivers/${encodeURIComponent(id || name)}/modify-export`,
+    selectedAlertmanager
+  );
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
@@ -108,6 +113,16 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           disabled={!exportAllowed}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
+        />
+        <Menu.Item
+          icon="pen"
+          label={t('alerting.contact-point-header.export-label-export-with-modifications', 'Export with modifications')}
+          ariaLabel={t(
+            'alerting.contact-point-header.export-aria-label-export-with-modifications',
+            'Export with modifications'
+          )}
+          disabled={!exportAllowed}
+          url={modifyExportUrl}
         />
         <Menu.Divider />
       </Fragment>
