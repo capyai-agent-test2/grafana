@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 
 import { GettingStarted } from './GettingStarted';
+import { type Options } from './panelcfg.gen';
 
-// Simplest possible panel plugin
-export const plugin = new PanelPlugin(GettingStarted).setNoPadding();
+export const plugin = new PanelPlugin<Options>(GettingStarted).setNoPadding();
