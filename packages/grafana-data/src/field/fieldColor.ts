@@ -322,7 +322,9 @@ class FieldColorSchemeMode implements FieldColorMode {
   }
 
   getCalculator(field: Field, theme: GrafanaTheme2) {
-    const colors = this.getColors(theme);
+    const colors =
+      getClassicPaletteOverride(field, theme, this.useSeriesName === true) ??
+      this.getColors(theme);
 
     if (this.isByValue) {
       if (this.isContinuous) {
@@ -345,6 +347,38 @@ class FieldColorSchemeMode implements FieldColorMode {
       };
     }
   }
+}
+
+function getClassicPaletteOverride(field: Field, theme: GrafanaTheme2, enforceContrast: boolean): string[] | undefined {
+  const mode = field.config.color?.mode;
+
+  if (mode !== FieldColorModeId.PaletteClassic && mode !== FieldColorModeId.PaletteClassicByName) {
+    return undefined;
+  }
+
+  const palette = field.config.custom?.classicPalette;
+
+  if (!Array.isArray(palette)) {
+    return undefined;
+  }
+
+  const colors = palette
+    .filter((color): color is string => typeof color === 'string' && color.trim().length > 0)
+    .map((color) => theme.visualization.getColorByName(color.trim()));
+
+  if (colors.length === 0) {
+    return undefined;
+  }
+
+  if (!enforceContrast) {
+    return colors;
+  }
+
+  const filteredColors = colors.filter(
+    (color) => getContrastRatio(color, theme.colors.background.primary) >= theme.colors.contrastThreshold
+  );
+
+  return filteredColors.length > 0 ? filteredColors : colors;
 }
 
 /** @beta */

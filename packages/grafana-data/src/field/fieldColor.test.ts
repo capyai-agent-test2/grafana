@@ -26,10 +26,12 @@ interface GetCalcOptions {
   seriesIndex?: number;
   name?: string;
   fixedColor?: string;
+  classicPalette?: string[];
 }
 
 function getCalculator(options: GetCalcOptions): FieldValueColorCalculator {
   const field = getTestField(options.mode, options.fixedColor, options.name);
+  field.config.custom = options.classicPalette ? { classicPalette: options.classicPalette } : undefined;
   const mode = fieldColorModeRegistry.get(options.mode);
   field.state!.seriesIndex = options.seriesIndex;
   return mode.getCalculator(field, createTheme());
@@ -116,6 +118,34 @@ describe('fieldColorModeRegistry', () => {
 
     expect(calcFn1(0, 0)).toEqual('#5195CE');
     expect(calcFn2(0, 0)).toEqual('#37872D');
+  });
+
+  it('Palette classic can use a custom palette from field config', () => {
+    const calcFn = getCalculator({
+      mode: FieldColorModeId.PaletteClassic,
+      seriesIndex: 1,
+      classicPalette: ['#111111', 'dark-red'],
+    });
+
+    expect(calcFn(70, 0, undefined)).toEqual('#C4162A');
+  });
+
+  it('Palette by name can use a custom palette from field config', () => {
+    const calcFn1 = getCalculator({
+      mode: FieldColorModeId.PaletteClassicByName,
+      seriesIndex: 0,
+      name: 'same name',
+      classicPalette: ['#111111', 'dark-red'],
+    });
+    const calcFn2 = getCalculator({
+      mode: FieldColorModeId.PaletteClassicByName,
+      seriesIndex: 1,
+      name: 'same name',
+      classicPalette: ['#111111', 'dark-red'],
+    });
+
+    expect(calcFn1(12, 34, undefined)).toEqual(calcFn2(56, 78, undefined));
+    expect(['#111111', '#C4162A']).toContain(calcFn1(12, 34, undefined));
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {
