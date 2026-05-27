@@ -2474,6 +2474,8 @@ var exactTermQueryFields = []string{
 	"email",
 }
 
+const noOwnerReferenceFilterValue = "__no_owner__"
+
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
 	useExactTermQuery := slices.Contains(exactTermQueryFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
@@ -2492,6 +2494,9 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 		}
 
 	case selection.Equals:
+		if req.Key == resource.SEARCH_FIELD_OWNER_REFERENCES && len(req.Values) == 1 && req.Values[0] == noOwnerReferenceFilterValue {
+			return fieldDoesNotExistQuery(req.Key, prefix), nil
+		}
 		return allRequirementValuesQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
 				return exactFieldTermQuery(req.Key, v, prefix)
@@ -2500,6 +2505,9 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 		}), nil
 
 	case selection.In:
+		if req.Key == resource.SEARCH_FIELD_OWNER_REFERENCES && slices.Contains(req.Values, noOwnerReferenceFilterValue) {
+			return ownerReferenceInOrMissingQuery(req.Values, prefix), nil
+		}
 		return anyRequirementValueQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
 				return exactFieldTermQuery(req.Key, v, prefix)
@@ -2526,13 +2534,28 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	// will fall through to the BadRequestError
 	case selection.NotEquals:
 	case selection.DoesNotExist:
+		return fieldDoesNotExistQuery(req.Key, prefix), nil
 	case selection.GreaterThan:
 	case selection.LessThan:
 	case selection.Exists:
+		return fieldExistsQuery(req.Key, prefix), nil
 	}
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+func ownerReferenceInOrMissingQuery(values []string, prefix string) query.Query {
+	queries := []query.Query{fieldDoesNotExistQuery(resource.SEARCH_FIELD_OWNER_REFERENCES, prefix)}
+
+	for _, value := range values {
+		if value == noOwnerReferenceFilterValue {
+			continue
+		}
+		queries = append(queries, exactFieldTermQuery(resource.SEARCH_FIELD_OWNER_REFERENCES, value, prefix))
+	}
+
+	return bleve.NewDisjunctionQuery(queries...)
 }
 
 // allRequirementValuesQuery preserves selector semantics where multiple "=" values are combined with AND.
@@ -2663,6 +2686,18 @@ func fieldWildcardQuery(key string, value string, prefix string) query.Query {
 func fieldMatchQuery(key string, value string, prefix string) query.Query {
 	q := bleve.NewMatchQuery(value)
 	q.SetField(prefix + key)
+	return q
+}
+
+func fieldExistsQuery(key string, prefix string) query.Query {
+	q := bleve.NewRegexpQuery(".+")
+	q.SetField(prefix + key)
+	return q
+}
+
+func fieldDoesNotExistQuery(key string, prefix string) query.Query {
+	q := bleve.NewBooleanQuery()
+	q.AddMustNot(fieldExistsQuery(key, prefix))
 	return q
 }
 

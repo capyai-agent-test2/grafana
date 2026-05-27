@@ -2319,6 +2319,11 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	require.Len(t, sr.Hits, 1)
 	require.Equal(t, "folderB", sr.Hits[0].Name)
 
+	// Find results without any owner
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=__no_owner__")
+	require.Len(t, sr.Hits, 1)
+	require.Equal(t, "folderA", sr.Hits[0].Name)
+
 	// Do not find results if owner does not match
 	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing")
 	require.Len(t, sr.Hits, 0)

@@ -977,6 +977,26 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"ownerReference filter": {
+			queryString: "ownerReference=__no_owner__&ownerReference=iam.grafana.app/Team/team-a",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: dashboardKey,
+					Fields: []*resourcepb.Requirement{{
+						Key:      "ownerReferences",
+						Operator: "in",
+						Values:   []string{"__no_owner__", "iam.grafana.app/Team/team-a"},
+					}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 	}
 
 	for name, tt := range tests {

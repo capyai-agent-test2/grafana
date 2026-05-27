@@ -28,9 +28,20 @@ describe('OwnersFilter', () => {
 
     await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
 
+    expect(await screen.findByText('No owner')).toBeInTheDocument();
     expect(await screen.findByText('All teams')).toBeInTheDocument();
     expect(await screen.findByText('Team A')).toBeInTheDocument();
     expect(await screen.findByText('Test Team')).toBeInTheDocument();
+  });
+
+  it('normalizes the no owner selection into the special ownerReference value', async () => {
+    const onChange = jest.fn();
+    const { user } = render(<OwnersFilter values={[]} onChange={onChange} />);
+
+    await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
+    await user.click(await screen.findByText('No owner'));
+
+    expect(onChange).toHaveBeenCalledWith(['__no_owner__']);
   });
 
   it('normalizes a team selection into ownerReference values', async () => {
@@ -51,6 +62,19 @@ describe('OwnersFilter', () => {
     await user.click(await screen.findByText('All teams'));
 
     expect(onChange).toHaveBeenCalledWith(['iam.grafana.app/Team/team-a', 'iam.grafana.app/Team/test-team']);
+  });
+
+  it('still shows the no owner option when no teams are returned', async () => {
+    server.use(getSearchTeamsHandler([], 0));
+
+    const { user } = render(<OwnersFilter values={[]} onChange={jest.fn()} />);
+
+    await user.click(await screen.findByRole('combobox', { name: 'Owner filter' }));
+
+    expect(await screen.findByText('No owner')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('All teams')).not.toBeInTheDocument();
+    });
   });
 
   it('does not show the all teams option when totalCount is more than 200 and shows a warning', async () => {

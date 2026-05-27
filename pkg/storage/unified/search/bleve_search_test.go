@@ -258,6 +258,84 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 }
 
+func TestCanSearchByOwnerReferencePresence(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 2, noop)
+	req := &resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:   1,
+				Name: "unowned",
+				Key: &resourcepb.ResourceKey{
+					Name:      "unowned",
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title: "Unowned dashboard",
+			},
+		},
+		{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:   1,
+				Name: "owned",
+				Key: &resourcepb.ResourceKey{
+					Name:      "owned",
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title:           "Owned dashboard",
+				OwnerReferences: []string{"iam.grafana.app/Team/team-a"},
+			},
+		},
+	}}
+	require.NoError(t, index.BulkIndex(req))
+
+	t.Run("can find unowned resources with the special owner value", func(t *testing.T) {
+		checkSearchQuery(t, index, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "in",
+					Values:   []string{"__no_owner__"},
+				}},
+			},
+			Limit: 100000,
+		}, []string{"unowned"})
+	})
+
+	t.Run("can combine unowned and owned ownerReference filters", func(t *testing.T) {
+		checkSearchQuery(t, index, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "in",
+					Values:   []string{"__no_owner__", "iam.grafana.app/Team/team-a"},
+				}},
+			},
+			Limit: 100000,
+		}, []string{"owned", "unowned"})
+	})
+}
+
 // TestTitleNgramFieldSearch queries exclusively against the title_ngram field
 // (via explicit QueryFields) to prove partial/prefix matching works without
 // relying on the title field mapping.

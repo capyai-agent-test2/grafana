@@ -9,6 +9,7 @@ import { extractErrorMessage } from 'app/api/utils';
 import { teamOwnerRef } from 'app/features/browse-dashboards/utils/dashboards';
 
 const ALL_TEAMS_VALUE = '__all-teams__';
+const NO_OWNER_VALUE = '__no_owner__';
 // The number here is currently arbitrary, feel free to change if it makes sense.
 const TEAM_OPTIONS_LIMIT = 200;
 
@@ -48,6 +49,13 @@ export function OwnersFilter({ values, onChange }: OwnersFilterProps) {
     };
   }, []);
 
+  const noOwnerValue = useMemo(() => {
+    return {
+      label: t('browse-dashboards.filters.no-owner', 'No owner'),
+      value: NO_OWNER_VALUE,
+    };
+  }, []);
+
   // We go through some hoops here to create a virtual "all teams" item to allow quickly selecting all the teams
   // in the select.
   const allTeamReferences = useMemo(() => {
@@ -60,31 +68,39 @@ export function OwnersFilter({ values, onChange }: OwnersFilterProps) {
   }, [teamOptions]);
 
   // Check if the value prop matches list of all the teams we get from the API
+  const selectedTeamValues = values.filter((value) => value !== NO_OWNER_VALUE);
+
   const hasAllTeamsSelected =
     !hasMoreTeamsThanLimit &&
-    values.length > 0 &&
+    selectedTeamValues.length > 0 &&
     allTeamReferences.length > 0 &&
-    values.length === allTeamReferences.length &&
-    allTeamReferences.every((reference) => values.includes(reference));
+    selectedTeamValues.length === allTeamReferences.length &&
+    allTeamReferences.every((reference) => selectedTeamValues.includes(reference));
 
   const value = useMemo(() => {
-    return hasAllTeamsSelected
+    const selectedOptions = hasAllTeamsSelected
       ? [allTeamsValue]
       : teamOptions.filter((option) => option.value && values.includes(option.value));
-  }, [hasAllTeamsSelected, allTeamsValue, teamOptions, values]);
+
+    if (values.includes(NO_OWNER_VALUE)) {
+      selectedOptions.unshift(noOwnerValue);
+    }
+
+    return selectedOptions;
+  }, [allTeamsValue, hasAllTeamsSelected, noOwnerValue, teamOptions, values]);
 
   // Add "all teams" option if there are some actual teams
   const options = useMemo<Array<SelectableValue<string>>>(() => {
     if (teamOptions.length === 0) {
-      return [];
+      return [noOwnerValue];
     }
 
     if (hasMoreTeamsThanLimit) {
-      return teamOptions;
+      return [noOwnerValue, ...teamOptions];
     }
 
-    return [allTeamsValue, ...teamOptions];
-  }, [allTeamsValue, hasMoreTeamsThanLimit, teamOptions]);
+    return [noOwnerValue, allTeamsValue, ...teamOptions];
+  }, [allTeamsValue, hasMoreTeamsThanLimit, noOwnerValue, teamOptions]);
 
   return (
     <div className={styles.ownerFilter}>
@@ -95,7 +111,11 @@ export function OwnersFilter({ values, onChange }: OwnersFilterProps) {
         onChange={(selectedOptions) => {
           const values = selectedOptions.map((option) => option.value).filter((value) => value !== undefined);
           // We don't send ALL_TEAMS_VALUE upstream, so we map it to actual list of all the teams.
-          onChange(!hasMoreTeamsThanLimit && values.includes(ALL_TEAMS_VALUE) ? allTeamReferences : values);
+          onChange(
+            !hasMoreTeamsThanLimit && values.includes(ALL_TEAMS_VALUE)
+              ? [...values.filter((value) => value !== ALL_TEAMS_VALUE), ...allTeamReferences]
+              : values
+          );
         }}
         noOptionsMessage={t('browse-dashboards.filters.owner-no-options', 'No teams found')}
         loadingMessage={t('browse-dashboards.filters.owner-loading', 'Loading teams...')}
