@@ -106,6 +106,7 @@ describe('MuteTimingsTable', () => {
         'href',
         expect.stringContaining(`muteName=${encodeURIComponent(base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH))}`)
       );
+      expect(editLink).toHaveAttribute('href', expect.stringContaining('muteNameType=uid'));
       expect(editLink).not.toHaveAttribute(
         'href',
         expect.stringContaining(`muteName=${encodeURIComponent(TIME_INTERVAL_NAME_HAPPY_PATH)}`)

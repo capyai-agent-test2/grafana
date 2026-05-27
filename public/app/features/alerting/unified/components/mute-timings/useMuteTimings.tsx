@@ -95,20 +95,6 @@ const useGrafanaAlertmanagerIntervals = () =>
     },
   });
 
-const isEncodedResourceName = (name: string): boolean => {
-  try {
-    const padding = '='.repeat((4 - (name.length % 4)) % 4);
-    const base64 = name.replace(/-/g, '+').replace(/_/g, '/') + padding;
-    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(
-      Uint8Array.from(atob(base64), (char) => char.codePointAt(0) ?? 0)
-    );
-
-    return base64UrlEncode(decoded) === name;
-  } catch {
-    return false;
-  }
-};
-
 /**
  * Imported time intervals (provenance: converted_prometheus) are marked with canUse: false
  * by the backend because they belong to external Mimir-kind resources and should not be
@@ -192,7 +178,11 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
  * Get an individual time interval, either from the k8s API,
  * or by finding it in the alertmanager config
  */
-export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertmanagerArgs & { name: string }) => {
+export const useGetMuteTiming = ({
+  alertmanager,
+  name: nameToFind,
+  identifierType = 'name',
+}: BaseAlertmanagerArgs & { name: string; identifierType?: 'name' | 'uid' }) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [getGrafanaTimeInterval, k8sResponse] = useLazyGetTimeIntervalQuery({
@@ -234,7 +224,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
         try {
           await getGrafanaTimeInterval({ name: nameToFind }, true).unwrap();
         } catch {
-          if (!isEncodedResourceName(nameToFind)) {
+          if (identifierType !== 'uid') {
             const legacyResourceName = base64UrlEncode(nameToFind);
             void getGrafanaTimeInterval({ name: legacyResourceName }, true);
           }
@@ -245,7 +235,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
     }
-  }, [alertmanager, getAlertmanagerTimeInterval, getGrafanaTimeInterval, nameToFind, useK8sApi]);
+  }, [alertmanager, getAlertmanagerTimeInterval, getGrafanaTimeInterval, identifierType, nameToFind, useK8sApi]);
 
   return useK8sApi ? k8sResponse : amConfigApiResponse;
 };

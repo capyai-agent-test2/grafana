@@ -120,6 +120,7 @@ describe('useMuteTimings', () => {
           useGetMuteTiming({
             alertmanager: GRAFANA_RULES_SOURCE_NAME,
             name: base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH),
+            identifierType: 'uid',
           }),
         {
           wrapper,
@@ -138,6 +139,43 @@ describe('useMuteTimings', () => {
 
     it('should fall back to encoded metadata.name for legacy display names with reserved URL characters', async () => {
       const legacyName = 'legacy/name';
+      const encodedLegacyName = base64UrlEncode(legacyName);
+
+      server.use(
+        http.get(`*/timeintervals/${legacyName}`, () => HttpResponse.json({}, { status: 404 })),
+        http.get(`*/timeintervals/${encodedLegacyName}`, () =>
+          HttpResponse.json({
+            apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+            kind: 'TimeInterval',
+            metadata: { name: encodedLegacyName },
+            spec: { name: legacyName, time_intervals: [] },
+          })
+        )
+      );
+
+      const { result } = renderHook(
+        () =>
+          useGetMuteTiming({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            name: legacyName,
+          }),
+        {
+          wrapper,
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data).toBeDefined();
+      expect(result.current.data?.name).toBe(legacyName);
+      expect(result.current.data?.id).toBe(encodedLegacyName);
+      expect(result.current.isError).toBe(false);
+    });
+
+    it('should fall back to encoded metadata.name for legacy display names with safe characters', async () => {
+      const legacyName = 'weekend';
       const encodedLegacyName = base64UrlEncode(legacyName);
 
       server.use(
@@ -194,6 +232,7 @@ describe('useMuteTimings', () => {
           useGetMuteTiming({
             alertmanager: GRAFANA_RULES_SOURCE_NAME,
             name: encodedResourceName,
+            identifierType: 'uid',
           }),
         {
           wrapper,
