@@ -9,7 +9,11 @@ import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
-import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, {
+  buildFilteredTable,
+  getMinVisibleTotal,
+  splitOtherEntry,
+} from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -46,7 +50,7 @@ describe('FlameGraphTopTableContainer', () => {
     expect(columnHeaders[3].textContent).toEqual('Total');
 
     const cells = screen.getAllByRole('cell');
-    expect(cells).toHaveLength(60); // 16 rows
+    expect(cells).toHaveLength(60);
     expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
     expect(cells[2].textContent).toEqual('31.7 K');
     expect(cells[3].textContent).toEqual('5.58 Bil');
@@ -81,6 +85,49 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+
+  it('should move the other row below the top table and explain it', async () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+
+    const flameGraphData = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1] },
+        { name: 'value', values: [10, 6, 4] },
+        { name: 'self', values: [0, 6, 4] },
+        { name: 'label', values: ['root', 'visible', 'other'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+    const onSearch = jest.fn();
+    const onSandwich = jest.fn();
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={onSearch}
+        onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    expect(screen.queryByRole('cell', { name: 'other' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('otherSummary')).toHaveTextContent(
+      'A total of 4 has been truncated and is represented by "other" in the flamegraph.'
+    );
+    expect(screen.getByTestId('otherSummary')).toHaveTextContent(
+      'Each truncated stacktrace had a total resource consumption less than or equal to 6'
+    );
+
+    const buttons = screen.getByTestId('otherSummary').querySelectorAll('button');
+    expect(buttons).toHaveLength(2);
+
+    await userEvents.click(buttons[0]);
+    expect(onSearch).toHaveBeenCalledWith('other');
+
+    await userEvents.click(buttons[1]);
+    expect(onSandwich).toHaveBeenCalledWith('other');
   });
 });
 
@@ -189,5 +236,34 @@ describe('buildFilteredTable', () => {
       '3': { self: 0, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
     });
+  });
+
+  it('should split the other row out of the top table', () => {
+    const result = splitOtherEntry({
+      visible: { self: 6, total: 6, totalRight: 0 },
+      other: { self: 4, total: 4, totalRight: 0 },
+    });
+
+    expect(result.filteredTable).toEqual({
+      visible: { self: 6, total: 6, totalRight: 0 },
+    });
+    expect(result.otherEntry).toEqual({
+      label: 'other',
+      data: { self: 4, total: 4, totalRight: 0 },
+    });
+  });
+
+  it('should return the minimum visible total without counting other', () => {
+    const flameGraphData = createDataFrame({
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [15, 7, 5, 3] },
+        { name: 'self', values: [0, 7, 5, 3] },
+        { name: 'label', values: ['root', 'alpha', 'beta', 'other'] },
+      ],
+    });
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+
+    expect(getMinVisibleTotal(container)).toBe(5);
   });
 });

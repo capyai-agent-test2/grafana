@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   type DataFrame,
   type DataLinkClickEvent,
+  type DisplayValue,
   type Field,
   FieldType,
   type GrafanaTheme2,
@@ -55,6 +56,10 @@ const FlameGraphTopTableContainer = memo(
     colorScheme,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const { filteredTable, otherEntry } = useMemo(
+      () => (data.isDiffFlamegraph() ? { filteredTable: table, otherEntry: undefined } : splitOtherEntry(table)),
+      [data, table]
+    );
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -71,7 +76,7 @@ const FlameGraphTopTableContainer = memo(
 
             const frame = buildTableDataFrame(
               data,
-              table,
+              filteredTable,
               width,
               onSymbolClick,
               onSearch,
@@ -82,18 +87,31 @@ const FlameGraphTopTableContainer = memo(
               sandwichItem
             );
             return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
+              <>
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={otherEntry ? Math.max(height - otherSummaryHeight, 48) : height}
+                />
+                {otherEntry && (
+                  <OtherSummary
+                    label={otherEntry.label}
+                    row={otherEntry.data}
+                    data={data}
+                    search={search}
+                    sandwichItem={sandwichItem}
+                    onSearch={onSearch}
+                    onSandwich={onSandwich}
+                  />
+                )}
+              </>
             );
           }}
         </AutoSizer>
@@ -146,6 +164,43 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
   }
 
   return filteredTable;
+}
+
+function isOtherLabel(label: string) {
+  return label.trim().toLowerCase() === 'other';
+}
+
+function splitOtherEntry(table: { [key: string]: TableData }) {
+  const filteredTable: { [key: string]: TableData } = Object.create(null);
+  let otherEntry: { label: string; data: TableData } | undefined;
+
+  for (const [label, row] of Object.entries(table)) {
+    if (isOtherLabel(label)) {
+      otherEntry = { label, data: row };
+      continue;
+    }
+
+    filteredTable[label] = row;
+  }
+
+  return { filteredTable, otherEntry };
+}
+
+function getMinVisibleTotal(data: FlameGraphDataContainer) {
+  let minVisibleTotal = Infinity;
+
+  for (let i = 0; i < data.data.length; i++) {
+    if (isOtherLabel(data.getLabel(i))) {
+      continue;
+    }
+
+    const total = data.getValue(i);
+    if (total < minVisibleTotal) {
+      minVisibleTotal = total;
+    }
+  }
+
+  return Number.isFinite(minVisibleTotal) ? minVisibleTotal : undefined;
 }
 
 function buildTableDataFrame(
@@ -260,6 +315,10 @@ function buildTableDataFrame(
   return dataFrames[0];
 }
 
+function formatValue(data: FlameGraphDataContainer, value: number): DisplayValue {
+  return data.valueDisplayProcessor(value);
+}
+
 function createNumberField(name: string, unit?: string): Field {
   const tableFieldOptions: TableFieldOptions = {
     width: TOP_TABLE_COLUMN_WIDTH,
@@ -280,6 +339,7 @@ function createNumberField(name: string, unit?: string): Field {
 }
 
 const actionColumnWidth = 61;
+const otherSummaryHeight = 92;
 
 function createActionField(
   onSandwich: (str?: string) => void,
@@ -290,14 +350,15 @@ function createActionField(
   const options: TableCustomCellOptions = {
     type: TableCellDisplayMode.Custom,
     cellComponent: (props) => {
+      const symbolField = props.frame.fields.find((field) => field.name === 'Symbol');
+      const symbol = String(symbolField?.values[props.rowIndex] ?? '');
       return (
         <ActionCell
-          frame={props.frame}
+          symbol={symbol}
           onSandwich={onSandwich}
           onSearch={onSearch}
           search={search}
           sandwichItem={sandwichItem}
-          rowIndex={props.rowIndex}
         />
       );
     },
@@ -323,19 +384,17 @@ function createActionField(
 }
 
 type ActionCellProps = {
-  frame: DataFrame;
-  rowIndex: number;
+  symbol: string;
   search?: string;
   sandwichItem?: string;
   onSearch: (symbol: string) => void;
-  onSandwich: (symbol: string) => void;
+  onSandwich: (symbol?: string) => void;
 };
 
 function ActionCell(props: ActionCellProps) {
   const styles = getStylesActionCell();
-  const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values[props.rowIndex];
-  const isSearched = props.search === `^${escapeStringForRegex(String(symbol))}$`;
-  const isSandwiched = props.sandwichItem === symbol;
+  const isSearched = props.search === `^${escapeStringForRegex(props.symbol)}$`;
+  const isSandwiched = props.sandwichItem === props.symbol;
 
   return (
     <div className={styles.actionCellWrapper}>
@@ -346,7 +405,7 @@ function ActionCell(props: ActionCellProps) {
         tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
         aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
         onClick={() => {
-          props.onSearch(isSearched ? '' : symbol);
+          props.onSearch(isSearched ? '' : props.symbol);
         }}
       />
       <IconButton
@@ -356,23 +415,12 @@ function ActionCell(props: ActionCellProps) {
         variant={isSandwiched ? 'primary' : 'secondary'}
         aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
         onClick={() => {
-          props.onSandwich(isSandwiched ? undefined : symbol);
+          props.onSandwich(isSandwiched ? undefined : props.symbol);
         }}
       />
     </div>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    topTableContainer: css({
-      label: 'topTableContainer',
-      padding: theme.spacing(1),
-      backgroundColor: theme.colors.background.secondary,
-      height: '100%',
-    }),
-  };
-};
 
 const getStylesActionCell = () => {
   return {
@@ -389,6 +437,87 @@ const getStylesActionCell = () => {
   };
 };
 
-export { buildFilteredTable };
+type OtherSummaryProps = {
+  label: string;
+  row: TableData;
+  data: FlameGraphDataContainer;
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (str: string) => void;
+  onSandwich: (str?: string) => void;
+};
+
+function OtherSummary({ label, row, data, search, sandwichItem, onSearch, onSandwich }: OtherSummaryProps) {
+  const styles = useStyles2(getStyles);
+  const truncatedValue = formatValue(data, row.total).text;
+  const minimumVisibleTotal = getMinVisibleTotal(data);
+  const minimumVisibleTotalText =
+    minimumVisibleTotal === undefined ? undefined : formatValue(data, minimumVisibleTotal).text;
+
+  return (
+    <div className={styles.otherSummary} data-testid="otherSummary">
+      <div className={styles.otherSummaryRow}>
+        <ActionCell
+          symbol={label}
+          onSearch={onSearch}
+          onSandwich={onSandwich}
+          search={search}
+          sandwichItem={sandwichItem}
+        />
+        <span className={styles.otherSummarySymbol}>{label}</span>
+        <span className={styles.otherSummaryValue}>{formatValue(data, row.self).text}</span>
+        <span className={styles.otherSummaryValue}>{formatValue(data, row.total).text}</span>
+      </div>
+      <div className={styles.otherSummaryText}>
+        A total of {truncatedValue} has been truncated and is represented by &quot;{label}&quot; in the flamegraph.
+        {minimumVisibleTotalText
+          ? ` Each truncated stacktrace had a total resource consumption less than or equal to ${minimumVisibleTotalText}, the smallest total currently shown in the flamegraph.`
+          : ''}
+      </div>
+    </div>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    topTableContainer: css({
+      label: 'topTableContainer',
+      padding: theme.spacing(1),
+      backgroundColor: theme.colors.background.secondary,
+      height: '100%',
+    }),
+    otherSummary: css({
+      marginTop: theme.spacing(1),
+      paddingTop: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+    }),
+    otherSummaryRow: css({
+      display: 'grid',
+      gridTemplateColumns: `${actionColumnWidth}px minmax(0, 1fr) ${TOP_TABLE_COLUMN_WIDTH}px ${TOP_TABLE_COLUMN_WIDTH}px`,
+      alignItems: 'center',
+      columnGap: theme.spacing(1),
+      minHeight: '24px',
+    }),
+    otherSummarySymbol: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    otherSummaryValue: css({
+      textAlign: 'right',
+      fontVariantNumeric: 'tabular-nums',
+    }),
+    otherSummaryText: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+    }),
+  };
+};
+
+export { buildFilteredTable, getMinVisibleTotal, splitOtherEntry };
 
 export default FlameGraphTopTableContainer;
