@@ -29,6 +29,24 @@ import (
 //       200: AlertingFileExport
 //       403: PermissionDenied
 
+// swagger:route POST /v1/provisioning/contact-points/export provisioning stable RoutePostContactpointsExport
+//
+// Export contact points from the provided payload in provisioning file format.
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: PermissionDenied
+
 // swagger:route POST /v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
 // Create a contact point.
@@ -77,12 +95,18 @@ type ContactPointUIDReference struct {
 	UID string
 }
 
-// swagger:parameters RouteGetContactpoints RouteGetContactpointsExport
+// swagger:parameters RouteGetContactpoints RouteGetContactpointsExport RoutePostContactpointsExport
 type ContactPointParams struct {
 	// Filter by name
 	// in: query
 	// required: false
 	Name string `json:"name"`
+}
+
+// swagger:parameters RoutePostContactpointsExport
+type ContactPointExportPayload struct {
+	// in:body
+	Body ContactPoints
 }
 
 // swagger:parameters RoutePostContactpoints RoutePutContactpoint

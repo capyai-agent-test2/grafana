@@ -138,7 +138,7 @@ describe('contact points', () => {
       test('loads contact points tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
-        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
@@ -150,27 +150,27 @@ describe('contact points', () => {
       test('defaults to contact points tab with invalid query param', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
-        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only read permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       });
 
       test('defaults to contact points tab if user has only create permission', async () => {
         grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/new contact point/i)).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       });
     });
 
@@ -197,6 +197,10 @@ describe('contact points', () => {
 
       // check for available actions – our mock 4 contact points, 1 of them is provisioned
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'export new contact point' })).toHaveAttribute(
+        'href',
+        '/alerting/notifications/receivers/modify-export/new?alertmanager=grafana'
+      );
       expect(screen.getByRole('button', { name: 'export all' })).toBeInTheDocument();
 
       const unusedBadge = screen.getAllByLabelText('unused');
@@ -242,6 +246,18 @@ describe('contact points', () => {
       moreActionsButtons.forEach((button) => {
         expect(button).toBeEnabled();
       });
+    });
+
+    it('shows export with modifications in the contact point actions menu', async () => {
+      renderWithProvider(<ContactPointsPageContents />);
+
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
+      await clickMoreActionsButton('lotsa-emails');
+
+      expect(screen.getByRole('menuitem', { name: /export with modifications/i })).toHaveAttribute(
+        'href',
+        '/alerting/notifications/receivers/lotsa-emails/modify-export?alertmanager=grafana'
+      );
     });
 
     it('should disable certain actions if the user has no write permissions', async () => {

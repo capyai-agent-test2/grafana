@@ -93,6 +93,10 @@ func (f *ProvisioningApiHandler) handleRouteGetContactpointsExport(ctx *contextm
 	return f.svc.RouteGetContactPointsExport(ctx)
 }
 
+func (f *ProvisioningApiHandler) handleRoutePostContactpointsExport(ctx *contextmodel.ReqContext, cps apimodels.ContactPoints) response.Response {
+	return f.svc.RoutePostContactPointsExport(ctx, cps)
+}
+
 func (f *ProvisioningApiHandler) handleRoutePostContactpoints(ctx *contextmodel.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return deprecatedNotificationProvisioningResponse(f.svc.RoutePostContactPoint(ctx, cp), replacementReceivers)
 }

@@ -43,6 +43,7 @@ type ProvisioningApi interface {
 	RouteGetTemplates(*contextmodel.ReqContext) response.Response
 	RoutePostAlertRule(*contextmodel.ReqContext) response.Response
 	RoutePostContactpoints(*contextmodel.ReqContext) response.Response
+	RoutePostContactpointsExport(*contextmodel.ReqContext) response.Response
 	RoutePostMuteTiming(*contextmodel.ReqContext) response.Response
 	RoutePutAlertRule(*contextmodel.ReqContext) response.Response
 	RoutePutAlertRuleGroup(*contextmodel.ReqContext) response.Response
@@ -158,6 +159,14 @@ func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *contextmodel.ReqCon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostContactpoints(ctx, conf)
+}
+func (f *ProvisioningApiHandler) RoutePostContactpointsExport(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
+	conf := apimodels.ContactPoints{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostContactpointsExport(ctx, conf)
 }
 func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
@@ -409,6 +418,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodGet,
 				"/api/v1/provisioning/contact-points/export",
 				api.Hooks.Wrap(srv.RouteGetContactpointsExport),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/v1/provisioning/contact-points/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/v1/provisioning/contact-points/export"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/provisioning/contact-points/export",
+				api.Hooks.Wrap(srv.RoutePostContactpointsExport),
 				m,
 			),
 		)

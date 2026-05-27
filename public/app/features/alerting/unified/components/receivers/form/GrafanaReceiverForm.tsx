@@ -47,9 +47,19 @@ interface Props {
   contactPoint?: GrafanaManagedContactPoint;
   readOnly?: boolean;
   editMode?: boolean;
+  onSubmit?: (contactPoint: GrafanaManagedContactPoint) => Promise<void> | void;
+  submitButtonText?: string;
+  cancelHref?: string;
 }
 
-export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
+export const GrafanaReceiverForm = ({
+  contactPoint,
+  readOnly = false,
+  editMode,
+  onSubmit,
+  submitButtonText,
+  cancelHref,
+}: Props) => {
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
@@ -97,8 +107,13 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint));
   }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
-  const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
+  const handleSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
+
+    if (onSubmit) {
+      await onSubmit(newReceiver);
+      return;
+    }
 
     if (editMode) {
       if (contactPoint && contactPoint.id) {
@@ -187,7 +202,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         contactPointId={contactPoint?.id}
         isEditable={isEditable}
         isTestable={isTestable}
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit}
         initialValues={existingValue}
         onTestChannel={onTestChannel}
         notifiers={notifiers}
@@ -199,6 +214,8 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
           editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
         }
         canEditProtectedFields={canEditProtectedFields}
+        submitButtonText={submitButtonText}
+        cancelHref={cancelHref}
       />
       {testChannelData && (
         <TestContactPointModal

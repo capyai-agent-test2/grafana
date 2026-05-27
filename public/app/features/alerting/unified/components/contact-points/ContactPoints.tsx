@@ -117,6 +117,17 @@ const ContactPointsTab = () => {
               <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )}
+          {exportContactPointsSupported && selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME && (
+            <LinkButton
+              icon="download-alt"
+              variant="secondary"
+              aria-label={t('alerting.contact-points-tab.aria-label-export-new', 'export new contact point')}
+              href={makeAMLink('/alerting/notifications/receivers/modify-export/new', selectedAlertmanager)}
+              disabled={!exportContactPointsAllowed}
+            >
+              <Trans i18nKey="alerting.contact-points-tab.export-new">New contact point for export</Trans>
+            </LinkButton>
+          )}
           {exportContactPointsSupported && (
             <Button
               icon="download-alt"

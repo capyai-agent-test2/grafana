@@ -195,6 +195,20 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/notifications/receivers/modify-export/new',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_CONTACT_POINTS,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "ExportNewContactPoint" */ 'app/features/alerting/unified/components/export/GrafanaContactPointModifyExport'
+          )
+      ),
+    },
+    {
       path: '/alerting/notifications/receivers/:name/edit',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
@@ -210,6 +224,20 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(
             /* webpackChunkName: "EditContactPoint" */ 'app/features/alerting/unified/components/contact-points/EditContactPoint'
+          )
+      ),
+    },
+    {
+      path: '/alerting/notifications/receivers/:name/modify-export',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_CONTACT_POINTS,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "ModifyExportContactPoint" */ 'app/features/alerting/unified/components/export/GrafanaModifyExportContactPoint'
           )
       ),
     },
