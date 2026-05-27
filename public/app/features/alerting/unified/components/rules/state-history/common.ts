@@ -1,7 +1,12 @@
 import { isEqual, uniqBy } from 'lodash';
 
 import { type DataFrameJSON } from '@grafana/data';
-import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertState,
+  type GrafanaAlertStateWithReason,
+  mapStateWithReasonToBaseState,
+  mapStateWithReasonToReason,
+} from 'app/types/unified-alerting-dto';
 
 export interface Line {
   previous: GrafanaAlertStateWithReason;
@@ -74,4 +79,11 @@ export function isNumbers(value: unknown[]): value is number[] {
 
 export function isLine(value: unknown): value is Line {
   return typeof value === 'object' && value !== null && 'current' in value && 'previous' in value;
+}
+
+export function isEvictedAlertInstanceState(state: GrafanaAlertStateWithReason): boolean {
+  return (
+    mapStateWithReasonToBaseState(state) === GrafanaAlertState.Normal &&
+    mapStateWithReasonToReason(state) === 'MissingSeries'
+  );
 }
