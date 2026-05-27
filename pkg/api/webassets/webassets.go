@@ -71,12 +71,7 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 		openfeature.TransactionContext(ctx), // Extract evaluation context from the request
 	)
 
-	var assetsFilename string
-	if useReact19 {
-		assetsFilename = "assets-manifest-react19.json"
-	} else {
-		assetsFilename = "assets-manifest.json"
-	}
+	assetsFilename := getAssetsManifestFilename(buildDir, useReact19)
 
 	if result == nil {
 		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, assetsFilename))
@@ -93,6 +88,14 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 	}
 	entryPointAssetsCache[buildDir] = result
 	return entryPointAssetsCache[buildDir], err
+}
+
+func getAssetsManifestFilename(buildDir string, useReact19 bool) string {
+	if useReact19 && buildDir == "build" {
+		return "assets-manifest-react19.json"
+	}
+
+	return "assets-manifest.json"
 }
 
 func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {

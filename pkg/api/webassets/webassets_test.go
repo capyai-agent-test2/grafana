@@ -103,6 +103,13 @@ func TestReadSwaggerWebassets(t *testing.T) {
 	require.Empty(t, assets.Light)
 }
 
+func TestGetAssetsManifestFilename(t *testing.T) {
+	require.Equal(t, "assets-manifest-react19.json", getAssetsManifestFilename("build", true))
+	require.Equal(t, "assets-manifest.json", getAssetsManifestFilename("build", false))
+	require.Equal(t, "assets-manifest.json", getAssetsManifestFilename("build-swagger", false))
+	require.Equal(t, "assets-manifest.json", getAssetsManifestFilename("build-swagger", true))
+}
+
 func TestReadWebassetsFromCDN(t *testing.T) {
 	t.Skip()
 
