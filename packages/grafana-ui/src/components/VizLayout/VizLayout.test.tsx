@@ -254,7 +254,7 @@ describe('VizLayout', () => {
   });
 
   describe('small screen behavior', () => {
-    it('forces bottom placement for a right legend when viewport is below the lg breakpoint', () => {
+    it('keeps an explicitly right legend on the right when viewport is below the lg breakpoint', () => {
       Object.defineProperty(document.body, 'clientWidth', { value: 100, configurable: true });
       render(
         <VizLayout
@@ -269,7 +269,7 @@ describe('VizLayout', () => {
           {() => null}
         </VizLayout>
       );
-      expect(screen.getByTestId(selectors.components.VizLayout.container)).toHaveStyle({ flexDirection: 'column' });
+      expect(screen.getByTestId(selectors.components.VizLayout.container)).toHaveStyle({ flexDirection: 'row' });
     });
   });
 });
