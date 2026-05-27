@@ -6,7 +6,7 @@ import { Dropdown, Menu } from '@grafana/ui';
 import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
-import { shouldUseAlertingListViewV2, shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import {
   AlertingAction,
   FolderBulkAction,
@@ -14,6 +14,7 @@ import {
   useFolderBulkActionAbility,
 } from '../../hooks/useAbilities';
 import { useFolder } from '../../hooks/useFolder';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createRelativeUrl } from '../../utils/url';
@@ -33,8 +34,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
 
   // feature toggles
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
-  const listView2Enabled = shouldUseAlertingListViewV2();
-
   const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
   const canExportRules = exportRulesSupported && exportRulesAllowed;
@@ -44,10 +43,9 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
 
   const { folder } = useFolder(folderUID);
   const folderName = folder?.title || 'unknown folder';
-  const viewComponent = listView2Enabled ? 'list' : 'grouped';
 
   // URLs
-  const redirectToListView = useRedirectToListView(viewComponent);
+  const redirectToListView = useRedirectToListView();
 
   if (!folder) {
     return null;
@@ -91,8 +89,9 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   );
 };
 
-function useRedirectToListView(view: string) {
+function useRedirectToListView() {
   const dispatch = useDispatch();
+  const [queryParams] = useURLSearchParams();
   const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
   const redirectToListView = async () => {
     if (prometheusRulesPrimary) {
@@ -101,7 +100,12 @@ function useRedirectToListView(view: string) {
     } else {
       await dispatch(fetchAllPromAndRulerRulesAction(false));
     }
-    locationService.push(createRelativeUrl('/alerting/list', { view }, { skipSubPath: true }));
+    const wantsListView = queryParams.get('view') === 'list';
+    locationService.push(
+      wantsListView
+        ? createRelativeUrl('/alerting/list', { view: 'list' }, { skipSubPath: true })
+        : createRelativeUrl('/alerting/list', undefined, { skipSubPath: true })
+    );
   };
 
   return redirectToListView;
@@ -130,7 +134,6 @@ function BulkActions({
   isLoading: boolean;
 }) {
   // feature toggles
-  const listView2Enabled = shouldUseAlertingListViewV2();
   const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
   // abilities
@@ -145,8 +148,7 @@ function BulkActions({
   const [unpauseFolder, unpauseState] = alertingFolderActionsApi.endpoints.unpauseFolder.useMutation();
 
   // URLs
-  const viewComponent = listView2Enabled ? 'list' : 'grouped';
-  const redirectToListView = useRedirectToListView(viewComponent);
+  const redirectToListView = useRedirectToListView();
 
   if (!bulkActionsEnabled) {
     return null;
