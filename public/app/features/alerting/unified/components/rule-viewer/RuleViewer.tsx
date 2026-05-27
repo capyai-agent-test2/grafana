@@ -9,6 +9,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Alert,
+  Badge,
   LinkButton,
   LoadingBar,
   Stack,
@@ -41,6 +42,7 @@ import { useRuleLocation } from '../../hooks/useCombinedRule';
 import { useEnrichmentUrlParams } from '../../hooks/useEnrichmentUrlParams';
 import { useHasInhibitedInstances } from '../../hooks/useHasInhibitedInstances';
 import { useHasRulerV2 } from '../../hooks/useHasRuler';
+import { useHasSilencedInstances } from '../../hooks/useHasSilencedInstances';
 import { useRuleGroupConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
@@ -114,6 +116,7 @@ const RuleViewer = () => {
     ? rulerRule.grafana_alert.uid
     : undefined;
   const { hasInhibitedInstances } = useHasInhibitedInstances(grafanaAlertingRuleUid);
+  const { hasSilencedInstances } = useHasSilencedInstances(grafanaAlertingRuleUid);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
@@ -133,6 +136,7 @@ const RuleViewer = () => {
           provenance={rulerRuleType.grafana.rule(rulerRule) ? rulerRule.grafana_alert.provenance : undefined}
           state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
           isInhibited={hasInhibitedInstances}
+          isSilenced={hasSilencedInstances}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
@@ -312,6 +316,7 @@ interface TitleProps {
   // recording rules don't have a state
   state?: PromAlertingRuleState;
   isInhibited?: boolean;
+  isSilenced?: boolean;
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
@@ -325,6 +330,7 @@ export const Title = ({
   provenance,
   state,
   isInhibited,
+  isSilenced,
   health,
   ruleType,
   ruleOrigin,
@@ -354,6 +360,7 @@ export const Title = ({
       {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
       {/* recording rules won't have a state */}
       {state && <StateText type="alerting" state={textState} health={textHealth} isPaused={paused} />}
+      {isSilenced && <Badge color="orange" text={t('alerting.rule-viewer.title.suppressed', 'Suppressed')} />}
       {isRecordingRule && <StateText type="recording" health={textHealth} isPaused={paused} />}
     </Stack>
   );

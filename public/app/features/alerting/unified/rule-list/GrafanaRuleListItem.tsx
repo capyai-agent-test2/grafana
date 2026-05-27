@@ -69,6 +69,7 @@ export function GrafanaRuleListItem({
         summary={rule.annotations?.summary}
         state={promAlertingRule?.state}
         instancesCount={instancesCount}
+        grafanaRuleUid={uid}
         operation={operation}
         showLocation={showLocation}
       />

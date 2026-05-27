@@ -5,7 +5,7 @@ import { type ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 import { AlertLabels, StateIcon } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   type Rule,
   type RuleGroupIdentifierV2,
@@ -23,6 +23,7 @@ import { logError } from '../../Analytics';
 import ConditionalWrap from '../../components/ConditionalWrap';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
+import { useHasSilencedInstances } from '../../hooks/useHasSilencedInstances';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
 import { getGroupOriginName } from '../../utils/groupIdentifier';
@@ -61,6 +62,7 @@ export interface AlertRuleListItemProps {
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
   querySourceUIDs?: string[];
+  grafanaRuleUid?: string;
   // Evaluation interval (in seconds) for the rule. Only set for rules that belong to artificial
   // `no_group_for_rule_*` groups, where the group header — which normally surfaces this — isn't
   // rendered. For rules in normal groups this stays undefined and the interval is shown at the
@@ -94,10 +96,12 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     operation,
     showLocation = true,
     querySourceUIDs = [],
+    grafanaRuleUid,
     evalIntervalSeconds,
   } = props;
 
   const listItemAriaId = useId();
+  const { hasSilencedInstances } = useHasSilencedInstances(grafanaRuleUid);
 
   const metadata: ReactNode[] = [];
   if (namespace && group && showLocation) {
@@ -171,6 +175,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
           <TextLink href={href} color="primary" inline={false} id={listItemAriaId}>
             {name}
           </TextLink>
+          {hasSilencedInstances && <Badge color="orange" text={t('alerting.rule-list.suppressed', 'Suppressed')} />}
           {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
           {/* show provisioned badge only when it also doesn't have plugin origin */}
           {isProvisioned && !origin && <ProvisioningBadge />}
