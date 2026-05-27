@@ -5,7 +5,7 @@ export function getRowAnchorId(title?: string, fallback = 'row'): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  return normalizedTitle || fallback;
+  return normalizedTitle ? `${normalizedTitle}-${fallback}` : fallback;
 }
 
 export function doesRowAnchorMatchLocation(title?: string, fallback?: string): boolean {

@@ -72,7 +72,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     if (isCollapsed && doesRowAnchorMatchLocation(title, key)) {
       model.onCollapseToggle();
     }
-  }, [isCollapsed, key, model, title]);
+  }, [key, model, title]);
 
   if (isHidden) {
     return null;
