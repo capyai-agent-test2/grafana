@@ -8,4 +8,10 @@ describe('VariableTextField', () => {
 
     expect(screen.getByText('Name *')).toBeInTheDocument();
   });
+
+  it('does not render an orphan required marker when the label is empty', () => {
+    const { container } = render(<VariableTextField name="" value="" onChange={() => {}} required />);
+
+    expect(container).not.toHaveTextContent(/^\s*\*\s*$/);
+  });
 });

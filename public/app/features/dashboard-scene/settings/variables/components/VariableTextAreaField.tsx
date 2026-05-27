@@ -38,7 +38,13 @@ export function VariableTextAreaField({
   const id = useId();
 
   return (
-    <Field label={name} description={description} htmlFor={id} noMargin={noMargin} required={required}>
+    <Field
+      label={name}
+      description={description}
+      htmlFor={id}
+      noMargin={noMargin}
+      required={required && Boolean(name)}
+    >
       <TextArea
         id={id}
         rows={2}
