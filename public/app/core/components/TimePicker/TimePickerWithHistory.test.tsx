@@ -33,7 +33,6 @@ describe('TimePickerWithHistory', () => {
     jest.restoreAllMocks();
     systemDateFormats.update({
       fullDate: 'YYYY-MM-DD HH:mm:ss',
-      fullDateMS: 'YYYY-MM-DD HH:mm:ss.SSS',
       interval: {
         millisecond: 'HH:mm:ss.SSS',
         second: 'HH:mm:ss',
@@ -45,6 +44,7 @@ describe('TimePickerWithHistory', () => {
       },
       useBrowserLocale: false,
     });
+    systemDateFormats.fullDateMS = 'YYYY-MM-DD HH:mm:ss.SSS';
   });
 
   it('Should load with no history', async () => {
