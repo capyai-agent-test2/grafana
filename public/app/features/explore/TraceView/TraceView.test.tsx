@@ -9,8 +9,9 @@ import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComp
 
 import { configureStore } from '../../../store/configureStore';
 
-import { TraceView } from './TraceView';
+import { mergeSpanLinkFuncs, TraceView } from './TraceView';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
+import { SpanLinkType } from './components/types/links';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
@@ -145,6 +146,31 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+});
+
+describe('mergeSpanLinkFuncs', () => {
+  it('returns default links followed by custom links', () => {
+    const span = response.spans[0] as unknown as TraceSpanData;
+    const defaultCreateSpanLink = jest.fn(() => [
+      { href: '/default', field: {} as never, content: null, type: SpanLinkType.Logs },
+    ]);
+    const customCreateSpanLink = jest.fn(() => [
+      { href: '/custom', field: {} as never, content: null, type: SpanLinkType.Unknown },
+    ]);
+
+    const createSpanLink = mergeSpanLinkFuncs(defaultCreateSpanLink, customCreateSpanLink);
+
+    expect(createSpanLink?.(span)).toEqual([
+      { href: '/default', field: {}, content: null, type: SpanLinkType.Logs },
+      { href: '/custom', field: {}, content: null, type: SpanLinkType.Unknown },
+    ]);
+  });
+
+  it('returns custom link creator when default links are unavailable', () => {
+    const customCreateSpanLink = jest.fn();
+
+    expect(mergeSpanLinkFuncs(undefined, customCreateSpanLink)).toBe(customCreateSpanLink);
   });
 });
 

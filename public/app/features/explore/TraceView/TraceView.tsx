@@ -72,6 +72,21 @@ type Props = {
   hideHeaderDetails?: boolean;
 };
 
+export function mergeSpanLinkFuncs(
+  defaultCreateSpanLink?: SpanLinkFunc,
+  customCreateSpanLink?: SpanLinkFunc
+): SpanLinkFunc | undefined {
+  if (!defaultCreateSpanLink) {
+    return customCreateSpanLink;
+  }
+
+  if (!customCreateSpanLink) {
+    return defaultCreateSpanLink;
+  }
+
+  return (span) => [...(defaultCreateSpanLink(span) ?? []), ...(customCreateSpanLink(span) ?? [])];
+}
+
 export function TraceView(props: Props) {
   const {
     traceProp,
@@ -149,9 +164,8 @@ export function TraceView(props: Props) {
 
   const dataLinksContext = useDataLinksContext();
 
-  const createSpanLink = useMemo(
+  const defaultCreateSpanLink = useMemo(
     () =>
-      createSpanLinkFromProps ??
       createSpanLinkFactory({
         splitOpenFn: props.splitOpenFn!,
         traceToLogsOptions,
@@ -170,9 +184,12 @@ export function TraceView(props: Props) {
       props.dataFrames,
       createFocusSpanLink,
       traceProp,
-      createSpanLinkFromProps,
       dataLinksContext?.dataLinkPostProcessor,
     ]
+  );
+  const createSpanLink = useMemo(
+    () => mergeSpanLinkFuncs(defaultCreateSpanLink, createSpanLinkFromProps),
+    [defaultCreateSpanLink, createSpanLinkFromProps]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
