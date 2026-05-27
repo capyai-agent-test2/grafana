@@ -28,6 +28,8 @@ import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
+const HISTORY_ACTION_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter'];
+
 interface Props {
   value: TimeRange;
   onChange: (timeRange: TimeRange) => void;
@@ -338,12 +340,14 @@ function getRenderHistoryAction(onSaveHistoryOption?: (timeOption: TimeOption) =
       : t('time-picker.absolute.save-range', 'Save and label time range');
 
     return (
-      <IconButton
+        <IconButton
         name="bookmark"
         size="sm"
         aria-label={label}
         onKeyDown={(event) => {
-          event.stopPropagation();
+          if (HISTORY_ACTION_KEYS.includes(event.key)) {
+            event.stopPropagation();
+          }
         }}
         onClick={(event) => {
           event.stopPropagation();
