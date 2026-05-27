@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction, useReturnToPrevious } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -30,9 +30,11 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
+  const setReturnToPrevious = useReturnToPrevious();
 
   const { snapshotName, snapshotSharingOptions, selectedExpireOption, panelRef, onDismiss, dashboardRef } =
     model.useState();
+  const dashboardTitle = dashboardRef.resolve().state.title;
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
     const response = await model.onSnapshotCreate(external);
@@ -60,6 +62,10 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
     await deleteSnapshot(snapshotResult.value?.key!);
     reset();
   };
+
+  const onViewAllSnapshotsClick = useCallback(() => {
+    setReturnToPrevious(dashboardTitle);
+  }, [dashboardTitle, setReturnToPrevious]);
 
   if (showDeleteConfirmation) {
     return (
@@ -110,7 +116,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
                 />
               )
             )}
-            <TextLink icon="external-link-alt" href={`${config.appSubUrl || ''}/dashboard/snapshots`} external>
+            <TextLink href={`${config.appSubUrl || ''}/dashboard/snapshots`} onClick={onViewAllSnapshotsClick}>
               {t('snapshot.share.view-all-button', 'View all snapshots')}
             </TextLink>
           </Stack>
