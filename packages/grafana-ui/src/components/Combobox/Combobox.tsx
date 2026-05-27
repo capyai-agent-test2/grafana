@@ -8,7 +8,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
-import { AutoSizeInput } from '../Input/AutoSizeInput';
+import { AutoSizeInput, getWidthFor } from '../Input/AutoSizeInput';
 import { Input, type Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
 
@@ -386,6 +386,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
+  const autoSizeMinWidth = useMemo(() => {
+    if (!isAutoSize) {
+      return undefined;
+    }
+
+    const selectedItemWidth = selectedItem ? getWidthFor(itemToString(selectedItem), minWidth, maxWidth) : minWidth;
+
+    return minWidth ? Math.max(minWidth, selectedItemWidth) : selectedItemWidth;
+  }, [isAutoSize, maxWidth, minWidth, selectedItem]);
 
   const loading = loadingProp || fieldContext.loading || asyncLoading;
 
@@ -425,7 +434,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     <Wrapper {...wrapperProps}>
       <InputComponent
         width={isAutoSize ? undefined : width}
-        {...(isAutoSize ? { minWidth, maxWidth } : {})}
+        {...(isAutoSize ? { minWidth: autoSizeMinWidth, maxWidth } : {})}
         autoFocus={autoFocus}
         prefix={icon && <Icon name={icon} />}
         disabled={disabled}
