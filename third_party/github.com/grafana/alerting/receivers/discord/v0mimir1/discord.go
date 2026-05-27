@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/go-kit/log"
@@ -47,6 +48,8 @@ const (
 	colorGreen = 0x2ECC71
 	colorGrey  = 0x95A5A6
 )
+
+var discordMentionTokenPattern = regexp.MustCompile(`(<@!?[0-9]+>|<@&[0-9]+>|@everyone|@here)`)
 
 // Notifier implements a Notifier for Discord notifications.
 type Notifier struct {
@@ -139,6 +142,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	w := webhook{
+		Content: extractDiscordMentionContent(description),
 		Embeds: []webhookEmbed{{
 			Title:       title,
 			Description: description,
@@ -162,4 +166,36 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return shouldRetry, err
 	}
 	return false, nil
+}
+
+func extractDiscordMentionContent(message string) string {
+	matchIndexes := discordMentionTokenPattern.FindAllStringIndex(message, -1)
+	if len(matchIndexes) == 0 {
+		return ""
+	}
+
+	mentions := make([]string, 0, len(matchIndexes))
+	seen := make(map[string]struct{}, len(matchIndexes))
+	for _, matchIndex := range matchIndexes {
+		if mentionIsEscaped(message, matchIndex[0]) {
+			continue
+		}
+		match := message[matchIndex[0]:matchIndex[1]]
+		if _, ok := seen[match]; ok {
+			continue
+		}
+		seen[match] = struct{}{}
+		mentions = append(mentions, match)
+	}
+
+	return strings.Join(mentions, " ")
+}
+
+func mentionIsEscaped(message string, matchStart int) bool {
+	backslashCount := 0
+	for i := matchStart - 1; i >= 0 && message[i] == '\\'; i-- {
+		backslashCount++
+	}
+
+	return backslashCount%2 == 1
 }
