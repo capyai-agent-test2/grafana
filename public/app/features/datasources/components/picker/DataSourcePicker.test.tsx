@@ -180,6 +180,24 @@ describe('DataSourcePicker', () => {
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
+    it('should not display the current DS when it does not match the available filters', () => {
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+
+      render(
+        <DataSourcePicker
+          onChange={jest.fn()}
+          current={mockDS2}
+          filter={(ds) => ds.uid !== mockDS2.uid}
+        ></DataSourcePicker>
+      );
+
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        'Select data source'
+      );
+      expect(screen.queryByAltText(`${mockDS2.meta.name} logo`)).not.toBeInTheDocument();
+    });
+
     it('should get the sorting function using the correct parameters', async () => {
       //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
       const spy = jest.spyOn(utils, 'getDataSourceCompareFn');

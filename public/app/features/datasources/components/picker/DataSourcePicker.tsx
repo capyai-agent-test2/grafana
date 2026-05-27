@@ -98,9 +98,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
   const currentDataSourceInstanceSettings = useDatasource(current, props.scopedVars);
-  const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
-  const prefixIcon =
-    filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -113,6 +110,22 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+  const currentValue = useMemo(() => {
+    if (!current && noDefault) {
+      return undefined;
+    }
+
+    if (!currentDataSourceInstanceSettings) {
+      return currentDataSourceInstanceSettings;
+    }
+
+    const matchesAvailableDataSource = dataSources.some((dataSource) => dataSource.uid === currentDataSourceInstanceSettings.uid);
+    const matchesCustomFilter = props.filter ? props.filter(currentDataSourceInstanceSettings) : true;
+
+    return matchesAvailableDataSource && matchesCustomFilter ? currentDataSourceInstanceSettings : undefined;
+  }, [current, noDefault, currentDataSourceInstanceSettings, dataSources, props.filter]);
+  const prefixIcon =
+    filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
   const favoriteDataSources = useFavoriteDatasources();
   const placement = 'bottom-start';
 
