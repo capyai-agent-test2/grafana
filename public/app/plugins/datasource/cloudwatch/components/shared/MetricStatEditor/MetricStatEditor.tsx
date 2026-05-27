@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import * as React from 'react';
 
 import { type SelectableValue } from '@grafana/data';
@@ -28,12 +28,14 @@ const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerPar
 
 // used in both Metric query editor and in Annotations Editor
 export const MetricStatEditor = ({
-  refId,
+  refId: _refId,
   metricStat,
   datasource,
   disableExpressions = false,
   onChange,
 }: React.PropsWithChildren<Props>) => {
+  const statisticId = useId();
+  const matchExactId = useId();
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
   const accountState = useAccountOptions(datasource.resources, metricStat.region);
@@ -110,7 +112,7 @@ export const MetricStatEditor = ({
 
           <EditorField label="Statistic" width={16}>
             <Select
-              inputId={`${refId}-metric-stat-editor-select-statistic`}
+              inputId={statisticId}
               allowCustomValue
               value={toOption(metricStat.statistic ?? standardStatistics[0])}
               options={appendTemplateVariables(
@@ -166,7 +168,7 @@ export const MetricStatEditor = ({
             tooltipInteractive
           >
             <EditorSwitch
-              id={`${refId}-cloudwatch-match-exact`}
+              id={matchExactId}
               value={!!metricStat.matchExact}
               onChange={(e) => {
                 onChange({

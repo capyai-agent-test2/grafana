@@ -144,6 +144,21 @@ describe('MetricStatEditor', () => {
       );
       expect(await screen.findByLabelText('Match exact - optional')).not.toBeChecked();
     });
+
+    it('should generate unique field ids when multiple editors share a refId', async () => {
+      render(
+        <>
+          <MetricStatEditor {...props} disableExpressions={false} />
+          <MetricStatEditor {...props} disableExpressions={false} />
+        </>
+      );
+
+      const statisticElements = await screen.findAllByLabelText('Statistic');
+      const matchExactElements = await screen.findAllByLabelText('Match exact - optional');
+
+      expect(new Set(statisticElements.map((element) => element.id)).size).toBe(2);
+      expect(new Set(matchExactElements.map((element) => element.id)).size).toBe(2);
+    });
   });
 
   describe('validating Query namespace / metricName', () => {
