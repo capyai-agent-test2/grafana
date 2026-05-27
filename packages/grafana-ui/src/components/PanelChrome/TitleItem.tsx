@@ -15,13 +15,14 @@ type TitleItemProps = {
   href?: string;
   target?: LinkTarget;
   title?: string;
-};
+} & React.HTMLAttributes<HTMLElement>;
 
 type TitleItemElement = HTMLAnchorElement & HTMLButtonElement;
 
 export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
   ({ className, children, href, onClick, target, title, ...rest }, ref) => {
     const styles = useStyles2(getStyles);
+    const shouldRenderButton = Boolean(onClick) || rest.role === 'button';
 
     if (href) {
       return (
@@ -37,7 +38,7 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
           {children}
         </a>
       );
-    } else if (onClick) {
+    } else if (shouldRenderButton) {
       return (
         <Button
           ref={ref}
@@ -45,6 +46,8 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
           variant="secondary"
           fill="text"
           onClick={onClick}
+          title={title}
+          {...rest}
         >
           {children}
         </Button>
