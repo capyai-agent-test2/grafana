@@ -795,6 +795,17 @@ func Test_PluginsList_EmbeddedFilter(t *testing.T) {
 				resultIDs = append(resultIDs, p.Id)
 			}
 			require.ElementsMatch(t, tc.expectedPlugins, resultIDs)
+
+			pluginsByID := make(map[string]dtos.PluginListItem, len(result))
+			for _, p := range result {
+				pluginsByID[p.Id] = p
+			}
+			if embeddedPlugin, exists := pluginsByID["embedded-ds"]; exists {
+				require.Equal(t, "parent-app", embeddedPlugin.IncludedInAppID)
+			}
+			if parentPlugin, exists := pluginsByID["parent-app"]; exists {
+				require.Empty(t, parentPlugin.IncludedInAppID)
+			}
 		})
 	}
 }
