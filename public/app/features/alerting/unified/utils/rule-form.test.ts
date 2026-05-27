@@ -1,5 +1,9 @@
+import { dateTime } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
+import * as runtime from '@grafana/runtime';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -30,6 +34,7 @@ import {
   getDefaultExpressions,
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
+  panelToRuleFormValues,
   rulerRuleToFormValues,
 } from './rule-form';
 
@@ -58,6 +63,63 @@ describe('folderFromDashboardMeta', () => {
       uid: 'abc',
       title: 'abc',
     });
+  });
+});
+
+describe('panelToRuleFormValues', () => {
+  function mockAlertingDatasource() {
+    runtime.setDataSourceSrv({
+      get: jest.fn().mockResolvedValue({
+        uid: 'prom-uid',
+        type: DataSourceType.Prometheus,
+        interval: '15s',
+        interpolateVariablesInQueries: (queries: AlertDataQuery[]) => queries,
+      }),
+      getInstanceSettings: jest.fn().mockReturnValue(
+        mockDataSource(
+          { uid: 'prom-uid', type: DataSourceType.Prometheus, name: 'Prometheus', meta: { alerting: true } as never },
+          { alerting: true }
+        )
+      ),
+    } as never);
+  }
+
+  it('uses the current panel range duration but ends at now for relative ranges in the past', async () => {
+    mockAlertingDatasource();
+
+    const panel = new PanelModel({
+      id: 7,
+      title: 'CPU',
+      datasource: { uid: 'prom-uid', type: DataSourceType.Prometheus },
+      targets: [{ refId: 'A', expr: 'up' }],
+    });
+    const dashboard = createDashboardModelFixture({
+      uid: 'dashboard-uid',
+      time: { from: 'now-5d', to: 'now-4d' },
+    });
+
+    const formValues = await panelToRuleFormValues(panel, dashboard);
+
+    expect(formValues?.queries?.[0].relativeTimeRange).toEqual({ from: 86400, to: 0 });
+  });
+
+  it('uses the selected duration but resets absolute ranges to end at now', async () => {
+    mockAlertingDatasource();
+
+    const panel = new PanelModel({
+      id: 7,
+      title: 'CPU',
+      datasource: { uid: 'prom-uid', type: DataSourceType.Prometheus },
+      targets: [{ refId: 'A', expr: 'up' }],
+    });
+    const dashboard = createDashboardModelFixture({
+      uid: 'dashboard-uid',
+      time: { from: dateTime('2024-06-01T00:00:00Z'), to: dateTime('2024-06-01T01:00:00Z') },
+    });
+
+    const formValues = await panelToRuleFormValues(panel, dashboard);
+
+    expect(formValues?.queries?.[0].relativeTimeRange).toEqual({ from: 3600, to: 0 });
   });
 });
 
