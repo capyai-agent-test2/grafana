@@ -225,6 +225,9 @@ export function InteractiveTable<TableData extends object>({
 
   const multiplePages = data.length > pageSize;
   const paginationEnabled = pageSize > 0;
+  const totalPages = paginationEnabled ? Math.max(1, Math.ceil(data.length / pageSize)) : 1;
+  const normalizedPage =
+    page == null || !Number.isFinite(page) || !paginationEnabled ? undefined : Math.max(1, Math.min(Math.floor(page), totalPages));
 
   if (paginationEnabled) {
     tableHooks.push(usePagination);
@@ -250,18 +253,18 @@ export function InteractiveTable<TableData extends object>({
             .map((c) => c.id)
             .filter(isTruthy),
         ].filter(isTruthy),
+        pageIndex: normalizedPage != null ? normalizedPage - 1 : 0,
+        pageSize: paginationEnabled ? pageSize : undefined,
         sortBy: initialSortBy,
       },
     },
     ...tableHooks
   );
 
-  const normalizedPage =
-    page == null || !Number.isFinite(page)
-      ? undefined
-      : Math.max(1, Math.min(Math.floor(page), tableInstance.pageOptions?.length || 1));
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
   const lastReportedPageRef = useRef<number | undefined>(undefined);
+  const previousNormalizedPageRef = useRef<number | undefined>(normalizedPage);
+  const syncingControlledPageRef = useRef<number | undefined>(undefined);
   const currentPage = tableInstance.state.pageIndex + 1;
 
   const { sortBy } = tableInstance.state;
@@ -278,6 +281,13 @@ export function InteractiveTable<TableData extends object>({
   }, [paginationEnabled, pageSize, tableInstance.setPageSize, tableInstance]);
 
   useEffect(() => {
+    if (normalizedPage !== previousNormalizedPageRef.current) {
+      syncingControlledPageRef.current = normalizedPage;
+      previousNormalizedPageRef.current = normalizedPage;
+    }
+  }, [normalizedPage]);
+
+  useEffect(() => {
     if (!paginationEnabled || normalizedPage == null || currentPage === normalizedPage) {
       return;
     }
@@ -286,7 +296,17 @@ export function InteractiveTable<TableData extends object>({
   }, [currentPage, normalizedPage, paginationEnabled, tableInstance]);
 
   useEffect(() => {
+    if (paginationEnabled && normalizedPage != null && currentPage === normalizedPage) {
+      syncingControlledPageRef.current = undefined;
+    }
+  }, [currentPage, normalizedPage, paginationEnabled]);
+
+  useEffect(() => {
     if (!paginationEnabled || !onPageChange) {
+      return;
+    }
+
+    if (normalizedPage != null && syncingControlledPageRef.current === normalizedPage && currentPage !== normalizedPage) {
       return;
     }
 
@@ -296,7 +316,7 @@ export function InteractiveTable<TableData extends object>({
 
     lastReportedPageRef.current = currentPage;
     onPageChange(currentPage);
-  }, [currentPage, onPageChange, paginationEnabled]);
+  }, [currentPage, normalizedPage, onPageChange, paginationEnabled]);
 
   return (
     <div className={styles.container}>

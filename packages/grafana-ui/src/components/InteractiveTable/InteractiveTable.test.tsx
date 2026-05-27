@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -226,7 +226,7 @@ describe('InteractiveTable', () => {
       expect(screen.getByText('Belgium')).toBeInTheDocument();
     });
 
-    it('renders the requested page when the page prop is set', () => {
+    it('renders the requested page when the page prop is set', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
       const data: TableData[] = [
         { id: '1', value: '1', country: 'Sweden' },
@@ -234,7 +234,7 @@ describe('InteractiveTable', () => {
       ];
       render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} />);
 
-      expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByText('Sweden')).not.toBeInTheDocument());
       expect(screen.getByText('Belgium')).toBeInTheDocument();
     });
 
@@ -283,7 +283,7 @@ describe('InteractiveTable', () => {
       expect(screen.getByText('Belgium')).toBeInTheDocument();
     });
 
-    it('calls onPageChange with the current page', () => {
+    it('calls onPageChange with the current page', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
       const data: TableData[] = [
         { id: '1', value: '1', country: 'Sweden' },
@@ -294,7 +294,22 @@ describe('InteractiveTable', () => {
         <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} onPageChange={onPageChange} />
       );
 
-      expect(onPageChange).toHaveBeenLastCalledWith(2);
+      await waitFor(() => expect(onPageChange).toHaveBeenLastCalledWith(2));
+    });
+
+    it('does not emit a stale initial page before controlled synchronization', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const onPageChange = jest.fn();
+
+      render(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} onPageChange={onPageChange} />
+      );
+
+      await waitFor(() => expect(onPageChange.mock.calls).toEqual([[2]]));
     });
 
     it('reports user pagination even when page is controlled', async () => {
@@ -308,7 +323,7 @@ describe('InteractiveTable', () => {
         <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} onPageChange={onPageChange} />
       );
 
-      expect(onPageChange).toHaveBeenLastCalledWith(2);
+      await waitFor(() => expect(onPageChange).toHaveBeenLastCalledWith(2));
 
       await user.click(screen.getByRole('button', { name: /1/i }));
 
