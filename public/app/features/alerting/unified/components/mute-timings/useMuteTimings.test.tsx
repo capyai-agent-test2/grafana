@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
+import { base64UrlEncode } from '@grafana/alerting';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import {
@@ -107,8 +108,30 @@ describe('useMuteTimings', () => {
 
       expect(result.current.data).toBeDefined();
       expect(result.current.data?.name).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
-      expect(result.current.data?.id).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
+      expect(result.current.data?.id).toBe(base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH));
       expect(result.current.data).toHaveProperty('time_intervals');
+      expect(result.current.isError).toBe(false);
+    });
+
+    it('should return single mute timing by metadata.name for editing', async () => {
+      const { result } = renderHook(
+        () =>
+          useGetMuteTiming({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            name: base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH),
+          }),
+        {
+          wrapper,
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data).toBeDefined();
+      expect(result.current.data?.name).toBe(TIME_INTERVAL_NAME_HAPPY_PATH);
+      expect(result.current.data?.id).toBe(base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH));
       expect(result.current.isError).toBe(false);
     });
   });

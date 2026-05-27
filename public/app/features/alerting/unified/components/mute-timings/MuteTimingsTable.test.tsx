@@ -97,6 +97,21 @@ describe('MuteTimingsTable', () => {
       expect(screen.queryByText(/you haven't created any time in intervals yet/i)).not.toBeInTheDocument();
     });
 
+    it('links edit actions by uid for grafana-managed intervals', async () => {
+      renderWithProvider(GRAFANA_RULES_SOURCE_NAME);
+
+      const editLink = await screen.findByRole('link', { name: /edit/i });
+
+      expect(editLink).toHaveAttribute(
+        'href',
+        expect.stringContaining(`muteName=${encodeURIComponent(base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH))}`)
+      );
+      expect(editLink).not.toHaveAttribute(
+        'href',
+        expect.stringContaining(`muteName=${encodeURIComponent(TIME_INTERVAL_NAME_HAPPY_PATH)}`)
+      );
+    });
+
     it('shows error when mute timings cannot load', async () => {
       setMuteTimingsListError();
       renderWithProvider();
