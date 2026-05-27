@@ -95,7 +95,7 @@ describe('panelToRuleFormValues', () => {
     });
     const dashboard = createDashboardModelFixture({
       uid: 'dashboard-uid',
-      time: { from: 'now-5d', to: 'now-4d' },
+      time: { from: 'now-48h', to: 'now-24h' },
     });
 
     const formValues = await panelToRuleFormValues(panel, dashboard);
