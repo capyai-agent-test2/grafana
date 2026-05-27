@@ -1,0 +1,59 @@
+version: "2"
+output:
+  formats:
+    text:
+      path: stdout
+      colors: false
+linters:
+  enable:
+    - asciicheck
+    - bodyclose
+    - dogsled
+    - errcheck
+    - errorlint
+    - exhaustive
+    - forbidigo
+    - goprintffuncname
+    - govet
+    - ineffassign
+    - loggercheck
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unused
+  settings:
+    errcheck:
+      exclude-functions:
+        - (github.com/go-kit/kit/log.Logger).Log
+        - (github.com/go-kit/log.Logger).Log
+    errorlint:
+      errorf: false
+      asserts: false
+      comparison: true
+    revive:
+      confidence: 3
+      severity: warning
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

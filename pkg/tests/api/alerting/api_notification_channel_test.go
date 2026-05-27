@@ -1809,10 +1809,11 @@ var expNonEmailNotifications = map[string][]string{
 	},
 	"discord_recv/discord_test": {
 		`{
-		  "content": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = DiscordAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_DiscordAlert/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3DUID_DiscordAlert&orgId=1\n",
+		  "content": "",
 		  "embeds": [
 			{
 			  "color": 14037554,
+			  "description": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = DiscordAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_DiscordAlert/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=__alert_rule_uid__%3DUID_DiscordAlert&orgId=1\n",
 			  "footer": {
 				"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 				"text": "Grafana v"
