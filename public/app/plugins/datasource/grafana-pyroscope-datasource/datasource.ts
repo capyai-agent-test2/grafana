@@ -107,7 +107,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): Query {
-    let labelSelector = this.templateSrv.replace(query.labelSelector ?? '', scopedVars);
+    let labelSelector = interpolateLabelSelector(this.templateSrv, query.labelSelector ?? '', scopedVars);
     if (filters && labelSelector) {
       for (const filter of filters) {
         labelSelector = addLabelToQuery(labelSelector, filter.key, filter.value, filter.operator);
@@ -162,6 +162,18 @@ export const defaultQuery: Partial<Query> = {
   ...defaultGrafanaPyroscopeDataQuery,
   queryType: defaultPyroscopeQueryType,
 };
+
+const labelMatcherRegex = /((?:"(?:\\.|[^\\"])*"|[a-zA-Z_]\w*)\s*(?:=~|!~|=|!=)\s*)"((?:\\.|[^\\"])*)"/g;
+
+function interpolateLabelSelector(templateSrv: TemplateSrv, labelSelector: string, scopedVars: ScopedVars): string {
+  const interpolatedSelector = labelSelector.replace(labelMatcherRegex, (match, prefix: string, value: string) => {
+    const format = prefix.includes('=~') || prefix.includes('!~') ? 'regex' : undefined;
+    const interpolatedValue = templateSrv.replace(value, scopedVars, format);
+    return `${prefix}"${interpolatedValue}"`;
+  });
+
+  return templateSrv.replace(interpolatedSelector, scopedVars);
+}
 
 export function normalizeQuery(query: Query, app?: CoreApp | string) {
   let normalized = { ...defaultQuery, ...query };
