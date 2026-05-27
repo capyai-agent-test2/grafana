@@ -35,7 +35,15 @@ import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
-import { formatLabels, formatSeriesValue, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+import {
+  formatLabels,
+  formatSeriesLabelValue,
+  formatSeriesValue,
+  getSeriesLabels,
+  getSeriesName,
+  getSeriesValue,
+  isEmptySeries,
+} from './util';
 
 const SqlExpr = lazy(() =>
   import('app/features/expressions/components/SqlExpressions/SqlExpr').then((module) => ({
@@ -457,7 +465,7 @@ function FrameRow({ frame, index, isAlertCondition, isRecordingRule }: FrameProp
                     <span className={styles.expression.labelKey}>{key}</span>
                     <Equals />
                     <Quote />
-                    <span className={styles.expression.labelValue}>{value}</span>
+                    <span className={styles.expression.labelValue}>{formatSeriesLabelValue(value)}</span>
                     <Quote />
                     {index < labels.length - 1 && <span>, </span>}
                   </Text>

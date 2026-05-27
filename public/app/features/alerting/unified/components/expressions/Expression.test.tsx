@@ -27,6 +27,25 @@ describe('TestResult', () => {
     expect(screen.getByText('0.5678')).toBeInTheDocument();
   });
 
+  it('should render non-string label values without crashing', () => {
+    const series: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'temp',
+            values: [0.1234],
+            labels: { label1: { nested: true } as unknown as string, label2: ['value2'] as unknown as string },
+          },
+        ],
+      }),
+    ];
+
+    expect(() => render(<ExpressionResult series={series} />)).not.toThrow();
+    expect(screen.getByTitle('{label1=[object Object], label2=value2}')).toBeInTheDocument();
+    expect(screen.getByText('[object Object]')).toBeInTheDocument();
+    expect(screen.getByText('value2')).toBeInTheDocument();
+  });
+
   it('should not paginate with less than PAGE_SIZE', () => {
     const series: DataFrame[] = [
       toDataFrame({

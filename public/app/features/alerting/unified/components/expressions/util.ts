@@ -1,6 +1,6 @@
 import { dropRight, last } from 'lodash';
 
-import { type DataFrame, type Labels, roundDecimals } from '@grafana/data';
+import { type DataFrame, roundDecimals } from '@grafana/data';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
@@ -40,14 +40,18 @@ const formatSeriesValue = (value: unknown): string => {
   return String(value);
 };
 
-const getSeriesLabels = (frame: DataFrame): Record<string, string> => {
+const formatSeriesLabelValue = (value: unknown): string => {
+  return String(value);
+};
+
+const getSeriesLabels = (frame: DataFrame): Record<string, unknown> => {
   const firstField = frame.fields[0];
   return firstField?.labels ?? {};
 };
 
-const formatLabels = (labels: Labels): string => {
+const formatLabels = (labels: Record<string, unknown>): string => {
   return Object.entries(labels)
-    .map(([key, value]) => key + '=' + value)
+    .map(([key, value]) => key + '=' + formatSeriesLabelValue(value))
     .join(', ');
 };
 
@@ -109,6 +113,7 @@ export {
   decodeGrafanaNamespace,
   encodeGrafanaNamespace,
   formatLabels,
+  formatSeriesLabelValue,
   getSeriesLabels,
   getSeriesName,
   getSeriesValue,
