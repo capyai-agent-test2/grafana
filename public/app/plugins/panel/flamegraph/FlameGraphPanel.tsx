@@ -14,6 +14,8 @@ function interaction(name: string, context: Record<string, string | number> = {}
 
 export const FlameGraphPanel = (props: PanelProps<Options>) => {
   const wrongFields = checkFields(props.data.series[0]);
+  const initialSelectedView = props.options?.defaultView ?? (props.options?.showFlameGraphOnly ? SelectedView.FlameGraph : undefined);
+
   if (wrongFields) {
     return (
       <PanelDataErrorView panelId={props.id} data={props.data} message={getMessageCheckFieldsResult(wrongFields)} />
@@ -25,8 +27,8 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
       data={props.data.series[0]}
       stickyHeader={false}
       getTheme={() => config.theme2}
-      showFlameGraphOnly={props.options?.showFlameGraphOnly ?? false}
-      initialSelectedView={props.options?.defaultView ?? (props.options?.showFlameGraphOnly ? SelectedView.FlameGraph : undefined)}
+      showFlameGraphOnly={initialSelectedView === undefined && (props.options?.showFlameGraphOnly ?? false)}
+      initialSelectedView={initialSelectedView}
       initialColorScheme={props.options?.colorScheme}
       onTableSymbolClick={() => interaction('table_item_selected')}
       onViewSelected={(view: string) => interaction('view_selected', { view })}

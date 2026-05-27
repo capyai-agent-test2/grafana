@@ -16,6 +16,7 @@ export const plugin = new PanelPlugin<Options>(FlameGraphPanel)
     return {
       ...panel.options,
       defaultView: panel.options?.showFlameGraphOnly ? SelectedView.FlameGraph : SelectedView.Both,
+      showFlameGraphOnly: false,
     };
   })
   // check that the first frame of the data has the required fields for a flamegraph
