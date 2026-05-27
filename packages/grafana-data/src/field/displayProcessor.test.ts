@@ -323,7 +323,7 @@ describe('Format value', () => {
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
     const disp = instance(value);
     expect(disp.text).toEqual('1');
-    expect(disp.suffix).toEqual(' Mil');
+    expect(disp.suffix).toEqual(' M');
   });
 
   it('with value 15000000 and unit short', () => {
@@ -331,7 +331,7 @@ describe('Format value', () => {
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
     const disp = instance(value);
     expect(disp.text).toEqual('1.50');
-    expect(disp.suffix).toEqual(' Mil');
+    expect(disp.suffix).toEqual(' M');
   });
 
   it('with value 15000000 and unit locale', () => {

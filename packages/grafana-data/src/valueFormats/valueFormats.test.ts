@@ -33,12 +33,12 @@ describe('valueFormats', () => {
     ${'short'}                         | ${undefined} | ${1000}                                     | ${'1 K'}
     ${'short'}                         | ${undefined} | ${1200}                                     | ${'1.20 K'}
     ${'short'}                         | ${undefined} | ${1250}                                     | ${'1.25 K'}
-    ${'short'}                         | ${undefined} | ${1000000}                                  | ${'1 Mil'}
-    ${'short'}                         | ${undefined} | ${1500000}                                  | ${'1.50 Mil'}
-    ${'short'}                         | ${undefined} | ${1000120}                                  | ${'1.00 Mil'}
+    ${'short'}                         | ${undefined} | ${1000000}                                  | ${'1 M'}
+    ${'short'}                         | ${undefined} | ${1500000}                                  | ${'1.50 M'}
+    ${'short'}                         | ${undefined} | ${1000120}                                  | ${'1.00 M'}
     ${'short'}                         | ${undefined} | ${98765}                                    | ${'98.8 K'}
-    ${'short'}                         | ${undefined} | ${9876543}                                  | ${'9.88 Mil'}
-    ${'short'}                         | ${undefined} | ${9876543}                                  | ${'9.88 Mil'}
+    ${'short'}                         | ${undefined} | ${9876543}                                  | ${'9.88 M'}
+    ${'short'}                         | ${undefined} | ${9876543}                                  | ${'9.88 M'}
     ${'kbytes'}                        | ${undefined} | ${10000000}                                 | ${'9.54 GiB'}
     ${'deckbytes'}                     | ${undefined} | ${10000000}                                 | ${'10 GB'}
     ${'megwatt'}                       | ${3}         | ${1000}                                     | ${'1.000 GW'}
