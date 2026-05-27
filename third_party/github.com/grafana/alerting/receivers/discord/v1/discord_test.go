@@ -181,6 +181,40 @@ func TestNotify(t *testing.T) {
 			expMsgError: nil,
 		},
 		{
+			name: "Escaped mentions stay literal and do not ping",
+			settings: Config{
+				Title:              templates.DefaultMessageTitleEmbed,
+				Message:            `\\@everyone \@here literal \\\\@everyone real @everyone <@1234567890> \<@9876543210>`,
+				AvatarURL:          "",
+				WebhookURL:         "http://localhost",
+				UseDiscordUsername: false,
+			},
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"content": "@everyone <@1234567890>",
+				"embeds": []interface{}{map[string]interface{}{
+					"color":       1.4037554e+07,
+					"description": `\\@everyone \@here literal \\\\@everyone real @everyone <@1234567890> \<@9876543210>`,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
+						"text":     "Grafana v" + appVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
 			name: "Missing field in template",
 			settings: Config{
 				Title:              templates.DefaultMessageTitleEmbed,

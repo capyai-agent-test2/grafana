@@ -239,14 +239,18 @@ func (d Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) 
 }
 
 func extractDiscordMentionContent(message string) string {
-	matches := discordMentionTokenPattern.FindAllString(message, -1)
-	if len(matches) == 0 {
+	matchIndexes := discordMentionTokenPattern.FindAllStringIndex(message, -1)
+	if len(matchIndexes) == 0 {
 		return ""
 	}
 
-	mentions := make([]string, 0, len(matches))
-	seen := make(map[string]struct{}, len(matches))
-	for _, match := range matches {
+	mentions := make([]string, 0, len(matchIndexes))
+	seen := make(map[string]struct{}, len(matchIndexes))
+	for _, matchIndex := range matchIndexes {
+		if mentionIsEscaped(message, matchIndex[0]) {
+			continue
+		}
+		match := message[matchIndex[0]:matchIndex[1]]
 		if _, ok := seen[match]; ok {
 			continue
 		}
@@ -255,6 +259,15 @@ func extractDiscordMentionContent(message string) string {
 	}
 
 	return strings.Join(mentions, " ")
+}
+
+func mentionIsEscaped(message string, matchStart int) bool {
+	backslashCount := 0
+	for i := matchStart - 1; i >= 0 && message[i] == '\\'; i-- {
+		backslashCount++
+	}
+
+	return backslashCount%2 == 1
 }
 
 func (d Notifier) SendResolved() bool {
