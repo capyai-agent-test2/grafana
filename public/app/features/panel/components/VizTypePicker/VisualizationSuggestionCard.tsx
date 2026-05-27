@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import { type CSSProperties, type HTMLAttributes, type ReactNode, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelData, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,12 +20,33 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    if (!showTooltip) {
+      return;
+    }
+
+    const hideTooltip = () => {
+      setShowTooltip(false);
+    };
+
+    window.addEventListener('scroll', hideTooltip, true);
+
+    return () => {
+      window.removeEventListener('scroll', hideTooltip, true);
+    };
+  }, [showTooltip]);
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
     className: cx(className, styles.vizBox, isSelected && styles.selected),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
+    onMouseEnter: () => setShowTooltip(true),
+    onMouseLeave: () => setShowTooltip(false),
+    onFocus: () => setShowTooltip(true),
+    onBlur: () => setShowTooltip(false),
     ...restProps,
   } satisfies HTMLAttributes<HTMLDivElement> & { 'data-testid': string };
 
@@ -82,7 +103,11 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     );
   }
 
-  return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
+  return (
+    <Tooltip content={suggestion.description ?? suggestion.name} show={showTooltip}>
+      {content}
+    </Tooltip>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
