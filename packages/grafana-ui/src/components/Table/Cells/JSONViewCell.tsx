@@ -22,6 +22,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
   if (typeof value === 'string') {
     try {
       value = JSON.parse(value);
+      displayValue = JSON.stringify(value, null, ' ');
     } catch {} // ignore errors
   } else {
     try {
