@@ -17014,12 +17014,6 @@
       "link": "Ссылка"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Нужна помощь?",
-      "welcome-to-grafana": "Добро пожаловать в Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "График XY",
     "errors": {

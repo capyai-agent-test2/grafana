@@ -16729,12 +16729,6 @@
       "link": "链接"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "需要帮助吗？",
-      "welcome-to-grafana": "欢迎使用 Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "XY 图表",
     "errors": {

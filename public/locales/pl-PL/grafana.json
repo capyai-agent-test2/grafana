@@ -17014,12 +17014,6 @@
       "link": "Link"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Potrzebujesz pomocy?",
-      "welcome-to-grafana": "Witamy w Grafanie"
-    }
-  },
   "xychart": {
     "category-xychart": "Wykres XY",
     "errors": {

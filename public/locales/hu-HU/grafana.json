@@ -16824,12 +16824,6 @@
       "link": "Hivatkozás"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Segítségre van szüksége?",
-      "welcome-to-grafana": "Üdvözli a Grafana"
-    }
-  },
   "xychart": {
     "category-xychart": "XY diagram",
     "errors": {

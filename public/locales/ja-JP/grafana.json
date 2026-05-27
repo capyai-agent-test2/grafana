@@ -16729,12 +16729,6 @@
       "link": "リンク"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "サポートが必要ですか？",
-      "welcome-to-grafana": "Grafanaへようこそ"
-    }
-  },
   "xychart": {
     "category-xychart": "XYチャート",
     "errors": {

@@ -17014,12 +17014,6 @@
       "link": "Odkaz"
     }
   },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Potřebujete pomoc?",
-      "welcome-to-grafana": "Vítejte v Grafaně"
-    }
-  },
   "xychart": {
     "category-xychart": "Graf XY",
     "errors": {

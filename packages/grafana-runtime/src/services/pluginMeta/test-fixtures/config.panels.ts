@@ -1218,41 +1218,6 @@ export const panels: PanelPluginMetas = structuredClone({
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,
   },
-  welcome: {
-    id: 'welcome',
-    name: 'Welcome',
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: '',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/welcome/img/icn-dashlist-panel.svg',
-        large: 'app/plugins/panel/welcome/img/icn-dashlist-panel.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: true,
-    sort: 100,
-    skipDataQuery: true,
-    baseUrl: 'app/plugins/panel/welcome',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/welcome',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
   xychart: {
     id: 'xychart',
     name: 'XY Chart',
