@@ -16,7 +16,13 @@ import { useTheme2 } from '@grafana/ui';
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 
-import { type LogRecord, extractCommonLabels, historyDataFrameToLogRecords, omitLabels } from './common';
+import {
+  type LogRecord,
+  extractCommonLabels,
+  historyDataFrameToLogRecords,
+  isEvictedAlertInstanceState,
+  omitLabels,
+} from './common';
 
 export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: string) {
   const theme = useTheme2();
@@ -66,20 +72,24 @@ export function logRecordsToDataFrame(
   theme: GrafanaTheme2
 ): DataFrame {
   const parsedInstanceLabels = Object.entries<string>(JSON.parse(instanceLabels));
+  const lastState = records.at(-1)?.line.current;
+  const shouldExtendToNow = lastState ? !isEvictedAlertInstanceState(lastState) : false;
 
-  // There is an artificial element at the end meaning Date.now()
-  // It exist to draw the state change from when it happened to the current time
+  // There is usually an artificial element at the end meaning Date.now()
+  // It exists to draw the current state to the present, except for evicted instances.
   const timeField: DataFrameField = {
     name: 'time',
     type: FieldType.time,
-    values: [...records.map((record) => record.timestamp), Date.now()],
+    values: shouldExtendToNow ? [...records.map((record) => record.timestamp), Date.now()] : records.map((record) => record.timestamp),
     config: { displayName: 'Time', custom: { fillOpacity: 100 } },
   };
 
   const timeIndex = timeField.values.map((_, index) => index);
   timeIndex.sort(fieldIndexComparer(timeField));
 
-  const stateValues = [...records.map((record) => record.line.current), records.at(-1)?.line.current];
+  const stateValues = shouldExtendToNow
+    ? [...records.map((record) => record.line.current), lastState]
+    : records.map((record) => record.line.current);
 
   const frame: DataFrame = {
     fields: [
