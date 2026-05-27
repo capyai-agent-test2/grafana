@@ -89,7 +89,6 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
   const resolvedHistoryTitle = historyTitle ?? t('time-picker.absolute.recent-title', 'Recently used absolute ranges');
-  const renderHistoryAction = getRenderHistoryAction(onSaveHistoryOption);
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
     const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
