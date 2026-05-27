@@ -1,6 +1,6 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
@@ -164,8 +164,10 @@ export function getIntervalsFromQueryString(query: string | undefined): string[]
     return initialIntervalVariableModelState.query?.split(',') ?? [];
   }
 
+  const interpolatedQuery = getTemplateSrv().replace(query);
+
   // separate intervals by quotes either single or double
-  const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
+  const matchIntervals = interpolatedQuery.match(/(["'])(.*?)\1|\w+/g);
 
   // If no intervals are found in query, return the initial state of the interval reducer.
   if (!matchIntervals) {

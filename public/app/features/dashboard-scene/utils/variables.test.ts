@@ -10,7 +10,7 @@ import {
   type TextBoxVariableModel,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setTemplateSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -27,6 +27,7 @@ import {
 import { defaultDashboard, defaultTimePickerConfig, type VariableType } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { NEW_LINK } from '../settings/links/utils';
@@ -362,6 +363,52 @@ describe('when creating variables objects', () => {
       type: 'interval',
       value: '1m',
     });
+  });
+
+  it('should interpolate interval variable queries during migration', () => {
+    setTemplateSrv(
+      initTemplateSrv('N4XLmH5Vz', [
+        {
+          type: 'custom',
+          name: 'intervals',
+          rootStateKey: 'N4XLmH5Vz',
+          current: { value: '5m,1h', text: '5m,1h' },
+          query: '5m,1h',
+          options: [],
+        },
+      ])
+    );
+
+    const variable: IntervalVariableModel = {
+      name: 'intervalVar',
+      label: 'Interval Label',
+      type: 'interval',
+      rootStateKey: 'N4XLmH5Vz',
+      auto: false,
+      refresh: 2,
+      auto_count: 30,
+      auto_min: '10s',
+      current: {
+        selected: true,
+        text: '5m',
+        value: '5m',
+      },
+      options: [],
+      query: '$intervals',
+      id: 'intervalVar',
+      global: false,
+      index: 4,
+      hide: 0,
+      skipUrlSync: false,
+      state: LoadingState.Done,
+      error: null,
+      description: null,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { intervals } = migrated.state as { intervals: string[] };
+
+    expect(intervals).toEqual(['5m', '1h']);
   });
 
   it('should migrate textbox variable', () => {

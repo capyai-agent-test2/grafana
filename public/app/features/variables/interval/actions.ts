@@ -13,9 +13,15 @@ import { createIntervalOptions } from './reducer';
 
 export const updateIntervalVariableOptions =
   (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
-  async (dispatch) => {
+  async (dispatch, getState) => {
     const { rootStateKey } = identifier;
-    await dispatch(toKeyedAction(rootStateKey, createIntervalOptions(toVariablePayload(identifier))));
+    const variable = getVariable(identifier, getState());
+    if (variable.type !== 'interval') {
+      return;
+    }
+
+    const query = getTemplateSrv().replace(variable.query);
+    await dispatch(toKeyedAction(rootStateKey, createIntervalOptions(toVariablePayload(identifier, query))));
     await dispatch(updateAutoValue(identifier));
     await dispatch(validateVariableSelectionState(identifier));
   };
