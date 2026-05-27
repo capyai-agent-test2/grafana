@@ -90,6 +90,14 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       height: MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT, // Ensure the accessory doesn't make the option too tall
     }),
 
+    optionImage: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      minWidth: theme.spacing(2),
+      objectFit: 'contain',
+      flexShrink: 0,
+    }),
+
     optionBody: css({
       label: 'combobox-option-body',
       display: 'flex',

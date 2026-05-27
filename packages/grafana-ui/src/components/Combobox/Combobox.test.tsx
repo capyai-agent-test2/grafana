@@ -38,6 +38,12 @@ const iconOptions: Array<ComboboxOption<string>> = [
   { label: 'Option 3', value: '3', description: 'This is option 3', icon: 'user' },
   { label: 'Option 4', value: '4', icon: 'add-user' },
 ];
+const imageOptions: Array<ComboboxOption<string>> = [
+  { label: 'Option 1', value: '1', imgUrl: 'https://example.com/one.png' },
+  { label: 'Option 2', value: '2', imgUrl: 'https://example.com/two.png' },
+  { label: 'Option 3', value: '3', description: 'This is option 3', imgUrl: 'https://example.com/three.png' },
+  { label: 'Option 4', value: '4', imgUrl: 'https://example.com/four.png', icon: 'add-user' },
+];
 
 describe('Combobox', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -119,6 +125,22 @@ describe('Combobox', () => {
     await userEvent.click(screen.getByText('Option 2'));
     expect(screen.getByDisplayValue('Option 2')).toBeInTheDocument();
     expect(onChangeHandler).toHaveBeenCalledWith(iconOptions[1]);
+  });
+
+  it('renders image for selected option', () => {
+    render(<Combobox options={imageOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
+    expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+    expect(screen.getByAltText('Option 1')).toHaveAttribute('src', 'https://example.com/one.png');
+  });
+
+  it('renders image in options and prefers it over the icon', async () => {
+    render(<Combobox options={imageOptions} value={'1'} onChange={onChangeHandler} placeholder="Select an option" />);
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.getByAltText('Option 4')).toBeVisible();
+    expect(screen.queryByTestId('icon-add-user')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByText('Option 4'));
+    expect(screen.getByDisplayValue('Option 4')).toBeInTheDocument();
+    expect(onChangeHandler).toHaveBeenCalledWith(imageOptions[3]);
   });
 
   it('selects value by clicking that needs scrolling', async () => {
