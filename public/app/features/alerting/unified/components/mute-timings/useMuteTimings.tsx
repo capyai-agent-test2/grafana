@@ -95,7 +95,19 @@ const useGrafanaAlertmanagerIntervals = () =>
     },
   });
 
-const shouldUseLegacyNameFallback = (name: string) => /[^A-Za-z0-9_-]/.test(name);
+const isEncodedResourceName = (name: string): boolean => {
+  try {
+    const padding = '='.repeat((4 - (name.length % 4)) % 4);
+    const base64 = name.replace(/-/g, '+').replace(/_/g, '/') + padding;
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(
+      Uint8Array.from(atob(base64), (char) => char.codePointAt(0) ?? 0)
+    );
+
+    return base64UrlEncode(decoded) === name;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Imported time intervals (provenance: converted_prometheus) are marked with canUse: false
@@ -222,7 +234,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
         try {
           await getGrafanaTimeInterval({ name: nameToFind }, true).unwrap();
         } catch {
-          if (shouldUseLegacyNameFallback(nameToFind)) {
+          if (!isEncodedResourceName(nameToFind)) {
             const legacyResourceName = base64UrlEncode(nameToFind);
             void getGrafanaTimeInterval({ name: legacyResourceName }, true);
           }

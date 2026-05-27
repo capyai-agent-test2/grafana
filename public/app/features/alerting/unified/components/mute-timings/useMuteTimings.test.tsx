@@ -172,5 +172,40 @@ describe('useMuteTimings', () => {
       expect(result.current.data?.id).toBe(encodedLegacyName);
       expect(result.current.isError).toBe(false);
     });
+
+    it('should not retry encoded resource names as legacy display names', async () => {
+      const encodedResourceName = base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH);
+      const doublyEncodedName = base64UrlEncode(encodedResourceName);
+
+      server.use(
+        http.get(`*/timeintervals/${encodedResourceName}`, () => HttpResponse.json({}, { status: 404 })),
+        http.get(`*/timeintervals/${doublyEncodedName}`, () =>
+          HttpResponse.json({
+            apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+            kind: 'TimeInterval',
+            metadata: { name: doublyEncodedName },
+            spec: { name: encodedResourceName, time_intervals: [] },
+          })
+        )
+      );
+
+      const { result } = renderHook(
+        () =>
+          useGetMuteTiming({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            name: encodedResourceName,
+          }),
+        {
+          wrapper,
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.isError).toBe(true);
+    });
   });
 });
