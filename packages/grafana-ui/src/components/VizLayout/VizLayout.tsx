@@ -7,7 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type LegendPlacement } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
@@ -34,7 +34,6 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-vizlayout--docs
  */
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
-  const theme = useTheme2();
   const styles = useStyles2(getVizStyles);
   const containerStyle: CSSProperties = {
     display: 'flex',
@@ -54,10 +53,6 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   }
 
   let { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
-
-  if (document.body.clientWidth < theme.breakpoints.values.lg) {
-    placement = 'bottom';
-  }
 
   let size: VizSize | null = null;
 
