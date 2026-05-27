@@ -256,10 +256,10 @@ export function InteractiveTable<TableData extends object>({
     ...tableHooks
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
-  const lastRequestedPageRef = useRef<number | undefined>(undefined);
-  const lastReportedPageRef = useRef<number | undefined>(undefined);
   const normalizedPage = page == null ? undefined : Math.max(1, Math.min(Math.floor(page), tableInstance.pageOptions.length || 1));
+  const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
+  const lastReportedPageRef = useRef<number | undefined>(undefined);
+  const currentPage = tableInstance.state.pageIndex + 1;
 
   const { sortBy } = tableInstance.state;
   useEffect(() => {
@@ -275,21 +275,15 @@ export function InteractiveTable<TableData extends object>({
   }, [paginationEnabled, pageSize, tableInstance.setPageSize, tableInstance]);
 
   useEffect(() => {
-    if (!paginationEnabled || normalizedPage == null || lastRequestedPageRef.current === normalizedPage) {
+    if (!paginationEnabled || normalizedPage == null || currentPage === normalizedPage) {
       return;
     }
 
-    lastRequestedPageRef.current = normalizedPage;
     tableInstance.gotoPage(normalizedPage - 1);
-  }, [normalizedPage, paginationEnabled, tableInstance]);
+  }, [currentPage, normalizedPage, paginationEnabled, tableInstance]);
 
   useEffect(() => {
     if (!paginationEnabled || !onPageChange) {
-      return;
-    }
-
-    const currentPage = tableInstance.state.pageIndex + 1;
-    if (normalizedPage != null && currentPage !== normalizedPage) {
       return;
     }
 
@@ -299,7 +293,7 @@ export function InteractiveTable<TableData extends object>({
 
     lastReportedPageRef.current = currentPage;
     onPageChange(currentPage);
-  }, [normalizedPage, onPageChange, paginationEnabled, tableInstance.state.pageIndex]);
+  }, [currentPage, onPageChange, paginationEnabled]);
 
   return (
     <div className={styles.container}>

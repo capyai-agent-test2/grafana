@@ -271,6 +271,24 @@ describe('InteractiveTable', () => {
       expect(onPageChange).toHaveBeenLastCalledWith(2);
     });
 
+    it('reports user pagination even when page is controlled', async () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      const onPageChange = jest.fn();
+      const { user } = setup(
+        <InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} page={2} onPageChange={onPageChange} />
+      );
+
+      expect(onPageChange).toHaveBeenLastCalledWith(2);
+
+      await user.click(screen.getByRole('button', { name: /1/i }));
+
+      expect(onPageChange).toHaveBeenCalledWith(1);
+    });
+
     it('calls onPageChange after user pagination', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }, { id: 'country' }];
       const data: TableData[] = [
