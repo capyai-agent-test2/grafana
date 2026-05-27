@@ -18,6 +18,7 @@ import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
+import { IconButton } from '../../IconButton/IconButton';
 import { TextLink } from '../../Link/TextLink';
 import { type WeekStart } from '../WeekStartPicker';
 
@@ -37,6 +38,8 @@ interface Props {
   fiscalYearStartMonth?: number;
   quickOptions?: TimeOption[];
   history?: TimeRange[];
+  historyOptions?: TimeOption[];
+  historyTitle?: string;
   showHistory?: boolean;
   className?: string;
   hideTimeZone?: boolean;
@@ -45,14 +48,17 @@ interface Props {
   hideQuickRanges?: boolean;
   widthOverride?: number;
   weekStart?: WeekStart;
+  onSaveHistoryOption?: (timeOption: TimeOption) => void;
 }
 
 export interface PropsWithScreenSize extends Props {
   isFullscreen: boolean;
 }
 
-interface FormProps extends Omit<Props, 'history'> {
-  historyOptions?: TimeOption[];
+type FormProps = Props;
+
+interface SavedHistoryOption extends TimeOption {
+  saved?: boolean;
 }
 
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
@@ -66,19 +72,24 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
     value,
     onChange,
     history,
+    historyOptions,
+    historyTitle,
     showHistory,
     className,
     hideTimeZone,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
+    onSaveHistoryOption,
   } = props;
-  const isHistoryEmpty = !history?.length;
+  const mappedHistoryOptions = historyOptions ?? mapToHistoryOptions(history, timeZone);
+  const isHistoryEmpty = mappedHistoryOptions.length === 0;
   const isContainerTall =
     (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
   const styles = useStyles2(getStyles, isReversed, hideQuickRanges, isContainerTall, isFullscreen);
-  const historyOptions = mapToHistoryOptions(history, timeZone);
   const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
+  const resolvedHistoryTitle = historyTitle ?? t('time-picker.absolute.recent-title', 'Recently used absolute ranges');
+  const renderHistoryAction = getRenderHistoryAction(onSaveHistoryOption);
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
     const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -116,7 +127,14 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
               />
             </div>
             <div className={styles.scrollContent}>
-              {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+              {!isFullscreen && (
+                <NarrowScreenForm
+                  {...props}
+                  historyOptions={mappedHistoryOptions}
+                  historyTitle={resolvedHistoryTitle}
+                  onSaveHistoryOption={onSaveHistoryOption}
+                />
+              )}
               {!hideQuickRanges && (
                 <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
               )}
@@ -125,7 +143,12 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
         )}
         {isFullscreen && (
           <div className={styles.leftSide}>
-            <FullScreenForm {...props} historyOptions={historyOptions} />
+            <FullScreenForm
+              {...props}
+              historyOptions={mappedHistoryOptions}
+              historyTitle={resolvedHistoryTitle}
+              onSaveHistoryOption={onSaveHistoryOption}
+            />
           </div>
         )}
       </div>
@@ -149,11 +172,23 @@ export const TimePickerContent = (props: Props) => {
 };
 
 const NarrowScreenForm = (props: FormProps) => {
-  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError, weekStart } = props;
+  const {
+    value,
+    hideQuickRanges,
+    onChange,
+    timeZone,
+    historyOptions = [],
+    historyTitle,
+    showHistory,
+    onError,
+    weekStart,
+    onSaveHistoryOption,
+  } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
   const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
   const collapsed = hideQuickRanges ? false : collapsedFlag;
+  const renderHistoryAction = getRenderHistoryAction(onSaveHistoryOption);
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
@@ -194,10 +229,11 @@ const NarrowScreenForm = (props: FormProps) => {
           </div>
           {showHistory && (
             <TimeRangeList
-              title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
+              title={historyTitle ?? t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
               options={historyOptions}
               onChange={onChangeTimeOption}
               placeholderEmpty={null}
+              renderOptionAction={renderHistoryAction}
             />
           )}
         </div>
@@ -207,8 +243,20 @@ const NarrowScreenForm = (props: FormProps) => {
 };
 
 const FullScreenForm = (props: FormProps) => {
-  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
+  const {
+    onChange,
+    value,
+    timeZone,
+    fiscalYearStartMonth,
+    isReversed,
+    historyOptions,
+    historyTitle,
+    onError,
+    weekStart,
+    onSaveHistoryOption,
+  } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
+  const renderHistoryAction = getRenderHistoryAction(onSaveHistoryOption);
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
@@ -235,10 +283,11 @@ const FullScreenForm = (props: FormProps) => {
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
-            title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
+            title={historyTitle ?? t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
             options={historyOptions || []}
             onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
+            renderOptionAction={renderHistoryAction}
           />
         </div>
       )}
@@ -276,6 +325,35 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   }
 
   return ranges.map((range) => mapRangeToTimeOption(range, timeZone));
+}
+
+function getRenderHistoryAction(onSaveHistoryOption?: (timeOption: TimeOption) => void) {
+  if (!onSaveHistoryOption) {
+    return undefined;
+  }
+
+  return function renderHistoryAction(option: TimeOption) {
+    const isSaved = isSavedHistoryOption(option) && option.saved;
+    const label = isSaved
+      ? t('time-picker.absolute.edit-saved-range', 'Edit saved time range label')
+      : t('time-picker.absolute.save-range', 'Save and label time range');
+
+    return (
+      <IconButton
+        name="bookmark"
+        size="sm"
+        aria-label={label}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSaveHistoryOption(option);
+        }}
+      />
+    );
+  };
+}
+
+function isSavedHistoryOption(option: TimeOption): option is SavedHistoryOption {
+  return 'saved' in option;
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';

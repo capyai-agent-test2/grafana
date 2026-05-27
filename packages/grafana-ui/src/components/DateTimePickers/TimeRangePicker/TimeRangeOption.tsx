@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, useId } from 'react';
+import { memo, useId, type ReactNode } from 'react';
 
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 
@@ -46,6 +46,11 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    action: css({
+      display: 'flex',
+      alignItems: 'center',
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 };
 
@@ -57,9 +62,10 @@ interface Props {
    *  Input identifier. This should be the same for all options in a group.
    */
   name: string;
+  action?: ReactNode;
 }
 
-export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
+export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name, action }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
   const id = useId();
@@ -79,6 +85,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
       <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
         {value.display}
       </label>
+      {action && <div className={styles.action}>{action}</div>}
     </li>
   );
 });

@@ -30,6 +30,21 @@ describe('TimePickerWithHistory', () => {
 
   afterEach(() => {
     window.localStorage.clear();
+    jest.restoreAllMocks();
+    systemDateFormats.update({
+      fullDate: 'YYYY-MM-DD HH:mm:ss',
+      fullDateMS: 'YYYY-MM-DD HH:mm:ss.SSS',
+      interval: {
+        millisecond: 'HH:mm:ss.SSS',
+        second: 'HH:mm:ss',
+        minute: 'HH:mm',
+        hour: 'MM/DD HH:mm',
+        day: 'MM/DD',
+        month: 'YYYY-MM',
+        year: 'YYYY',
+      },
+      useBrowserLocale: false,
+    });
   });
 
   it('Should load with no history', async () => {
@@ -168,6 +183,73 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/03-12-2022 00:00:00 to 03-12-2022 23:59:59/i)).toBeInTheDocument();
+  });
+
+  it('saves and labels a time range from history', async () => {
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(NEW_LOCAL_STORAGE));
+    jest.spyOn(window, 'prompt').mockReturnValue('Incident review window');
+
+    const timeRange = getDefaultTimeRange();
+    render(<TimePickerWithHistory value={timeRange} {...props} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    await userEvent.click(screen.getAllByLabelText(/Save and label time range/i)[0]);
+
+    const newLsValue = JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]');
+    expect(newLsValue[0]).toEqual({
+      from: '2022-12-03T00:00:00.000Z',
+      to: '2022-12-03T23:59:59.000Z',
+      label: 'Incident review window',
+      saved: true,
+    });
+
+    expect(screen.getByText(/Saved and recent absolute ranges/i)).toBeInTheDocument();
+    expect(screen.getByText(/Incident review window/i)).toBeInTheDocument();
+  });
+
+  it('keeps saved labeled ranges when recent history exceeds the limit', async () => {
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify([
+        {
+          from: '2022-12-01T00:00:00.000Z',
+          to: '2022-12-01T23:59:59.000Z',
+          label: 'Release day',
+          saved: true,
+        },
+      ])
+    );
+
+    const inputRanges: Array<[string, string]> = [
+      ['2022-12-10 00:00:00', '2022-12-10 23:59:59'],
+      ['2022-12-11 00:00:00', '2022-12-11 23:59:59'],
+      ['2022-12-12 00:00:00', '2022-12-12 23:59:59'],
+      ['2022-12-13 00:00:00', '2022-12-13 23:59:59'],
+      ['2022-12-14 00:00:00', '2022-12-14 23:59:59'],
+    ];
+
+    const timeRange = getDefaultTimeRange();
+    render(<TimePickerWithHistory value={timeRange} {...props} />);
+
+    for (const [inputFrom, inputTo] of inputRanges) {
+      await userEvent.click(screen.getByLabelText(/Time range selected/));
+      await clearAndType(getFromField(), inputFrom);
+      await clearAndType(getToField(), inputTo);
+      await userEvent.click(getApplyButton());
+    }
+
+    const newLsValue = JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]');
+    expect(newLsValue).toEqual([
+      {
+        from: '2022-12-01T00:00:00.000Z',
+        to: '2022-12-01T23:59:59.000Z',
+        label: 'Release day',
+        saved: true,
+      },
+      { from: '2022-12-14T00:00:00.000Z', to: '2022-12-14T23:59:59.000Z' },
+      { from: '2022-12-13T00:00:00.000Z', to: '2022-12-13T23:59:59.000Z' },
+      { from: '2022-12-12T00:00:00.000Z', to: '2022-12-12T23:59:59.000Z' },
+      { from: '2022-12-11T00:00:00.000Z', to: '2022-12-11T23:59:59.000Z' },
+    ]);
   });
 });
 
