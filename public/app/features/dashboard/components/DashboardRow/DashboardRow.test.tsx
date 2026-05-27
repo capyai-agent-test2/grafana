@@ -21,6 +21,7 @@ describe('DashboardRow', () => {
   let panel: PanelModel, dashboardMock: any;
 
   beforeEach(() => {
+    window.location.hash = '';
     dashboardMock = {
       toggleRow: jest.fn(),
       on: jest.fn(),
@@ -63,6 +64,21 @@ describe('DashboardRow', () => {
     render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     expect(screen.getByRole('button', { name: 'Delete row' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Row options' })).toBeInTheDocument();
+  });
+
+  it('should expose a stable anchor id based on the title', () => {
+    panel = new PanelModel({ collapsed: false, title: 'Traces Instance Stats' });
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    expect(screen.getByRole('button', { name: /Traces Instance Stats/ }).closest('#traces-instance-stats')).toBeTruthy();
+  });
+
+  it('should expand a collapsed row when the hash targets it', () => {
+    window.location.hash = '#traces-instance-stats';
+    panel = new PanelModel({ id: 17, collapsed: true, title: 'Traces Instance Stats' });
+
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+
+    expect(dashboardMock.toggleRow).toHaveBeenCalledTimes(1);
   });
 
   it('should not show row drag handle when cannot edit', () => {

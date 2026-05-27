@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,6 +11,7 @@ import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { doesRowAnchorMatchLocation, getRowAnchorId } from '../../../dashboard/utils/rowAnchor';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
@@ -65,6 +66,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
 
   const isDraggable = !isClone && isEditing;
+  const rowAnchorId = getRowAnchorId(title, key);
+
+  useEffect(() => {
+    if (isCollapsed && doesRowAnchorMatchLocation(title, key)) {
+      model.onCollapseToggle();
+    }
+  }, [isCollapsed, key, model, title]);
 
   if (isHidden) {
     return null;
@@ -102,6 +110,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
         <div
+          id={rowAnchorId}
           ref={(ref) => {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;

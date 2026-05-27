@@ -83,7 +83,8 @@ const getUrlForPartial = (location: Location, searchParamsToUpdate: UrlQueryMap)
       searchParams[key] = searchParamsToUpdate[key];
     }
   }
-  return assureBaseUrl(urlUtil.renderUrl(location.pathname, searchParams));
+  const url = assureBaseUrl(urlUtil.renderUrl(location.pathname, searchParams));
+  return location.hash ? `${url}${location.hash}` : url;
 };
 
 /**
