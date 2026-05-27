@@ -68,53 +68,55 @@ const FlameGraphTopTableContainer = memo(
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%' }}>
-          {({ width, height }) => {
-            if (width < 3 || height < 3) {
-              return null;
-            }
+        <div className={styles.topTableInner}>
+          <div className={styles.topTableSizer}>
+            <AutoSizer style={{ width: '100%' }}>
+              {({ width, height }) => {
+                if (width < 3 || height < 3) {
+                  return null;
+                }
 
-            const frame = buildTableDataFrame(
-              data,
-              filteredTable,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              search,
-              sandwichItem
-            );
-            return (
-              <>
-                <Table
-                  initialSortBy={sort}
-                  onSortByChange={(s) => {
-                    if (s && s.length) {
-                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                    }
-                    setSort(s);
-                  }}
-                  data={frame}
-                  width={width}
-                  height={otherEntry ? Math.max(height - otherSummaryHeight, 48) : height}
-                />
-                {otherEntry && (
-                  <OtherSummary
-                    label={otherEntry.label}
-                    row={otherEntry.data}
-                    data={data}
-                    search={search}
-                    sandwichItem={sandwichItem}
-                    onSearch={onSearch}
-                    onSandwich={onSandwich}
+                const frame = buildTableDataFrame(
+                  data,
+                  filteredTable,
+                  width,
+                  onSymbolClick,
+                  onSearch,
+                  onSandwich,
+                  theme,
+                  colorScheme,
+                  search,
+                  sandwichItem
+                );
+                return (
+                  <Table
+                    initialSortBy={sort}
+                    onSortByChange={(s) => {
+                      if (s && s.length) {
+                        onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                      }
+                      setSort(s);
+                    }}
+                    data={frame}
+                    width={width}
+                    height={height}
                   />
-                )}
-              </>
-            );
-          }}
-        </AutoSizer>
+                );
+              }}
+            </AutoSizer>
+          </div>
+          {otherEntry && (
+            <OtherSummary
+              label={otherEntry.label}
+              row={otherEntry.data}
+              data={data}
+              search={search}
+              sandwichItem={sandwichItem}
+              onSearch={onSearch}
+              onSandwich={onSandwich}
+            />
+          )}
+        </div>
       </div>
     );
   }
@@ -339,8 +341,6 @@ function createNumberField(name: string, unit?: string): Field {
 }
 
 const actionColumnWidth = 61;
-const otherSummaryHeight = 92;
-
 function createActionField(
   onSandwich: (str?: string) => void,
   onSearch: (str: string) => void,
@@ -485,6 +485,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
+    }),
+    topTableInner: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      minHeight: 0,
+    }),
+    topTableSizer: css({
+      flex: '1 1 auto',
+      minHeight: 0,
     }),
     otherSummary: css({
       marginTop: theme.spacing(1),
