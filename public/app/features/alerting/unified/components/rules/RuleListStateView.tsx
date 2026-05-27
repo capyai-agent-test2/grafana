@@ -127,6 +127,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
             health={rule.promRule?.health}
             error={rule.promRule?.lastError}
             labels={rule.promRule?.labels}
+            grafanaRuleUid={prometheusRuleType.grafana.alertingRule(promRule) ? promRule.uid : undefined}
             isProvisioned={isProvisioned}
             instancesCount={instancesCount}
             namespace={rule.namespace.name}

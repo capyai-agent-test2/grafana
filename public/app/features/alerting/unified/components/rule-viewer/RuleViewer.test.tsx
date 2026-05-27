@@ -432,6 +432,19 @@ describe('RuleViewer', () => {
       await screen.findByText('Test alert');
       expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
     });
+
+    it('should show "Suppressed" in the title when the rule has silenced instances', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Suppressed, silencedBy: ['silence-id'], inhibitedBy: [] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      expect(await screen.findByText('Suppressed')).toBeInTheDocument();
+    });
   });
 
   describe('Data source managed alert rule', () => {
