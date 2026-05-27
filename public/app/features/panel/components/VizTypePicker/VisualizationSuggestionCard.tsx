@@ -45,8 +45,8 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     style: outerStyles,
     onMouseEnter: () => setShowTooltip(true),
     onMouseLeave: () => setShowTooltip(false),
-    onFocus: () => setShowTooltip(true),
-    onBlur: () => setShowTooltip(false),
+    onFocusCapture: () => setShowTooltip(true),
+    onBlurCapture: () => setShowTooltip(false),
     ...restProps,
   } satisfies HTMLAttributes<HTMLDivElement> & { 'data-testid': string };
 

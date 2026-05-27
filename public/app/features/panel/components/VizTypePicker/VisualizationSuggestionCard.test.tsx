@@ -114,6 +114,19 @@ describe('VisualizationSuggestionCard', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
+  it('shows the tooltip on keyboard focus', async () => {
+    render(
+      <VisualizationSuggestionCard
+        data={mockData}
+        suggestion={{ ...baseSuggestion, description: 'Suggested for time series data' }}
+        width={100}
+      />
+    );
+
+    fireEvent.focus(screen.getByLabelText('Time series'));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Suggested for time series data');
+  });
+
   describe('maxSeries series-slicing', () => {
     let originalPanelSeriesLimit: number;
     beforeEach(() => {
