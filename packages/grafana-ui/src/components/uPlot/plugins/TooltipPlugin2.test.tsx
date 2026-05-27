@@ -285,6 +285,18 @@ describe('TooltipPlugin2', () => {
   });
 
   describe('setCursor', () => {
+    it('constrains tooltip height to the viewport and allows vertical scrolling', async () => {
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp();
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      expect(getTooltipWrapper()).toHaveStyle({ maxHeight: 'calc(100vh - 32px)', overflowY: 'auto' });
+    });
+
     it('sets transform', async () => {
       const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback, getHook } = setUp();
       const setCursorHook = getHook('setCursor') as (u: uPlot) => void;
