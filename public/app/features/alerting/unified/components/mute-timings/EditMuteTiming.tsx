@@ -18,6 +18,7 @@ const EditTimingRoute = () => {
   const [queryParams] = useURLSearchParams();
   const { selectedAlertmanager } = useAlertmanager();
   const name = queryParams.get('muteName')!;
+  const identifierType = queryParams.get('muteNameType') === 'uid' ? 'uid' : 'name';
 
   const {
     isLoading,
@@ -26,6 +27,7 @@ const EditTimingRoute = () => {
   } = useGetMuteTiming({
     alertmanager: selectedAlertmanager!,
     name,
+    identifierType,
   });
 
   if (!name) {

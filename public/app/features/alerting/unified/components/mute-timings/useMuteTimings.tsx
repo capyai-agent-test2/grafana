@@ -16,7 +16,6 @@ import {
   isK8sEntityProvisioned,
   isProvisionedResource,
   shouldUseK8sApi,
-  stringifyFieldSelector,
 } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
@@ -30,6 +29,7 @@ import {
 
 const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 const {
+  useLazyGetTimeIntervalQuery,
   useLazyListTimeIntervalQuery,
   useCreateTimeIntervalMutation,
   useReplaceTimeIntervalMutation,
@@ -50,7 +50,7 @@ const parseK8sTimeInterval: (item: TimeInterval) => MuteTiming = (item) => {
   const { metadata, spec } = item;
   return {
     ...spec,
-    id: spec.name,
+    id: metadata.name ?? spec.name,
     metadata,
     provisioned: isK8sEntityProvisioned(item),
   };
@@ -178,21 +178,21 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
  * Get an individual time interval, either from the k8s API,
  * or by finding it in the alertmanager config
  */
-export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertmanagerArgs & { name: string }) => {
+export const useGetMuteTiming = ({
+  alertmanager,
+  name: nameToFind,
+  identifierType = 'name',
+}: BaseAlertmanagerArgs & { name: string; identifierType?: 'name' | 'uid' }) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [getGrafanaTimeInterval, k8sResponse] = useLazyListTimeIntervalQuery({
+  const [getGrafanaTimeInterval, k8sResponse] = useLazyGetTimeIntervalQuery({
     selectFromResult: ({ data, ...rest }) => {
       if (!data) {
         return { data, ...rest };
       }
 
-      if (data.items.length === 0) {
-        return { ...rest, data: undefined, isError: true };
-      }
-
       return {
-        data: parseK8sTimeInterval(data.items[0]),
+        data: parseK8sTimeInterval(data),
         ...rest,
       };
     },
@@ -220,14 +220,22 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
 
   useEffect(() => {
     if (useK8sApi) {
-      getGrafanaTimeInterval(
-        { fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(nameToFind)]]) },
-        true
-      );
+      const fetchTimeInterval = async () => {
+        try {
+          await getGrafanaTimeInterval({ name: nameToFind }, true).unwrap();
+        } catch {
+          if (identifierType !== 'uid') {
+            const legacyResourceName = base64UrlEncode(nameToFind);
+            void getGrafanaTimeInterval({ name: legacyResourceName }, true);
+          }
+        }
+      };
+
+      void fetchTimeInterval();
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
     }
-  }, [alertmanager, getAlertmanagerTimeInterval, getGrafanaTimeInterval, nameToFind, useK8sApi]);
+  }, [alertmanager, getAlertmanagerTimeInterval, getGrafanaTimeInterval, identifierType, nameToFind, useK8sApi]);
 
   return useK8sApi ? k8sResponse : amConfigApiResponse;
 };

@@ -31,6 +31,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   const isGrafanaDataSource = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
   const viewOrEditHref = makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
     muteName: muteTiming.id,
+    muteNameType: 'uid',
   });
 
   const viewOrEditButton = (
