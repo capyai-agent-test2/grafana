@@ -9,6 +9,7 @@ import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_FOR_SPLIT_VIEW, MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
+import { SelectedView } from './types';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -85,6 +86,22 @@ describe('FlameGraphContainer', () => {
 
     await userEvent.click(screen.getByText(/Both/));
     expect(screen.getByTestId('flameGraph')).toBeDefined();
+    expect(screen.getByTestId('topTable')).toBeDefined();
+  });
+
+  it('should respect the initial selected view', async () => {
+    const flameGraphData = createDataFrame(data);
+    flameGraphData.meta = {
+      custom: {
+        ProfileTypeID: 'cpu:foo:bar',
+      },
+    };
+
+    const getTheme = () => createTheme({ colors: { mode: 'dark' } });
+
+    render(<FlameGraphContainer data={flameGraphData} getTheme={getTheme} initialSelectedView={SelectedView.TopTable} />);
+
+    expect(screen.queryByTestId('flameGraph')).toBeNull();
     expect(screen.getByTestId('topTable')).toBeDefined();
   });
 
