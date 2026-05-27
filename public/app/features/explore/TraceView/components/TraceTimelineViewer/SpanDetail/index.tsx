@@ -352,6 +352,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const mainContainerRef = useRef<HTMLDivElement>(null);
 
   const styles = useStyles2(getStyles);
+  const spanIdLabel = t('explore.span-detail.span-id-label', 'SpanID:');
   if (span.kind) {
     overviewItems.push({
       key: KIND,
@@ -555,7 +556,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           >
             <Icon name={'link'} className={cx(alignIcon, styles.LinkIcon)}></Icon>
           </a>
-          <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
+          <span className={styles.debugLabel} data-label={spanIdLabel} /> {spanID}
         </small>
       </div>
     </div>

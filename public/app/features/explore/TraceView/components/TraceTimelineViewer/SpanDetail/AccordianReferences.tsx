@@ -128,6 +128,8 @@ type ReferenceItemProps = {
 export function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
+  const traceIdLabel = t('explore.accordian-references.trace-id-label', 'TraceID:');
+  const spanIdLabel = t('explore.accordian-references.span-id-label', 'SpanID:');
 
   return (
     <div className={styles.AccordianReferencesContent}>
@@ -150,10 +152,10 @@ export function References(props: ReferenceItemProps) {
                   </span>
                 )}
                 <small className={styles.debugInfo}>
-                  <span className={styles.debugLabel} data-label="TraceID:">
+                  <span className={styles.debugLabel} data-label={traceIdLabel}>
                     {reference.traceID}
                   </span>
-                  <span className={styles.debugLabel} data-label="SpanID:">
+                  <span className={styles.debugLabel} data-label={spanIdLabel}>
                     {reference.spanID}
                   </span>
                 </small>
