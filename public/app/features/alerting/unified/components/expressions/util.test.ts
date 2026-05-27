@@ -8,6 +8,7 @@ import {
   decodeGrafanaNamespace,
   encodeGrafanaNamespace,
   formatLabels,
+  formatSeriesLabelValue,
   formatSeriesValue,
   getSeriesLabels,
   getSeriesName,
@@ -40,6 +41,10 @@ describe('formatLabels', () => {
 
   it('should work with multiple labels', () => {
     expect(formatLabels({ foo: 'bar', baz: 'qux' })).toBe('foo=bar, baz=qux');
+  });
+
+  it('should stringify non-string label values', () => {
+    expect(formatLabels({ foo: { nested: true }, bar: ['baz'] })).toBe('foo=[object Object], bar=baz');
   });
 });
 
@@ -260,5 +265,12 @@ describe('formatSeriesValue', () => {
 
   it('should handle zero correctly', () => {
     expect(formatSeriesValue(0)).toBe('0');
+  });
+});
+
+describe('formatSeriesLabelValue', () => {
+  it('should stringify unknown values', () => {
+    expect(formatSeriesLabelValue({})).toBe('[object Object]');
+    expect(formatSeriesLabelValue(['a', 'b'])).toBe('a,b');
   });
 });
