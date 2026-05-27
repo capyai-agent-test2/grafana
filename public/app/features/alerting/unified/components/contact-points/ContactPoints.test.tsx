@@ -199,7 +199,7 @@ describe('contact points', () => {
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'export new contact point' })).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/new/modify-export?alertmanager=grafana'
+        '/alerting/notifications/receivers/modify-export/new?alertmanager=grafana'
       );
       expect(screen.getByRole('button', { name: 'export all' })).toBeInTheDocument();
 

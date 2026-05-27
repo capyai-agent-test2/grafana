@@ -1969,25 +1969,42 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 }
 
 func TestProvisioningApiContactPointExportFromPayload(t *testing.T) {
-	rc := createTestRequestCtx()
-	rc.Req.Header.Add("Accept", "application/json")
-	sut := &ProvisioningSrv{}
+	t.Run("exports a valid payload", func(t *testing.T) {
+		rc := createTestRequestCtx()
+		rc.Req.Header.Add("Accept", "application/json")
+		sut := &ProvisioningSrv{}
 
-	response := sut.RoutePostContactPointsExport(&rc, definitions.ContactPoints{
-		{
-			UID:  "new-contact-point",
-			Name: "new contact point",
-			Type: "email",
-			Settings: simplejson.NewFromAny(map[string]string{
-				"addresses": "test@grafana.com",
-			}),
-			DisableResolveMessage: true,
-		},
+		response := sut.RoutePostContactPointsExport(&rc, definitions.ContactPoints{
+			{
+				UID:  "new-contact-point",
+				Name: "new contact point",
+				Type: "email",
+				Settings: simplejson.NewFromAny(map[string]string{
+					"addresses": "test@grafana.com",
+				}),
+				DisableResolveMessage: true,
+			},
+		})
+		response.WriteTo(&rc)
+
+		require.Equal(t, 200, response.Status())
+		require.JSONEq(t, `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"new contact point","receivers":[{"uid":"new-contact-point","type":"email","settings":{"addresses":"test@grafana.com"},"disableResolveMessage":true}]}]}`, string(response.Body()))
 	})
-	response.WriteTo(&rc)
 
-	require.Equal(t, 200, response.Status())
-	require.JSONEq(t, `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"new contact point","receivers":[{"uid":"new-contact-point","type":"email","settings":{"addresses":"test@grafana.com"},"disableResolveMessage":true}]}]}`, string(response.Body()))
+	t.Run("rejects missing settings", func(t *testing.T) {
+		rc := createTestRequestCtx()
+		sut := &ProvisioningSrv{}
+
+		response := sut.RoutePostContactPointsExport(&rc, definitions.ContactPoints{
+			{
+				Name: "new contact point",
+				Type: "email",
+			},
+		})
+
+		require.Equal(t, 400, response.Status())
+		require.Contains(t, string(response.Body()), "contact point settings must be specified")
+	})
 }
 
 func TestApiContactPointExportSnapshot(t *testing.T) {

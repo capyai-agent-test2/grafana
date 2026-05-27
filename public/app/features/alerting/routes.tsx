@@ -195,7 +195,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/notifications/receivers/new/modify-export',
+      path: '/alerting/notifications/receivers/modify-export/new',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,

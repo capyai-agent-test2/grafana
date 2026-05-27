@@ -122,7 +122,7 @@ const ContactPointsTab = () => {
               icon="download-alt"
               variant="secondary"
               aria-label={t('alerting.contact-points-tab.aria-label-export-new', 'export new contact point')}
-              href={makeAMLink('/alerting/notifications/receivers/new/modify-export', selectedAlertmanager)}
+              href={makeAMLink('/alerting/notifications/receivers/modify-export/new', selectedAlertmanager)}
               disabled={!exportContactPointsAllowed}
             >
               <Trans i18nKey="alerting.contact-points-tab.export-new">New contact point for export</Trans>

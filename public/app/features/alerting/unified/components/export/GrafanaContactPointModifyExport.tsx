@@ -27,12 +27,50 @@ interface EmbeddedContactPoint {
   disableResolveMessage?: boolean;
 }
 
+export const REDACTED_CONTACT_POINT_SECRET = '[REDACTED]';
+
+function setNestedValue(target: Record<string, unknown>, keyPath: string, value: unknown) {
+  const keys = keyPath.split('.');
+  let current: Record<string, unknown> = target;
+
+  keys.forEach((key, index) => {
+    const isLeaf = index === keys.length - 1;
+
+    if (isLeaf) {
+      current[key] = value;
+      return;
+    }
+
+    const next = current[key];
+    if (typeof next !== 'object' || next === null || Array.isArray(next)) {
+      current[key] = {};
+    }
+
+    current = current[key] as Record<string, unknown>;
+  });
+}
+
+export function getExportableSettings(
+  settings: Record<string, unknown>,
+  secureFields?: Record<string, boolean>
+): Record<string, unknown> {
+  const exportableSettings = structuredClone(settings);
+
+  Object.entries(secureFields ?? {}).forEach(([key, configured]) => {
+    if (configured) {
+      setNestedValue(exportableSettings, key, REDACTED_CONTACT_POINT_SECRET);
+    }
+  });
+
+  return exportableSettings;
+}
+
 function toEmbeddedContactPoints(contactPoint: GrafanaManagedContactPoint): EmbeddedContactPoint[] {
   return (contactPoint.grafana_managed_receiver_configs ?? []).map((receiver) => ({
     uid: receiver.uid,
     name: contactPoint.name,
     type: receiver.type,
-    settings: receiver.settings,
+    settings: getExportableSettings(receiver.settings, receiver.secureFields),
     disableResolveMessage: receiver.disableResolveMessage,
   }));
 }
