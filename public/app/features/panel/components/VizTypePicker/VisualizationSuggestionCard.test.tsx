@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import {
   FieldType,
@@ -95,6 +95,36 @@ describe('VisualizationSuggestionCard', () => {
     );
 
     expect(withoutProp.innerHTML).toBe(withFalseProp.innerHTML);
+  });
+
+  it('hides the tooltip when the suggestions list scrolls', async () => {
+    render(
+      <VisualizationSuggestionCard
+        data={mockData}
+        suggestion={{ ...baseSuggestion, description: 'Suggested for time series data' }}
+        width={100}
+      />
+    );
+
+    const button = screen.getByLabelText('Time series');
+    fireEvent.mouseEnter(button);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Suggested for time series data');
+
+    fireEvent.scroll(window);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('shows the tooltip on keyboard focus', async () => {
+    render(
+      <VisualizationSuggestionCard
+        data={mockData}
+        suggestion={{ ...baseSuggestion, description: 'Suggested for time series data' }}
+        width={100}
+      />
+    );
+
+    fireEvent.focus(screen.getByLabelText('Time series'));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Suggested for time series data');
   });
 
   describe('maxSeries series-slicing', () => {

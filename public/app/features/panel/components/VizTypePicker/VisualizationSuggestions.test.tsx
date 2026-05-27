@@ -27,11 +27,15 @@ jest.mock('./VisualizationSuggestionCard', () => ({
   VisualizationSuggestionCard: ({
     suggestion,
     onClick,
+    isSelected: _isSelected,
+    width: _width,
+    data: _data,
+    ...props
   }: {
     suggestion: { name: string; hash: string };
     onClick: () => void;
   }) => (
-    <div data-testid={`suggestion-card-${suggestion.hash}`} onClick={onClick}>
+    <div data-testid={`suggestion-card-${suggestion.hash}`} onClick={onClick} {...props}>
       {suggestion.name}
     </div>
   ),
