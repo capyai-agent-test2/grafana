@@ -343,6 +343,9 @@ function getRenderHistoryAction(onSaveHistoryOption?: (timeOption: TimeOption) =
         name="bookmark"
         size="sm"
         aria-label={label}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+        }}
         onClick={(event) => {
           event.stopPropagation();
           onSaveHistoryOption(option);
