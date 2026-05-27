@@ -42,6 +42,7 @@ describe('ShareSnapshot', () => {
     const link = screen.getByRole('link', { name: 'View all snapshots' });
 
     expect(link).toHaveAttribute('href', expect.stringContaining('/dashboard/snapshots'));
+    expect(link).not.toHaveAttribute('target', '_blank');
 
     await user.click(link);
 
