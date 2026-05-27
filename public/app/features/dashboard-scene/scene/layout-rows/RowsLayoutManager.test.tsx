@@ -1,10 +1,13 @@
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { UrlSyncManager, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { TabItem } from '../layout-tabs/TabItem';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -42,6 +45,52 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
 }
 
 describe('RowsLayoutManager', () => {
+  beforeEach(() => {
+    locationService.replace({ search: '' });
+  });
+
+  describe('URL sync', () => {
+    it('should sync collapsed row state from the url for top-level rows', () => {
+      const row = new RowItem({ title: 'HTTP', collapse: false });
+      const scene = new DashboardScene({ body: new RowsLayoutManager({ rows: [row] }) });
+
+      locationService.replace({ search: 'panel-http-collapsed=true' });
+      const urlSyncManager = new UrlSyncManager();
+      urlSyncManager.initSync(scene);
+
+      expect(row.getCollapsedState()).toBe(true);
+      expect(row.getUrlState()).toEqual({ 'panel-http-collapsed': 'true' });
+    });
+
+    it('should reset row collapse state when the url param is removed', () => {
+      const row = new RowItem({ title: 'HTTP', collapse: true });
+
+      row.updateFromUrl({ 'panel-http-collapsed': 'false' });
+      expect(row.getCollapsedState()).toBe(false);
+
+      row.updateFromUrl({ 'panel-http-collapsed': null });
+      expect(row.getCollapsedState()).toBe(true);
+      expect(row.getUrlState()).toEqual({ 'panel-http-collapsed': undefined });
+    });
+
+    it('should prefix nested row keys with ancestor row and tab slugs', () => {
+      const nestedRow = new RowItem({ title: 'HTTP', collapse: true });
+
+      new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            title: 'Overview',
+            layout: new TabsLayoutManager({
+              tabs: [new TabItem({ title: 'Frontend', layout: new RowsLayoutManager({ rows: [nestedRow] }) })],
+            }),
+          }),
+        ],
+      });
+
+      expect(nestedRow.getUrlKey()).toBe('overview-frontend-panel-http-collapsed');
+    });
+  });
+
   describe('addNewRow', () => {
     beforeEach(() => {
       lastUndo = undefined;

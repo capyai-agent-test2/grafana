@@ -10,6 +10,8 @@ import {
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
+  SceneObjectUrlSyncConfig,
+  type SceneObjectUrlValues,
   VariableDependencyConfig,
   type SceneGridItemLike,
   SceneGridLayout,
@@ -33,6 +35,7 @@ import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { TabItem } from '../layout-tabs/TabItem';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { type BulkActionElement } from '../types/BulkActionElement';
@@ -75,7 +78,9 @@ export class RowItem
   public readonly isDashboardDropTarget = true;
   public readonly dashboardLayoutItemType = 'row';
   public containerRef: React.MutableRefObject<HTMLDivElement | null> = React.createRef<HTMLDivElement>();
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: () => [this.getUrlKey()] });
   private _filtersSet?: SectionFiltersSet;
+  private readonly _initialCollapseState: boolean;
 
   public constructor(state?: Partial<RowItemState>) {
     super({
@@ -84,6 +89,7 @@ export class RowItem
       layout: state?.layout ?? AutoGridLayoutManager.createEmpty(),
       conditionalRendering: state?.conditionalRendering ?? ConditionalRenderingGroup.createEmpty(),
     });
+    this._initialCollapseState = state?.collapse ?? false;
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -142,6 +148,49 @@ export class RowItem
 
   public getSlug(): string {
     return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Row'));
+  }
+
+  public getUrlKey(): string {
+    let parent = this.parent;
+    let key = `panel-${this.getSlug()}-collapsed`;
+
+    while (parent) {
+      if (parent instanceof TabItem) {
+        key = `${parent.getSlug()}-${key}`;
+      }
+
+      if (parent instanceof RowItem) {
+        key = `${parent.getSlug()}-${key}`;
+      }
+
+      parent = parent.parent;
+    }
+
+    return key;
+  }
+
+  public getUrlState() {
+    const collapse = this.state.collapse ?? false;
+    return { [this.getUrlKey()]: collapse === this._initialCollapseState ? undefined : String(collapse) };
+  }
+
+  public updateFromUrl(values: SceneObjectUrlValues) {
+    const key = this.getUrlKey();
+    const urlValue = values[key];
+
+    if (urlValue === null) {
+      this.setCollapsedState(this._initialCollapseState);
+      return;
+    }
+
+    if (urlValue === 'true' || urlValue === '') {
+      this.setCollapsedState(true);
+      return;
+    }
+
+    if (urlValue === 'false') {
+      this.setCollapsedState(false);
+    }
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
