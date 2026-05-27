@@ -10,6 +10,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 export interface Props {
   children: React.ReactNode;
   isActive?: boolean;
+  isExpanded?: boolean;
+  level: number;
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
@@ -18,7 +20,18 @@ export interface Props {
   itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({
+  children,
+  isActive,
+  isExpanded,
+  level,
+  onClick,
+  target,
+  url,
+  onPin,
+  isPinned,
+  itemName,
+}: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
@@ -39,6 +52,9 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
     <div className={cx(styles.wrapper, isActive && styles.wrapperActive)}>
       <LinkComponent
         data-testid={selectors.components.NavMenu.item}
+        role="treeitem"
+        aria-expanded={isExpanded}
+        aria-level={level}
         className={styles.container}
         href={url}
         target={target}

@@ -78,13 +78,15 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
   }
 
   return (
-    <li ref={item} className={styles.listItem}>
+    <li ref={item} className={styles.listItem} role="none">
       <div className={styles.menuItem}>
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
+            isExpanded={showExpandButton ? Boolean(sectionExpanded) : undefined}
+            level={level + 1}
             onClick={() => {
               link.onClick?.();
               onClick?.();
@@ -132,7 +134,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
         </div>
       </div>
       {showExpandButton && sectionExpanded && (
-        <ul className={styles.children}>
+        <ul className={styles.children} role="group">
           {linkHasChildren(link) ? (
             link.children
               .filter((childLink) => !childLink.isCreateAction)
