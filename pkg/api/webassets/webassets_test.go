@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -38,25 +39,9 @@ func TestReadWebassets(t *testing.T) {
 		"integrity": "sha256-77rfikk+dYkH82TOmcmleVoDOHZQdhzVX9gDLcgPbtQ= sha384-IOTlZ1IvTVq5ekKLoaE3/SoZ12K1eExOAnSw9BzkgQ3+RcyQpb1S5hO2w//IIkRB sha512-0Ct3uJBFQIkyxYTvMxseA1cphe2RivXQ2MCbiV0hEm5NzWPiY9sq2P4ay5dXz5v35c++4W47KaknoWlc83bQJQ=="
 		}
 	],
-	"dark": "public/build/grafana.dark.722d809dba5a31f57d49.css",
-	"light": "public/build/grafana.light.2fbd901d840329c18394.css",
-	"swagger": [
-		{
-		"filePath": "public/build/runtime.js",
-		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
-		},
-		{
-		"filePath": "public/build/swagger.js",
-		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
-		}
-	],
-	"swaggerCssFiles": [
-		{
-		"filePath": "public/build/grafana.swagger.2733d417270d5dd49373.css",
-		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
-		}
-	]
-	}`, string(dto))
+		"dark": "public/build/grafana.dark.722d809dba5a31f57d49.css",
+		"light": "public/build/grafana.light.2fbd901d840329c18394.css"
+		}`, string(dto))
 
 	assets.SetContentDeliveryURL("https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 
@@ -86,31 +71,42 @@ func TestReadWebassets(t *testing.T) {
 		"integrity": "sha256-77rfikk+dYkH82TOmcmleVoDOHZQdhzVX9gDLcgPbtQ= sha384-IOTlZ1IvTVq5ekKLoaE3/SoZ12K1eExOAnSw9BzkgQ3+RcyQpb1S5hO2w//IIkRB sha512-0Ct3uJBFQIkyxYTvMxseA1cphe2RivXQ2MCbiV0hEm5NzWPiY9sq2P4ay5dXz5v35c++4W47KaknoWlc83bQJQ=="
 		}
 	],
-	"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.722d809dba5a31f57d49.css",
-	"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css",
-	"swagger": [
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/runtime.js",
-		"integrity": "sha256-tM4AGASn3Cb8139+wp3w6rlo3ELFAuUW7K4Pifx226o= sha384-DfxxsYWb0+RxiXOr+wtCSzAAYGecffq/iHyn6CN9tHmaORv1sS+rsrnlnJo2jPQD sha512-qSxdqrx0mJLY1mdkbKrkCyqOoIEgFqzCoY9+uIuFRIVDPFbb2nJy0NtaKMQvDJnAzIrJFwzwW1e250T4WqQNiQ=="
+		"dark": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.dark.722d809dba5a31f57d49.css",
+		"light": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.light.2fbd901d840329c18394.css"
+		}`, string(dto))
+}
+
+func TestReadSwaggerWebassets(t *testing.T) {
+	assets, err := readWebAssets(strings.NewReader(`{
+		"app.123.js": {
+			"src": "public/build-swagger/app.123.js",
+			"integrity": "sha384-js"
 		},
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/swagger.js",
-		"integrity": "sha256-wLlip7zRYODW/TPcI5JZPRdmWirc1KD+UcNF+8V9RBk= sha384-6VGD+LgCpjMZN/ORSjWcrWa9diUzQO3OfEhP0D2ZluSwP4IT+0kH7KEeD9NVbojd sha512-vZOCFzBZBhd34yGv8z7P4Gw4WLVR9HjpuK0y6Kcw+pCBk5Dv9qHBg3ZVs6s0tOnUmiMWwgL4Ne8f+zgiuJVPqg=="
+		"app.123.css": {
+			"src": "public/build-swagger/app.123.css",
+			"integrity": "sha384-css"
+		},
+		"entrypoints": {
+			"app": {
+				"assets": {
+					"js": ["public/build-swagger/app.123.js"],
+					"css": ["public/build-swagger/app.123.css"]
+				}
+			}
 		}
-	],
-	"swaggerCssFiles": [
-		{
-		"filePath": "https://grafana-assets.grafana.net/grafana/10.3.0-64123/public/build/grafana.swagger.2733d417270d5dd49373.css",
-		"integrity": "sha256-GNcHNgIAT7S+J4X7seFjlvNPC1bRhM15d0cQBm3VFoQ= sha384-ywztCBf8uF0tTFjC1mLth33RI2WuFURN3dRy7Bv2PheGzbWJpwlgo9+mtT2Zm7mO sha512-e4c+VedZGqcwLqwfdqRWonggRPO0gjJ7Z0YbXK5z4bFTsUIc+x8ycIJG+eQaf8cuHlsakG4hkWNkRwLBazcFAg=="
-		}
-	]
-	}`, string(dto))
+	}`))
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"public/build-swagger/app.123.js"}, []string{assets.JSFiles[0].FilePath})
+	require.Equal(t, []string{"public/build-swagger/app.123.css"}, []string{assets.CSSFiles[0].FilePath})
+	require.Empty(t, assets.Dark)
+	require.Empty(t, assets.Light)
 }
 
 func TestReadWebassetsFromCDN(t *testing.T) {
 	t.Skip()
 
-	assets, err := readWebAssetsFromCDN(context.Background(), "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
+	assets, err := readWebAssetsFromCDN(context.Background(), "build", "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
