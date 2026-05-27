@@ -73,14 +73,6 @@ export function VisualizationCardGrid({
       <div
         key={itemKey}
         className={styles.cardContainer}
-        tabIndex={0}
-        role="button"
-        onKeyDown={(ev) => {
-          if (ev.key === 'Enter' || ev.key === ' ') {
-            ev.preventDefault();
-            onItemClick(item, itemIndex);
-          }
-        }}
         ref={isFirst ? firstCardRef : undefined}
       >
         <VisualizationSuggestionCard
@@ -88,6 +80,14 @@ export function VisualizationCardGrid({
           suggestion={item}
           width={width}
           isSelected={getItemKey(item) === selectedKey}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              onItemClick(item, itemIndex);
+            }
+          }}
           onClick={() => onItemClick(item, itemIndex)}
         />
         {badge}
