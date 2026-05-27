@@ -21,6 +21,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -263,4 +264,42 @@ func TestDiscord_NotifyPreservesMentionsInContent(t *testing.T) {
 	require.False(t, ok)
 
 	require.JSONEq(t, `{"embeds":[{"title":"Test Title","description":"\\@everyone real @everyone <@1234567890> \\<@9876543210>","color":10038562}],"content":"@everyone <@1234567890>"}`, resp)
+}
+
+func TestDiscord_NotifyIgnoresPartialAndTruncatedMentionTokens(t *testing.T) {
+	var resp string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		resp = string(body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	u, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+
+	longPrefix := strings.Repeat("a", maxDescriptionLenRunes-1) + " "
+	cfg := &Config{
+		WebhookURL: &receivers.SecretURL{URL: u},
+		HTTPConfig: &httpcfg.HTTPClientConfig{},
+		Title:      "Test Title",
+		Message:    longPrefix + "@everyone prefix@here @herex tail @here",
+	}
+
+	notifier, err := New(cfg, test.CreateTmpl(t), log.NewNopLogger())
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	ctx = notify.WithGroupKey(ctx, "1")
+	ok, err := notifier.Notify(ctx, &types.Alert{Alert: model.Alert{
+		Labels:   model.LabelSet{"lbl1": "val1"},
+		StartsAt: time.Now(),
+		EndsAt:   time.Now().Add(time.Hour),
+	}})
+	require.NoError(t, err)
+	require.False(t, ok)
+
+	require.Contains(t, resp, `"content":"@everyone @here"`)
+	require.NotContains(t, resp, `"content":"@everyone @here @herex"`)
 }

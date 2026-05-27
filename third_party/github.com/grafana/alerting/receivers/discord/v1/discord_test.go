@@ -215,6 +215,40 @@ func TestNotify(t *testing.T) {
 			expMsgError: nil,
 		},
 		{
+			name: "Partial @here and @everyone strings do not ping",
+			settings: Config{
+				Title:              templates.DefaultMessageTitleEmbed,
+				Message:            `prefix@here @herex @everyonesuffix real @here and @everyone`,
+				AvatarURL:          "",
+				WebhookURL:         "http://localhost",
+				UseDiscordUsername: false,
+			},
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"content": "@here @everyone",
+				"embeds": []interface{}{map[string]interface{}{
+					"color":       1.4037554e+07,
+					"description": `prefix@here @herex @everyonesuffix real @here and @everyone`,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
+						"text":     "Grafana v" + appVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+				"username": "Grafana",
+			},
+			expMsgError: nil,
+		},
+		{
 			name: "Missing field in template",
 			settings: Config{
 				Title:              templates.DefaultMessageTitleEmbed,
@@ -841,11 +875,12 @@ Silence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=aler
 
 			if c.expBytes != nil {
 				buf.Reset()
-				part, err = reader.NextPart()
-				require.NoError(tt, err)
+					part, err = reader.NextPart()
+					require.NoError(tt, err)
+					require.Equal(tt, "files[0]", part.FormName())
 
-				_, err = buf.ReadFrom(part)
-				require.NoError(tt, err)
+					_, err = buf.ReadFrom(part)
+					require.NoError(tt, err)
 				require.Equal(tt, c.expBytes, buf.Bytes())
 			}
 		})

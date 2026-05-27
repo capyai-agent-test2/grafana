@@ -22,6 +22,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -114,7 +116,8 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if truncated {
 		level.Warn(n.logger).Log("msg", "Truncated title", "key", key, "max_runes", maxTitleLenRunes)
 	}
-	description, truncated := notify.TruncateInRunes(tmpl(n.conf.Message), maxDescriptionLenRunes)
+	message := tmpl(n.conf.Message)
+	description, truncated := notify.TruncateInRunes(message, maxDescriptionLenRunes)
 	if err != nil {
 		return false, err
 	}
@@ -142,7 +145,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	w := webhook{
-		Content: extractDiscordMentionContent(description),
+		Content: extractDiscordMentionContent(message),
 		Embeds: []webhookEmbed{{
 			Title:       title,
 			Description: description,
@@ -181,6 +184,9 @@ func extractDiscordMentionContent(message string) string {
 			continue
 		}
 		match := message[matchIndex[0]:matchIndex[1]]
+		if !mentionHasTokenBoundaries(message, match, matchIndex[0], matchIndex[1]) {
+			continue
+		}
 		if _, ok := seen[match]; ok {
 			continue
 		}
@@ -198,4 +204,26 @@ func mentionIsEscaped(message string, matchStart int) bool {
 	}
 
 	return backslashCount%2 == 1
+}
+
+func mentionHasTokenBoundaries(message, match string, matchStart, matchEnd int) bool {
+	if match != "@everyone" && match != "@here" {
+		return true
+	}
+
+	if matchStart > 0 {
+		prev, _ := utf8.DecodeLastRuneInString(message[:matchStart])
+		if unicode.IsLetter(prev) || unicode.IsDigit(prev) || prev == '_' {
+			return false
+		}
+	}
+
+	if matchEnd < len(message) {
+		next, _ := utf8.DecodeRuneInString(message[matchEnd:])
+		if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' {
+			return false
+		}
+	}
+
+	return true
 }

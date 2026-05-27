@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+	"unicode"
 
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/alertmanager/notify"
@@ -251,6 +252,9 @@ func extractDiscordMentionContent(message string) string {
 			continue
 		}
 		match := message[matchIndex[0]:matchIndex[1]]
+		if !mentionHasTokenBoundaries(message, match, matchIndex[0], matchIndex[1]) {
+			continue
+		}
 		if _, ok := seen[match]; ok {
 			continue
 		}
@@ -268,6 +272,28 @@ func mentionIsEscaped(message string, matchStart int) bool {
 	}
 
 	return backslashCount%2 == 1
+}
+
+func mentionHasTokenBoundaries(message, match string, matchStart, matchEnd int) bool {
+	if match != "@everyone" && match != "@here" {
+		return true
+	}
+
+	if matchStart > 0 {
+		prev, _ := utf8.DecodeLastRuneInString(message[:matchStart])
+		if unicode.IsLetter(prev) || unicode.IsDigit(prev) || prev == '_' {
+			return false
+		}
+	}
+
+	if matchEnd < len(message) {
+		next, _ := utf8.DecodeRuneInString(message[matchEnd:])
+		if unicode.IsLetter(next) || unicode.IsDigit(next) || next == '_' {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (d Notifier) SendResolved() bool {
@@ -365,9 +391,9 @@ func (d Notifier) buildRequest(url string, body []byte, attachments []*discordAt
 		return nil, err
 	}
 
-	for _, a := range attachments {
+	for i, a := range attachments {
 		if len(a.content) > 0 { // We have an image to upload.
-			part, err := w.CreateFormFile("", a.name)
+			part, err := w.CreateFormFile(fmt.Sprintf("files[%d]", i), a.name)
 			if err != nil {
 				return nil, err
 			}
