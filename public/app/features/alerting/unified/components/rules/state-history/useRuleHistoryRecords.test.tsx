@@ -38,21 +38,22 @@ describe('logRecordsToDataFrame', () => {
 
   it('should not extend evicted instances to the current time', () => {
     const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(2000000);
+    try {
+      const instanceLabels = { foo: 'bar', severity: 'critical', cluster: 'dev-us' };
+      const records: LogRecord[] = [
+        {
+          timestamp: 1000000,
+          line: { previous: 'Alerting', current: 'Normal (MissingSeries)', labels: instanceLabels },
+        },
+      ];
 
-    const instanceLabels = { foo: 'bar', severity: 'critical', cluster: 'dev-us' };
-    const records: LogRecord[] = [
-      {
-        timestamp: 1000000,
-        line: { previous: 'Alerting', current: 'Normal (MissingSeries)', labels: instanceLabels },
-      },
-    ];
+      const frame = logRecordsToDataFrame(JSON.stringify(instanceLabels), records, [], theme);
 
-    const frame = logRecordsToDataFrame(JSON.stringify(instanceLabels), records, [], theme);
-
-    expect(frame.fields[0].values).toEqual([1000000]);
-    expect(frame.fields[1].values).toEqual(['Normal (MissingSeries)']);
-
-    dateNowSpy.mockRestore();
+      expect(frame.fields[0].values).toEqual([1000000]);
+      expect(frame.fields[1].values).toEqual(['Normal (MissingSeries)']);
+    } finally {
+      dateNowSpy.mockRestore();
+    }
   });
 
   it('should configure value to color mappings', () => {
