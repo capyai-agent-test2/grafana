@@ -13,12 +13,20 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
   autofitpanels: true,
   orgId: true,
+  from: true,
+  to: true,
+  timezone: true,
+  refresh: true,
   hideLogo: true,
   '_dash.hideTimePicker': true,
   '_dash.hideVariables': true,
   '_dash.hideLinks': true,
   '_dash.hidePlaylistNav': true,
 };
+
+function shouldPreserveQueryParam(key: string): boolean {
+  return queryParamsToPreserve[key] || key.startsWith('var-');
+}
 
 export interface PlaylistSrvState {
   isPlaying: boolean;
@@ -43,7 +51,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private navigateToDashboard(replaceHistoryEntry = false) {
     const url = this.urls[this.index];
     const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
+    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => shouldPreserveQueryParam(key));
     const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
 
     this.index++;
