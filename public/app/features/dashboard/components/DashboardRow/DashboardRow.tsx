@@ -49,14 +49,28 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
     const panels = !!this.props.panel.panels?.length
       ? this.props.panel.panels
       : this.props.dashboard.getRowPanels(indexOf(this.props.dashboard.panels, this.props.panel));
-    const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
-    if (isAnyPanelUsingDashboardDS) {
+    const rowPanelIds = new Set(panels.map((p) => p.id));
+    const hasDashboardDSReferencingOutsideRow = panels.some((panel) => {
+      if (panel.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+        return false;
+      }
+
+      if (!panel.targets?.length) {
+        return true;
+      }
+
+      return panel.targets.some((target) => {
+        const dashboardTarget: { panelId?: unknown } = target;
+        return typeof dashboardTarget.panelId !== 'number' || !rowPanelIds.has(dashboardTarget.panelId);
+      });
+    });
+    if (hasDashboardDSReferencingOutsideRow) {
       return (
         <div>
           <p>
             <Trans i18nKey="dashboard.untheme-dashboard-row.dashboard-datasource">
-              Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
-              in the original row, not the ones in the repeated rows.
+              Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source and reference panels outside this row.
+              These panels will keep referencing the same source panel in repeated rows.
             </Trans>
           </p>
           <TextLink

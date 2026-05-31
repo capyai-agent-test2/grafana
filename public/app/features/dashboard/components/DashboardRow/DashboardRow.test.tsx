@@ -92,6 +92,27 @@ describe('DashboardRow', () => {
     expect(dashboardRow.getWarning()).toBeDefined();
   });
 
+  it('Should not return warning message when dashboard ds references a panel in the same row', async () => {
+    const sourcePanel = new PanelModel({
+      id: 2,
+      datasource: {
+        type: 'datasource',
+        uid: 'ds-uid',
+      },
+    });
+    const dashboardDatasourcePanel = new PanelModel({
+      id: 3,
+      datasource: {
+        type: 'datasource',
+        uid: SHARED_DASHBOARD_QUERY,
+      },
+      targets: [{ refId: 'A', panelId: 2 }],
+    });
+    const rowPanel = new PanelModel({ collapsed: true, panels: [sourcePanel, dashboardDatasourcePanel] });
+    const dashboardRow = new UnthemedDashboardRow({ panel: rowPanel, dashboard: dashboardMock, theme: createTheme() });
+    expect(dashboardRow.getWarning()).not.toBeDefined();
+  });
+
   it('Should not return warning message when row panel does not have a panel with dashboard ds set', async () => {
     const panel = new PanelModel({
       datasource: {

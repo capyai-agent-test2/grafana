@@ -36,6 +36,7 @@ import {
 } from 'app/types/events';
 
 import { appEvents } from '../../../core/app_events';
+import { SHARED_DASHBOARD_QUERY } from '../../../plugins/datasource/dashboard/constants';
 import { dispatch } from '../../../store/store';
 import {
   VariablesChanged,
@@ -860,6 +861,7 @@ export class DashboardModel implements TimeModel {
             this.updateRepeatedPanelIds(panelInRow, true);
           }
         }
+        this.updateRepeatedRowDashboardDatasourcePanelIds(panelsInRow);
 
         // push nth row clone's y-pos down by n
         rowClone.gridPos.y += optionIndex;
@@ -867,6 +869,7 @@ export class DashboardModel implements TimeModel {
       } else {
         // insert after row panel
         const insertPos = panelIndex + (panelsInRow.length + 1) * optionIndex + 1;
+        const repeatedPanelsInRow: PanelModel[] = [];
         panelsInRow.forEach((panelInRow, i) => {
           setScopedVars(panelInRow, variable, curOption);
 
@@ -877,8 +880,12 @@ export class DashboardModel implements TimeModel {
             // For exposed row, set correct grid y-position and add it to dashboard panels
             panelInRowClone.gridPos.y += rowHeight * optionIndex;
             this.panels.splice(insertPos + i, 0, panelInRowClone);
+            repeatedPanelsInRow.push(panelInRowClone);
+          } else {
+            repeatedPanelsInRow.push(panelInRow);
           }
         });
+        this.updateRepeatedRowDashboardDatasourcePanelIds(repeatedPanelsInRow);
 
         rowClone.panels = [];
         rowClone.gridPos.y += rowHeight * optionIndex;
@@ -889,6 +896,31 @@ export class DashboardModel implements TimeModel {
       if (selectedOptions.length > 1) {
         for (const panel of this.panels.slice(panelBelowIndex)) {
           panel.gridPos.y += rowHeight;
+        }
+      }
+    }
+  }
+
+  updateRepeatedRowDashboardDatasourcePanelIds(panelsInRow: PanelModel[]) {
+    const repeatedPanelIds = new Map<number, number>();
+
+    for (const panel of panelsInRow) {
+      if (panel.repeatPanelId) {
+        repeatedPanelIds.set(panel.repeatPanelId, panel.id);
+      }
+    }
+
+    for (const panel of panelsInRow) {
+      if (panel.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+        continue;
+      }
+
+      for (const target of panel.targets ?? []) {
+        const dashboardTarget: { panelId?: unknown } = target;
+        const mappedPanelId =
+          typeof dashboardTarget.panelId === 'number' ? repeatedPanelIds.get(dashboardTarget.panelId) : undefined;
+        if (mappedPanelId) {
+          dashboardTarget.panelId = mappedPanelId;
         }
       }
     }
