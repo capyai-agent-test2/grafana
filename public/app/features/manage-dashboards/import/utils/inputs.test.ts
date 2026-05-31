@@ -141,6 +141,33 @@ describe('extractV1Inputs', () => {
     expect(result.dataSources[0].type).toBe(InputType.DataSource);
   });
 
+  it('should skip datasource inputs that are backed by dashboard variables', async () => {
+    const dashboard = {
+      ...createV1DashboardWithInputs([
+        {
+          name: 'DS_PROMETHEUS',
+          type: InputType.DataSource,
+          label: 'Prometheus',
+          description: 'Prometheus datasource',
+          pluginId: 'prometheus',
+        },
+      ]),
+      templating: {
+        list: [
+          {
+            type: 'datasource',
+            name: 'DS_PROMETHEUS',
+            query: 'prometheus',
+          },
+        ],
+      },
+    };
+
+    const result = await extractV1Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(0);
+  });
+
   it('should extract constant inputs from __inputs array', async () => {
     const dashboard = createV1DashboardWithInputs([
       {
@@ -597,7 +624,7 @@ describe('applyV1Inputs', () => {
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
 
-  it('handles legacy string datasource format', () => {
+  it('preserves legacy string datasource variable references', () => {
     const dashboard = {
       title: 'PostgreSQL Database',
       uid: '000000039',
@@ -661,17 +688,17 @@ describe('applyV1Inputs', () => {
 
     const result = applyV1Inputs(dashboard, inputs, form);
 
-    expect(result.panels?.[0].datasource?.uid).toBe('prom-uid');
-    expect(result.panels?.[1].datasource?.uid).toBe('prom-uid');
+    expect(result.panels?.[0].datasource).toBe('${DS_PROMETHEUS}');
+    expect(result.panels?.[1].datasource).toBe('${DS_PROMETHEUS}');
 
     const panel2 = result.panels?.[1] as PanelWithTargets;
-    expect(panel2.targets?.[1].datasource?.uid).toBe('prom-uid');
+    expect(panel2.targets?.[1].datasource).toBe('${DS_PROMETHEUS}');
 
     const dsVariable = result.templating?.list?.[0] as DatasourceVariableModel;
-    expect(dsVariable.current?.value).toBe('prom-uid');
+    expect(dsVariable.current?.value).toBe('${DS_PROMETHEUS}');
 
     const queryVariable = result.templating?.list?.[1] as QueryVariableModel;
-    expect(queryVariable.datasource?.uid).toBe('prom-uid');
+    expect(queryVariable.datasource).toBe('${DS_PROMETHEUS}');
   });
 
   it('replaces constant variable query, current, and options with user-provided values', () => {
