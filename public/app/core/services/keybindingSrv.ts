@@ -24,7 +24,7 @@ import { HelpModal } from '../components/help/HelpModal';
 import { type RouteDescriptor } from '../navigation/types';
 import { contextSrv } from '../services/context_srv';
 
-import { areKeyboardShortcutsDisabled } from './keyboardShortcuts';
+import { areKeyboardShortcutsDisabled, clearKeyboardShortcutSubscription } from './keyboardShortcuts';
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
 
@@ -145,10 +145,7 @@ export class KeybindingSrv {
   }
 
   private clearAssistantSubscription() {
-    if (this.assistantSubscription) {
-      this.assistantSubscription.unsubscribe();
-      this.assistantSubscription = null;
-    }
+    this.assistantSubscription = clearKeyboardShortcutSubscription(this.assistantSubscription);
   }
 
   private toggleAssistant() {

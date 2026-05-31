@@ -1,4 +1,4 @@
-import { areKeyboardShortcutsDisabled } from './keyboardShortcuts';
+import { areKeyboardShortcutsDisabled, clearKeyboardShortcutSubscription } from './keyboardShortcuts';
 
 describe('areKeyboardShortcutsDisabled', () => {
   it.each([true, '', '1', 'true'])('returns true when disableShortcuts is %p', (disableShortcuts) => {
@@ -15,5 +15,14 @@ describe('areKeyboardShortcutsDisabled', () => {
 
   it.each([undefined, false, '0', 'false'])('returns false when the disable params are not enabled: %p', (value) => {
     expect(areKeyboardShortcutsDisabled({ disableShortcuts: value, disableKeyboardShortcuts: value })).toBe(false);
+  });
+});
+
+describe('clearKeyboardShortcutSubscription', () => {
+  it('unsubscribes an existing subscription and returns null', () => {
+    const subscription = { unsubscribe: jest.fn() };
+
+    expect(clearKeyboardShortcutSubscription(subscription)).toBeNull();
+    expect(subscription.unsubscribe).toHaveBeenCalledTimes(1);
   });
 });
