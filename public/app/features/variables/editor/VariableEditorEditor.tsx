@@ -21,6 +21,7 @@ import { VariableHideSelect } from '../../dashboard-scene/settings/variables/com
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
+import { VariableUrlSyncSwitch } from '../../dashboard-scene/settings/variables/components/VariableUrlSyncSwitch';
 import { VariableValuesPreview } from '../../dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { variableAdapters } from '../adapters';
 import { hasOptions } from '../guard';
@@ -126,6 +127,10 @@ export const VariableEditorEditorUnConnected = memo(function VariableEditorEdito
     changeVariableProp(identifier, 'hide', option);
   }
 
+  function onUrlSyncChange(skipUrlSync: boolean) {
+    changeVariableProp(identifier, 'skipUrlSync', skipUrlSync);
+  }
+
   function onPropChanged({ propName, propValue, updateOptions: shouldUpdateOptions = false }: OnPropChangeArguments) {
     changeVariableProp(identifier, propName, propValue);
 
@@ -213,6 +218,7 @@ export const VariableEditorEditorUnConnected = memo(function VariableEditorEdito
           width={52}
         />
         <VariableHideSelect onChange={onHideChange} hide={variable.hide} type={variable.type} />
+        <VariableUrlSyncSwitch skipUrlSync={variable.skipUrlSync} onChange={onUrlSyncChange} />
 
         {EditorToRender && <EditorToRender variable={variable} onPropChange={onPropChanged} />}
 

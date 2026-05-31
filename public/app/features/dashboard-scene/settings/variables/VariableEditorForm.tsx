@@ -14,6 +14,7 @@ import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/var
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
+import { VariableUrlSyncSwitch } from 'app/features/dashboard-scene/settings/variables/components/VariableUrlSyncSwitch';
 import {
   useGetAllVariableOptions,
   VariableValuesPreview,
@@ -42,7 +43,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
-  const { name, type, label, description, hide: display } = variable.useState();
+  const { name, type, label, description, hide: display, skipUrlSync } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -76,6 +77,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
   const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
+  const onUrlSyncChange = (skipUrlSync: boolean) => variable.setState({ skipUrlSync });
   const sectionOwner = dashboardSceneGraph.findSectionOwner(variable);
   const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
@@ -140,6 +142,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         type={type}
         topPlacementLabel={topPlacementLabel}
       />
+      <VariableUrlSyncSwitch skipUrlSync={skipUrlSync} onChange={onUrlSyncChange} />
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
