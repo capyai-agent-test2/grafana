@@ -431,7 +431,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	ctx = c.Req.Context()
 
-	if rsp := hs.validateLibraryPanelReferences(ctx, c.SignedInUser, cmd.GetDashboardModel()); rsp != nil {
+	if rsp := hs.validateLibraryPanelReferences(ctx, c.SignedInUser, cmd.GetDashboardModel().Data.Get("panels").MustArray()); rsp != nil {
 		return rsp
 	}
 
@@ -499,13 +499,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	})
 }
 
-func (hs *HTTPServer) validateLibraryPanelReferences(ctx context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) response.Response {
-	if dash == nil || dash.Data == nil {
-		return nil
-	}
-
+func (hs *HTTPServer) validateLibraryPanelReferences(ctx context.Context, signedInUser identity.Requester, panels []any) response.Response {
 	uids := map[string]struct{}{}
-	if err := collectLibraryPanelUIDs(dash.Data.Get("panels").MustArray(), uids); err != nil {
+	if err := collectLibraryPanelUIDs(panels, uids); err != nil {
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
@@ -563,6 +559,14 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	}
 
 	ctx := c.Req.Context()
+	panels, _, err := unstructured.NestedSlice(obj.Object, "spec", "panels")
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Dashboard panels could not be read", err)
+	}
+	if rsp := hs.validateLibraryPanelReferences(ctx, c.SignedInUser, panels); rsp != nil {
+		return rsp
+	}
+
 	namespace := hs.namespacer(c.GetOrgID())
 	tmp, err := dynamic.NewForConfig(hs.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
