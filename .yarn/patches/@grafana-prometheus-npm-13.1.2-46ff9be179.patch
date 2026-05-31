@@ -1,0 +1,88 @@
+diff --git a/dist/cjs/querycache/QueryCache.cjs b/dist/cjs/querycache/QueryCache.cjs
+index e367b43..13016aa 100644
+--- a/dist/cjs/querycache/QueryCache.cjs
++++ b/dist/cjs/querycache/QueryCache.cjs
+@@ -41,17 +41,19 @@ class QueryCache {
+       let targetSignature = this.getTargetSignature(request, target);
+       reqTargetSignatures.set(targetIdentity, targetSignature);
+     });
+-    for (const [targetIdentity, targetSignature] of reqTargetSignatures) {
+-      let cached = this.cache.get(targetIdentity);
+-      let cachedSig = cached == null ? void 0 : cached.signature;
+-      if (cachedSig !== targetSignature) {
+-        doPartialQuery = false;
+-      } else {
+-        prevTo = (_c = cached == null ? void 0 : cached.prevTo) != null ? _c : Infinity;
+-        doPartialQuery = newTo > prevTo && newFrom <= prevTo;
+-      }
+-      if (!doPartialQuery) {
+-        break;
++    if (shouldCache) {
++      for (const [targetIdentity, targetSignature] of reqTargetSignatures) {
++        let cached = this.cache.get(targetIdentity);
++        let cachedSig = cached == null ? void 0 : cached.signature;
++        if (cachedSig !== targetSignature) {
++          doPartialQuery = false;
++        } else {
++          prevTo = (_c = cached == null ? void 0 : cached.prevTo) != null ? _c : Infinity;
++          doPartialQuery = newTo > prevTo && newFrom <= prevTo;
++        }
++        if (!doPartialQuery) {
++          break;
++        }
+       }
+     }
+     if (doPartialQuery && prevTo) {
+@@ -66,7 +68,7 @@ class QueryCache {
+           to: newToDate
+         }
+       };
+-    } else {
++    } else if (shouldCache) {
+       reqTargetSignatures.forEach((targSig, targIdent) => {
+         this.cache.delete(targIdent);
+       });
+diff --git a/dist/esm/querycache/QueryCache.mjs b/dist/esm/querycache/QueryCache.mjs
+index e75757d..c3be0a5 100644
+--- a/dist/esm/querycache/QueryCache.mjs
++++ b/dist/esm/querycache/QueryCache.mjs
+@@ -37,17 +37,19 @@ class QueryCache {
+       let targetSignature = this.getTargetSignature(request, target);
+       reqTargetSignatures.set(targetIdentity, targetSignature);
+     });
+-    for (const [targetIdentity, targetSignature] of reqTargetSignatures) {
+-      let cached = this.cache.get(targetIdentity);
+-      let cachedSig = cached == null ? void 0 : cached.signature;
+-      if (cachedSig !== targetSignature) {
+-        doPartialQuery = false;
+-      } else {
+-        prevTo = (_c = cached == null ? void 0 : cached.prevTo) != null ? _c : Infinity;
+-        doPartialQuery = newTo > prevTo && newFrom <= prevTo;
+-      }
+-      if (!doPartialQuery) {
+-        break;
++    if (shouldCache) {
++      for (const [targetIdentity, targetSignature] of reqTargetSignatures) {
++        let cached = this.cache.get(targetIdentity);
++        let cachedSig = cached == null ? void 0 : cached.signature;
++        if (cachedSig !== targetSignature) {
++          doPartialQuery = false;
++        } else {
++          prevTo = (_c = cached == null ? void 0 : cached.prevTo) != null ? _c : Infinity;
++          doPartialQuery = newTo > prevTo && newFrom <= prevTo;
++        }
++        if (!doPartialQuery) {
++          break;
++        }
+       }
+     }
+     if (doPartialQuery && prevTo) {
+@@ -62,7 +64,7 @@ class QueryCache {
+           to: newToDate
+         }
+       };
+-    } else {
++    } else if (shouldCache) {
+       reqTargetSignatures.forEach((targSig, targIdent) => {
+         this.cache.delete(targIdent);
+       });
