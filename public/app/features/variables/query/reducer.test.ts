@@ -344,6 +344,13 @@ describe('expandRegexStaticOptions', () => {
       },
     ]);
   });
+
+  it('keeps slash-prefixed literal values unchanged', () => {
+    const options = [{ text: '/api/v1', value: '/api/v1', selected: false }];
+    const staticOptions = [{ text: 'API', value: '/api/v1', selected: false }];
+
+    expect(expandRegexStaticOptions(staticOptions, options)).toEqual(staticOptions);
+  });
 });
 
 describe('sortVariableValues', () => {

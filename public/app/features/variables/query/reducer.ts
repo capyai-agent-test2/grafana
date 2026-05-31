@@ -160,12 +160,11 @@ const getStaticOptionRegex = (option: VariableOption): string | undefined => {
     return regex;
   }
 
-  if (typeof option.value !== 'string' || !option.value.startsWith('/')) {
+  if (typeof option.value !== 'string') {
     return undefined;
   }
 
-  const lastSlashIndex = option.value.lastIndexOf('/');
-  return lastSlashIndex > 0 ? option.value : undefined;
+  return /^\/.*\/[dgimsuvy]*$/.test(option.value) ? option.value : undefined;
 };
 
 export const expandRegexStaticOptions = (staticOptions: VariableOption[] = [], options: VariableOption[]) => {
