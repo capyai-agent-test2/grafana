@@ -3,8 +3,17 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
-import { EventBusSrv, getDefaultTimeRange, LoadingState, type PanelData, type PanelPlugin } from '@grafana/data';
+import {
+  EventBusSrv,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  type DataFrame,
+  type PanelData,
+  type PanelPlugin,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 
 import { type PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, type TimeSrv } from '../services/TimeSrv';
@@ -81,6 +90,10 @@ function setupTestContext(options: Partial<Props>) {
 }
 
 describe('PanelStateWrapper', () => {
+  beforeEach(() => {
+    locationService.push('/');
+  });
+
   describe('when the user scrolls by a panel so fast that it starts loading data but scrolls out of view', () => {
     it('then it should load the panel successfully when scrolled into view again', () => {
       const { rerender, props, subject, store } = setupTestContext({});
@@ -140,6 +153,77 @@ describe('PanelStateWrapper', () => {
       });
     });
   });
+
+  it('applies the legend query parameter as a panel-specific series selection on first data load', () => {
+    locationService.push('/d/test?viewPanel=123&legend=A');
+    const { props, subject } = setupTestContext({});
+    const updateFieldConfig = jest.spyOn(props.panel, 'updateFieldConfig');
+
+    act(() => {
+      subject.next({
+        state: LoadingState.Done,
+        series: [makeSeries(['A', 'B'])],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    expect(updateFieldConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        overrides: [
+          expect.objectContaining({
+            matcher: expect.objectContaining({
+              options: expect.objectContaining({
+                mode: 'exclude',
+                names: ['A'],
+              }),
+            }),
+          }),
+        ],
+      })
+    );
+  });
+
+  it('applies the legend query parameter on first streaming data load', () => {
+    locationService.push('/d/test?viewPanel=123&legend=A');
+    const { props, subject } = setupTestContext({});
+    const updateFieldConfig = jest.spyOn(props.panel, 'updateFieldConfig');
+
+    act(() => {
+      subject.next({
+        state: LoadingState.Streaming,
+        series: [makeSeries(['A', 'B'])],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    expect(updateFieldConfig).toHaveBeenCalled();
+  });
+
+  it('does not update field config when legend query parameter does not match any series', () => {
+    locationService.push('/d/test?viewPanel=123&legend=missing');
+    const { props, subject } = setupTestContext({});
+    const updateFieldConfig = jest.spyOn(props.panel, 'updateFieldConfig');
+
+    act(() => {
+      subject.next({
+        state: LoadingState.Done,
+        series: [makeSeries(['A', 'B'])],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    expect(updateFieldConfig).not.toHaveBeenCalled();
+  });
 });
 
 const TestPanelComponent = () => <div>Plugin Panel to Render</div>;
+
+function makeSeries(names: string[]): DataFrame {
+  return {
+    fields: [
+      { name: 'time', type: FieldType.time, config: {}, values: [] },
+      ...names.map((name) => ({ name, type: FieldType.number, config: {}, values: [] })),
+    ],
+    length: 0,
+  };
+}
