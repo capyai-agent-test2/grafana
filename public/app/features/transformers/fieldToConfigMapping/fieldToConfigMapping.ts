@@ -144,7 +144,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'decimals',
-    processor: toNumericOrUndefined,
+    processor: toValidDecimalsOrUndefined,
   },
   {
     key: 'displayName',
@@ -266,6 +266,16 @@ function toNumericOrUndefined(value: unknown) {
   const numeric = anyToNumber(value);
 
   if (isNaN(numeric)) {
+    return;
+  }
+
+  return numeric;
+}
+
+function toValidDecimalsOrUndefined(value: unknown) {
+  const numeric = toNumericOrUndefined(value);
+
+  if (numeric === undefined || !Number.isInteger(numeric) || numeric < 0 || numeric > 20) {
     return;
   }
 
