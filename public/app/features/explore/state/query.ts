@@ -6,6 +6,7 @@ import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   type AbsoluteTimeRange,
+  type AdHocVariableFilter,
   type DataFrame,
   DataQueryErrorType,
   type DataQueryResponse,
@@ -64,6 +65,15 @@ import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
+
+interface DataQueryWithAdHocFilters extends DataQuery {
+  adhocFilters?: AdHocVariableFilter[];
+}
+
+const getAdHocFiltersFromQueries = (queries: DataQuery[]) => {
+  const filters = flatten(queries.map((query) => (query as DataQueryWithAdHocFilters).adhocFilters ?? []));
+  return filters.filter((filter, index) => filters.findIndex((other) => deepEqual(other, filter)) === index);
+};
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -626,6 +636,10 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         timeZone,
         scopedVars
       );
+      const adhocFilters = getAdHocFiltersFromQueries(queries);
+      if (adhocFilters.length) {
+        transaction.request.filters = adhocFilters;
+      }
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 

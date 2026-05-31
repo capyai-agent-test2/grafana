@@ -10,6 +10,7 @@ import {
   type DataSourceJsonData,
   type DataSourcePluginMeta,
   type DataSourceWithSupplementaryQueriesSupport,
+  type AdHocVariableFilter,
   LoadingState,
   MutableDataFrame,
   type RawTimeRange,
@@ -205,6 +206,27 @@ describe('runQueries', () => {
     await dispatch(runQueries({ exploreId: 'left' }));
     await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
+  });
+
+  it('should pass adhoc filters stored on queries to the datasource request', async () => {
+    const adhocFilters: AdHocVariableFilter[] = [{ key: 'slice', operator: '=', value: 'inner_eval' }];
+    const { dispatch, getState } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            queries: [{ expr: 'test', adhocFilters }],
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+    setupQueryResponse(getState());
+
+    await dispatch(runQueries({ exploreId: 'left' }));
+
+    const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
+    expect(leftDatasourceInstance.query).toHaveBeenCalledWith(expect.objectContaining({ filters: adhocFilters }));
   });
 
   it('shows results only after correlations are loaded', async () => {
