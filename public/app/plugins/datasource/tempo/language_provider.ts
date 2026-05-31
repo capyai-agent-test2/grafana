@@ -218,17 +218,20 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
 
     return filters
-      .filter((f) => f.tag && f.operator && f.value?.length)
+      .filter((f) => f.tag && f.operator && (Array.isArray(f.value) ? f.value.length : f.value !== undefined))
       .map((f) => filterToQuerySection(f, filters, this));
   }
 
   private generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[]) => {
     return filters
-      .filter((f) => f.key && f.operator && f.value)
+      .filter((f) => f.key && f.operator && f.value !== undefined)
       .map((f) => `${f.key}${f.operator}${this.adHocValueHelper(f)}`);
   };
 
   adHocValueHelper = (f: AdHocVariableFilter) => {
+    if (f.operator === '=' && f.value === '') {
+      return 'nil';
+    }
     if (this.getIntrinsics().find((t) => t === f.key) && enumIntrinsics.includes(f.key)) {
       return f.value;
     }

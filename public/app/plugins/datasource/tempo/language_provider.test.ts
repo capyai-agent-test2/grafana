@@ -135,6 +135,19 @@ describe('Language_provider', () => {
       ).toBe('{.footag="foovalue"}');
     });
 
+    it('a string field with an empty value', () => {
+      expect(
+        lp.generateQueryFromFilters({
+          traceqlFilters: [{ id: 'foo', tag: 'footag', value: '', operator: '=', valueType: 'string' }],
+        })
+      ).toBe('{.footag=nil}');
+      expect(
+        lp.generateQueryFromFilters({
+          traceqlFilters: [{ id: 'foo', tag: 'footag', value: [''], operator: '=', valueType: 'string' }],
+        })
+      ).toBe('{.footag=nil}');
+    });
+
     it('a field with valueType as integer', () => {
       expect(
         lp.generateQueryFromFilters({
@@ -268,6 +281,12 @@ describe('Language_provider', () => {
         expect(
           lp.generateQueryFromFilters({ adhocFilters: [{ key: 'footag', operator: '=', value: 'foovalue' }] })
         ).toBe('{footag="foovalue"}');
+      });
+
+      it('a filter with an empty value', () => {
+        expect(lp.generateQueryFromFilters({ adhocFilters: [{ key: 'footag', operator: '=', value: '' }] })).toBe(
+          '{footag=nil}'
+        );
       });
 
       it('two filters with values', () => {
