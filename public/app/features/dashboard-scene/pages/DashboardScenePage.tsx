@@ -32,6 +32,8 @@ import { useScenesFlickeringFix } from '../utils/utils';
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
 
+const SNAPSHOT_FOOTER_LINK_URL = 'https://grafana.com/?src=grafananet&cnt=dashboard-snapshot';
+
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
 
@@ -139,6 +141,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   // `locationSearchToObject()` parses `?kiosk` as `true` (boolean param). Some clients can emit `?kiosk=`, which parses as ''.
   const isKioskMode = queryParams.kiosk === '1' || queryParams.kiosk === true || queryParams.kiosk === '';
   const hideFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
+  const isSnapshot = type === 'snapshot';
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
@@ -152,7 +155,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}
         useMinHeight={true}
-        hide={!isKioskMode || hideFooter}
+        linkUrl={isSnapshot ? SNAPSHOT_FOOTER_LINK_URL : undefined}
+        hide={(!isKioskMode && !isSnapshot) || hideFooter}
       />
     </UrlSyncContextProvider>
   );
