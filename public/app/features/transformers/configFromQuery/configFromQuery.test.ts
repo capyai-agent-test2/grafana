@@ -89,6 +89,34 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
+  it.each([-3, 2.5, 21])('ignores invalid decimals value %p', (decimals) => {
+    const config = toDataFrame({
+      fields: [{ name: 'Decimals', type: FieldType.number, values: [decimals] }],
+      refId: 'A',
+    });
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Decimals', handlerKey: 'decimals' }],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results[0].fields[1].config.decimals).toBeUndefined();
+  });
+
+  it.each([0, 20])('applies valid decimals value %p', (decimals) => {
+    const config = toDataFrame({
+      fields: [{ name: 'Decimals', type: FieldType.number, values: [decimals] }],
+      refId: 'A',
+    });
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Decimals', handlerKey: 'decimals' }],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results[0].fields[1].config.decimals).toBe(decimals);
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
