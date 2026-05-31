@@ -82,15 +82,15 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
       }
 
       autoSaveInFlight.current = true;
-
-      const clone = dashboard.getSaveModelClone(AUTO_SAVE_OPTIONS);
-      const serializedClone = JSON.stringify(clone);
-      if (serializedClone === lastFailedAutoSave.current) {
-        autoSaveInFlight.current = false;
-        return;
-      }
+      let serializedClone: string | undefined;
 
       try {
+        const clone = dashboard.getSaveModelClone(AUTO_SAVE_OPTIONS);
+        serializedClone = JSON.stringify(clone);
+        if (serializedClone === lastFailedAutoSave.current) {
+          return;
+        }
+
         const result = await (
           await getDashboardAPI()
         ).saveDashboard({
@@ -107,7 +107,9 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
         dashboard.clearUnsavedChanges(clone, AUTO_SAVE_OPTIONS);
         appEvents.publish(new DashboardSavedEvent());
       } catch (error) {
-        lastFailedAutoSave.current = serializedClone;
+        if (serializedClone) {
+          lastFailedAutoSave.current = serializedClone;
+        }
         throw error;
       } finally {
         autoSaveInFlight.current = false;
