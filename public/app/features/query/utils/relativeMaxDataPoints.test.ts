@@ -5,6 +5,7 @@ describe('relative max data points', () => {
     expect(parseMaxDataPoints('100')).toBe(100);
     expect(parseMaxDataPoints(' 50% ')).toBe('50%');
     expect(parseMaxDataPoints('12.5%')).toBe('12.5%');
+    expect(parseMaxDataPoints('0.0000001%')).toBe('0.0000001%');
   });
 
   it('treats empty, zero, and invalid values as auto', () => {

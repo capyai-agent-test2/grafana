@@ -246,6 +246,34 @@ describe('PanelAlertTabContent', () => {
     });
   });
 
+  it('Will ignore relative panel maxDataPoints when creating alert defaults', async () => {
+    renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        maxDataPoints: '50%',
+        interval: '10s',
+      })
+    );
+
+    const button = await ui.createButton.find();
+    const href = button.href;
+    const match = href.match(/alerting\/new\?defaults=(.*)&returnTo=/);
+    expect(match).toHaveLength(2);
+
+    const defaults = JSON.parse(decodeURIComponent(match![1]));
+    expect(defaults.queries[0].model).toEqual({
+      expr: 'sum(some_metric [10s])) by (app)',
+      refId: 'A',
+      datasource: {
+        type: 'prometheus',
+        uid: 'mock-ds-2',
+      },
+      interval: '',
+      intervalMs: 10000,
+    });
+  });
+
   it('Will work with default datasource', async () => {
     renderAlertTabContent(
       dashboard,

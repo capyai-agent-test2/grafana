@@ -15,7 +15,7 @@ export function parseMaxDataPoints(value: string): MaxDataPoints | null {
 
   if (isRelativeMaxDataPoints(trimmedValue)) {
     const percent = Number.parseFloat(trimmedValue);
-    return percent > 0 ? `${percent}%` : null;
+    return percent > 0 ? trimmedValue : null;
   }
 
   if (!/^\d+$/.test(trimmedValue)) {
