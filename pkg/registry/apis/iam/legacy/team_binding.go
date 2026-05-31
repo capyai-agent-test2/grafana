@@ -123,7 +123,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		var nullableExternal stdsql.NullBool
+		var nullableExternal nullableBool
 		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &nullableExternal)
 		if err != nil {
 			return res, err
@@ -500,7 +500,7 @@ func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.Namespa
 
 func scanMember(rows *stdsql.Rows) (TeamMember, error) {
 	m := TeamMember{}
-	var nullableExternal stdsql.NullBool
+	var nullableExternal nullableBool
 	var name, email, username stdsql.NullString
 	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &name, &email, &username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
 	if err != nil {
