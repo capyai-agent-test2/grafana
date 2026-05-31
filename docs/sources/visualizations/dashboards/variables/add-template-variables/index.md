@@ -618,13 +618,14 @@ Grafana has two built-in time range variables: `$__from` and `$__to`. They are c
 
 <!-- prettier-ignore-start -->
 
-| Syntax                   | Example result           | Description                                                                                                                                                      |
-| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                                                                           |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No arguments, defaults to ISO 8601/RFC 3339                                                                                                                      |
-| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                                                                                |
-| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                                                                               |
-| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC |
+| Syntax                                     | Example result           | Description                                                                                                                 |
+| ------------------------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `${__from}`                                | 1594671549254            | Unix millisecond epoch                                                                                                      |
+| `${__from:date}`                           | 2020-07-13T20:19:09.254Z | No arguments, defaults to ISO 8601/RFC 3339                                                                                 |
+| `${__from:date:iso}`                       | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                                           |
+| `${__from:date:seconds}`                   | 1594671549               | Unix seconds epoch                                                                                                          |
+| `${__from:date:YYYY-MM}`                   | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character. Uses browser time |
+| `${__from:date:utc:YYYY-MM-DD HH:mm:ss}`   | 2020-07-13 20:19:09      | Any custom [date format](https://momentjs.com/docs/#/displaying/) rendered in UTC                                           |
 
 <!-- prettier-ignore-end -->
 
