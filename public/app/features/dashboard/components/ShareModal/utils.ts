@@ -1,4 +1,4 @@
-import { dateTime, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
+import { dateMath, dateTime, dateTimeAsMoment, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -29,9 +29,9 @@ export function buildParams({
 
   // Use panel's relative time if it's set
   if (timeFrom) {
-    const { from, to } = rangeUtil.describeTextRange(timeFrom);
-    searchParams.set('from', from);
-    searchParams.set('to', to);
+    const panelTimeRange = parsePanelTimeRange(timeFrom, range);
+    searchParams.set('from', panelTimeRange.from);
+    searchParams.set('to', panelTimeRange.to);
   } else {
     searchParams.set('from', String(range.from.valueOf()));
     searchParams.set('to', String(range.to.valueOf()));
@@ -59,6 +59,41 @@ export function buildParams({
   searchParams.delete('shareView');
 
   return searchParams;
+}
+
+function parsePanelTimeRange(timeFrom: string, range: TimeRange) {
+  const absoluteTimeRange = parseAbsoluteTimeRange(timeFrom, range);
+  if (absoluteTimeRange) {
+    return absoluteTimeRange;
+  }
+
+  const { from, to } = rangeUtil.describeTextRange(timeFrom);
+  return { from, to };
+}
+
+function parseAbsoluteTimeRange(timeFrom: string, range: TimeRange) {
+  const parts = timeFrom.split(/\s+to\s+/i);
+  if (parts.length !== 2) {
+    return undefined;
+  }
+
+  const [from, to] = parts.map((part) => part.trim());
+  if (!from || !to) {
+    return undefined;
+  }
+
+  const fromTimezone = dateTimeAsMoment(range.from).tz();
+  const toTimezone = dateTimeAsMoment(range.to).tz();
+  const fromDate = dateMath.parse(from, false, fromTimezone);
+  const toDate = dateMath.parse(to, true, toTimezone);
+  if (!fromDate?.isValid() || !toDate?.isValid() || toDate.isBefore(fromDate)) {
+    return undefined;
+  }
+
+  return {
+    from: String(fromDate.valueOf()),
+    to: String(toDate.valueOf()),
+  };
 }
 
 export function buildBaseUrl() {

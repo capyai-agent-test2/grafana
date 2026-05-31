@@ -41,6 +41,20 @@ describe('applyPanelTimeOverrides', () => {
     expect(overrides.timeRange.raw.to).toBe('now');
   });
 
+  it('should apply fixed absolute time range override', () => {
+    const panelModel = {
+      timeFrom: '2018-01-01T00:00:00Z to 2018-01-01T00:00:00Z||+35d',
+    };
+
+    // @ts-ignore: PanelModel type inconsistency
+    const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
+
+    expect(overrides.timeRange.from.toISOString()).toBe(dateTime('2018-01-01T00:00:00Z').toISOString());
+    expect(overrides.timeRange.to.toISOString()).toBe(dateTime('2018-02-05T00:00:00Z').toISOString());
+    expect(overrides.timeRange.raw.from).toBe('2018-01-01T00:00:00Z');
+    expect(overrides.timeRange.raw.to).toBe('2018-01-01T00:00:00Z||+35d');
+  });
+
   it('should apply time shift', () => {
     const panelModel = {
       timeShift: '2h',
