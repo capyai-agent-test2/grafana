@@ -15,6 +15,7 @@ import { NavigationKey } from '../types';
 import {
   commitChangesToVariable,
   filterOrSearchOptions,
+  mapToCurrent,
   navigateOptions,
   openOptions,
   toggleOptionByHighlight,
@@ -554,6 +555,30 @@ describe('options picker actions', () => {
         toKeyedAction('key', moveOptionsHighlight(1)),
         toKeyedAction('key', toggleOption({ option: optionBD, forceSelect: false, clearOthers }))
       );
+    });
+  });
+});
+
+describe('mapToCurrent', () => {
+  it('flattens selected regex group options into matching values', () => {
+    const groupOption = {
+      text: 'webservers',
+      value: ['www-1', 'www-2'],
+      selected: true,
+      properties: { textValues: ['www-1', 'www-2'] },
+    };
+
+    expect(
+      mapToCurrent({
+        ...initialOptionPickerState,
+        multi: true,
+        options: [groupOption],
+        selectedValues: [groupOption],
+      })
+    ).toEqual({
+      text: ['www-1', 'www-2'],
+      value: ['www-1', 'www-2'],
+      selected: true,
     });
   });
 });

@@ -154,6 +154,66 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
   return sortVariableValues(options, sort);
 };
 
+const getStaticOptionRegex = (option: VariableOption): string | undefined => {
+  const regex = option.properties?.regex ?? option.properties?.filterRegex;
+  if (typeof regex === 'string' && regex.length > 0) {
+    return regex;
+  }
+
+  if (typeof option.value !== 'string') {
+    return undefined;
+  }
+
+  return /^\/.*\/[dgimsuvy]*$/.test(option.value) ? option.value : undefined;
+};
+
+export const expandRegexStaticOptions = (staticOptions: VariableOption[] = [], options: VariableOption[]) => {
+  return staticOptions.map((option) => {
+    const regex = getStaticOptionRegex(option);
+    if (!regex) {
+      return option;
+    }
+
+    const matcher = stringToJsRegex(regex);
+    const matches = options.filter((queryOption) => {
+      matcher.lastIndex = 0;
+      return matcher.test(String(queryOption.value));
+    });
+
+    return {
+      ...option,
+      value: matches.map((match) => match.value).flat(),
+      properties: {
+        ...option.properties,
+        textValues: matches.map((match) => match.text).flat(),
+      },
+    };
+  });
+};
+
+const mergeStaticOptions = (
+  options: VariableOption[],
+  staticOptions: VariableOption[] | undefined,
+  staticOptionsOrder: QueryVariableModel['staticOptionsOrder'],
+  sort: VariableSort
+) => {
+  if (!staticOptions?.length) {
+    return options;
+  }
+
+  const expandedStaticOptions = expandRegexStaticOptions(staticOptions, options);
+
+  if (staticOptionsOrder === 'after') {
+    return [...options, ...expandedStaticOptions];
+  }
+
+  if (staticOptionsOrder === 'sorted') {
+    return sortVariableValues([...options, ...expandedStaticOptions], sort);
+  }
+
+  return [...expandedStaticOptions, ...options];
+};
+
 export const queryVariableSlice = createSlice({
   name: 'templating/query',
   initialState: initialVariablesState,
@@ -165,8 +225,9 @@ export const queryVariableSlice = createSlice({
         return;
       }
 
-      const { includeAll, sort } = instanceState;
-      const options = metricNamesToVariableValues(templatedRegex, sort, results);
+      const { includeAll, sort, staticOptions, staticOptionsOrder } = instanceState;
+      const queryOptions = metricNamesToVariableValues(templatedRegex, sort, results);
+      const options = mergeStaticOptions(queryOptions, staticOptions, staticOptionsOrder, sort);
 
       if (includeAll) {
         options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });

@@ -20,6 +20,7 @@ import { changeVariableMultiValue } from '../state/actions';
 import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';
 
+import { type StaticOptionsType } from './QueryVariableStaticOptions';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
@@ -129,6 +130,23 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     this.props.onPropChange({ propName: 'allValue', propValue: event.currentTarget.value });
   };
 
+  onStaticOptionsChange = (staticOptions: StaticOptionsType = []) => {
+    this.props.onPropChange({
+      propName: 'staticOptions',
+      propValue: staticOptions.map((option) => ({
+        text: option.text ?? option.label ?? String(option.value),
+        value: option.value,
+        selected: option.selected ?? false,
+        properties: option.properties,
+      })),
+      updateOptions: true,
+    });
+  };
+
+  onStaticOptionsOrderChange = (staticOptionsOrder: QueryVariableModel['staticOptionsOrder']) => {
+    this.props.onPropChange({ propName: 'staticOptionsOrder', propValue: staticOptionsOrder, updateOptions: true });
+  };
+
   render() {
     const { extended, variable } = this.props;
     if (!extended || !extended.dataSource) {
@@ -157,6 +175,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         onMultiChange={this.onMultiChange}
         onIncludeAllChange={this.onIncludeAllChange}
         onAllValueChange={this.onAllValueChange}
+        staticOptions={variable.staticOptions?.map((option) => ({
+          label: option.text.toString(),
+          value: option.value,
+          properties: option.properties,
+        }))}
+        staticOptionsOrder={variable.staticOptionsOrder}
+        onStaticOptionsChange={this.onStaticOptionsChange}
+        onStaticOptionsOrderChange={this.onStaticOptionsOrderChange}
         options={variable.options.map((o) => ({
           label: String(o.text),
           value: String(o.value),
