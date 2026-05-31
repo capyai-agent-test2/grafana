@@ -616,7 +616,9 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(root, "foo", "foo.json"), dashboardJSON, 0600))
 		require.NoError(t, os.WriteFile(filepath.Join(root, "bar", "foo.json"), dashboardJSON, 0600))
 		symlinkPath := filepath.Join(root, "grafana")
-		require.NoError(t, os.Symlink("foo", symlinkPath))
+		if err := os.Symlink("foo", symlinkPath); err != nil {
+			t.Skipf("skipping symlink test: %v", err)
+		}
 		cfg.Options["path"] = symlinkPath
 
 		fakeForSymlink := &dashboards.FakeDashboardProvisioning{}
@@ -642,8 +644,19 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		require.NotNil(t, savedProvisioning)
 		require.Equal(t, filepath.Join(symlinkPath, "foo.json"), savedProvisioning.ExternalID)
 
+		legacyProvisioning := *savedProvisioning
+		legacyProvisioning.ExternalID = filepath.Join(root, "foo", "foo.json")
+		fakeForSymlink.On("GetProvisionedDashboardData", mock.Anything, configName).
+			Return([]*dashboards.DashboardProvisioning{&legacyProvisioning}, nil).
+			Once()
+		provisionedByPath, err := reader.getProvisionedDashboardsByPath(context.Background(), fakeForSymlink, configName)
+		require.NoError(t, err)
+		require.Contains(t, provisionedByPath, filepath.Join(symlinkPath, "foo.json"))
+
 		require.NoError(t, os.Remove(symlinkPath))
-		require.NoError(t, os.Symlink("bar", symlinkPath))
+		if err := os.Symlink("bar", symlinkPath); err != nil {
+			t.Skipf("skipping symlink retarget test: %v", err)
+		}
 		fakeForSymlink.On("GetProvisionedDashboardData", mock.Anything, configName).
 			Return([]*dashboards.DashboardProvisioning{savedProvisioning}, nil).
 			Once()

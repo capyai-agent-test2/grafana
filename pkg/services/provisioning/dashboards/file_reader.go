@@ -403,6 +403,7 @@ func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, servic
 		if !filepath.IsAbs(pd.ExternalID) {
 			pd.ExternalID = filepath.Join(fr.absPath(), pd.ExternalID)
 		}
+		pd.ExternalID = toExternalIDPath(pd.ExternalID, fr.resolvedPath(), fr.absPath())
 
 		byPath[pd.ExternalID] = pd
 	}
