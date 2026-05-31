@@ -656,6 +656,16 @@ describe('templateSrv', () => {
       const target = _templateSrv.replace('${__from:date:YYYY-MM}');
       expect(target).toBe('2020-07');
     });
+
+    it('should replace ${__from:date:utc:YYYY-MM-DD HH:mm:ss} using custom UTC format', () => {
+      const target = _templateSrv.replace('${__from:date:utc:YYYY-MM-DD HH:mm:ss}');
+      expect(target).toBe('2020-07-13 20:19:09');
+    });
+
+    it('should replace ${__to:date:utc:YYYYMMDDHHmmss} using custom UTC format', () => {
+      const target = _templateSrv.replace('${__to:date:utc:YYYYMMDDHHmmss}');
+      expect(target).toBe('20200720092709');
+    });
   });
 
   describe('handle objects gracefully', () => {

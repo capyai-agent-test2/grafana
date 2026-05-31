@@ -4,6 +4,9 @@ import { VariableFormatID } from '@grafana/schema';
 import { isAdHoc } from '../variables/guard';
 
 import { getVariableWrapper } from './LegacyVariableWrapper';
+import { registerUtcDateFormatter } from './timeRangeVariableFormats';
+
+registerUtcDateFormatter();
 
 export function formatVariableValue(value: any, format?: any, variable?: any, text?: string): string {
   // for some scopedVars there is no variable

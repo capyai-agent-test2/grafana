@@ -1,6 +1,10 @@
 import { dateTimeFormat } from '@grafana/data';
 import { type FormatVariable, sceneGraph, type SceneObject } from '@grafana/scenes';
 
+import { registerUtcDateFormatter } from '../../templating/timeRangeVariableFormats';
+
+registerUtcDateFormatter();
+
 /**
  * This macro is used to support the old __to and __from macros that always used the dashboard level time range.
  **/

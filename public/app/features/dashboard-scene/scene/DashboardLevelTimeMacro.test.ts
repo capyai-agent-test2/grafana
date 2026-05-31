@@ -70,5 +70,6 @@ describe('dashboardLevelTimeMacros', () => {
 
     expect(sceneGraph.interpolate(panel, '$__from')).toBe('1684822197073'); // Dashboard level time range even when panel is time shifted
     expect(sceneGraph.interpolate(panel, '$__to')).toBe('1684825797073'); // Dashboard level time range even when panel is time shifted
+    expect(sceneGraph.interpolate(panel, '${__from:date:utc:YYYY-MM-DD HH:mm:ss}')).toBe('2023-05-23 06:09:57');
   });
 });
