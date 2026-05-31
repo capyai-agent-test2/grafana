@@ -55,4 +55,6 @@ export interface VizLegendItem<T = any> {
   fieldName?: string;
   data?: T;
   lineStyle?: LineStyle;
+  onFilterFor?: () => void;
+  onFilterOut?: () => void;
 }
