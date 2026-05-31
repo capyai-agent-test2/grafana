@@ -4,7 +4,7 @@ import { type ContextSrv, setContextSrv } from '../../../../core/services/contex
 import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
 
-import { hasChanges, ignoreChanges } from './DashboardPrompt';
+import { hasChanges, ignoreChanges, shouldAutoSave } from './DashboardPrompt';
 
 function getDefaultDashboardModel() {
   return createDashboardModelFixture({
@@ -158,6 +158,31 @@ describe('DashboardPrompt', () => {
         const original = dash.getSaveModelCloneOld();
         expect(ignoreChanges(dash, original)).toBe(undefined);
       });
+    });
+  });
+
+  describe('shouldAutoSave', () => {
+    it('returns true for a saved editable dashboard with changes', () => {
+      const { original, dash } = getTestContext();
+      dash.title = 'updated title';
+
+      expect(shouldAutoSave(dash, original)).toBe(true);
+    });
+
+    it('returns false for a new dashboard', () => {
+      const { dash } = getTestContext();
+      dash.version = 0;
+      dash.title = 'updated title';
+
+      expect(shouldAutoSave(dash, dash.getSaveModelCloneOld())).toBe(false);
+    });
+
+    it('returns false for a provisioned dashboard', () => {
+      const { original } = getTestContext();
+      const dash = createDashboardModelFixture({}, { canSave: true, provisioned: true });
+      dash.title = 'updated title';
+
+      expect(shouldAutoSave(dash, original)).toBe(false);
     });
   });
 });

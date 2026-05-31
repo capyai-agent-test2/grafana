@@ -1,13 +1,15 @@
 import type * as H from 'history';
 import { find } from 'lodash';
-import { memo, useContext, useEffect, useState } from 'react';
+import { memo, useContext, useEffect, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { ModalsContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { type PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { DashboardSavedEvent } from 'app/types/events';
@@ -26,8 +28,13 @@ interface State {
   originalPath?: string;
 }
 
+const AUTO_SAVE_INTERVAL = 30000;
+const AUTO_SAVE_OPTIONS = { saveTimerange: false, saveVariables: false };
+
 export const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
+  const autoSaveInFlight = useRef(false);
+  const lastFailedAutoSave = useRef<string | null>(null);
   const dispatch = useDispatch();
   const { original, originalPath } = state;
   const { showModal, hideModal } = useContext(ModalsContext);
@@ -66,6 +73,53 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
     };
     window.addEventListener('beforeunload', handleUnload);
     return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [dashboard, original]);
+
+  useEffect(() => {
+    const autoSaveDashboard = async () => {
+      if (autoSaveInFlight.current || !shouldAutoSave(dashboard, original)) {
+        return;
+      }
+
+      autoSaveInFlight.current = true;
+      let serializedClone: string | undefined;
+
+      try {
+        const clone = dashboard.getSaveModelClone(AUTO_SAVE_OPTIONS);
+        serializedClone = JSON.stringify(clone);
+        if (serializedClone === lastFailedAutoSave.current) {
+          return;
+        }
+
+        const result = await (
+          await getDashboardAPI()
+        ).saveDashboard({
+          dashboard: clone,
+          folderUid: dashboard.meta.folderUid ?? clone.meta?.folderUid,
+          message: t('dashboard.dashboard-prompt.auto-save-message', 'Auto-saved dashboard changes'),
+          showErrorAlert: false,
+          k8s: dashboard.meta.k8s,
+        });
+
+        lastFailedAutoSave.current = null;
+        dashboard.version = result.version;
+        clone.version = result.version;
+        dashboard.clearUnsavedChanges(clone, AUTO_SAVE_OPTIONS);
+        appEvents.publish(new DashboardSavedEvent());
+      } catch (error) {
+        if (serializedClone) {
+          lastFailedAutoSave.current = serializedClone;
+        }
+        throw error;
+      } finally {
+        autoSaveInFlight.current = false;
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      autoSaveDashboard().catch(() => {});
+    }, AUTO_SAVE_INTERVAL);
+    return () => window.clearInterval(intervalId);
   }, [dashboard, original]);
 
   const onHistoryBlock = (location: H.Location) => {
@@ -223,4 +277,12 @@ export function hasChanges(current: DashboardModel, original: unknown) {
   const originalJson = JSON.stringify(originalClean, null);
 
   return currentJson !== originalJson;
+}
+
+export function shouldAutoSave(current: DashboardModel | null, original: object | null) {
+  if (!current || current.version === 0 || current.meta.provisioned || ignoreChanges(current, original)) {
+    return false;
+  }
+
+  return hasChanges(current, original);
 }

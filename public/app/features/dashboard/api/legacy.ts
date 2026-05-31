@@ -34,12 +34,16 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     dashboardWatcher.ignoreNextSave();
 
-    return getBackendSrv().post<SaveDashboardResponseDTO>('/api/dashboards/db/', {
-      dashboard: options.dashboard,
-      message: options.message ?? '',
-      overwrite: options.overwrite ?? false,
-      folderUid: options.folderUid,
-    });
+    return getBackendSrv().post<SaveDashboardResponseDTO>(
+      '/api/dashboards/db/',
+      {
+        dashboard: options.dashboard,
+        message: options.message ?? '',
+        overwrite: options.overwrite ?? false,
+        folderUid: options.folderUid,
+      },
+      { showErrorAlert: options.showErrorAlert }
+    );
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {

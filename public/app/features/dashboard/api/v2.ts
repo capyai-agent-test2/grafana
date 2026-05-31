@@ -158,12 +158,16 @@ export class K8sDashboardV2API
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
       delete obj.metadata.labels?.[DeprecatedInternalId];
-      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client
+        .update(obj, { requestOptions: { showErrorAlert: options.showErrorAlert } })
+        .then((v) => this.asSaveDashboardResponseDTO(v));
     }
 
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
-    return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    return await this.client
+      .create(obj, { requestOptions: { showErrorAlert: options.showErrorAlert } })
+      .then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardV2Spec>): SaveDashboardResponseDTO {

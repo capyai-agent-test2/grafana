@@ -134,16 +134,24 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       obj.metadata.generateName = alphabeticChars || 'g';
     }
     setSavedFromUIAnnotation(obj.metadata);
+    const { requestOptions, ...queryParams } = params ?? {};
+    const requestParams = Object.keys(queryParams).length ? queryParams : undefined;
+    const backendOptions = cleanRequestOptions(requestOptions);
     return getBackendSrv().post(this.url, obj, {
-      params,
+      ...backendOptions,
+      params: requestParams,
     });
   }
 
   public async update(obj: Resource<T, S, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     setSavedFromUIAnnotation(obj.metadata);
     const url = `${this.url}/${obj.metadata.name}`;
+    const { requestOptions, ...queryParams } = params ?? {};
+    const requestParams = Object.keys(queryParams).length ? queryParams : undefined;
+    const backendOptions = cleanRequestOptions(requestOptions);
     return getBackendSrv().put<Resource<T, S, K>>(url, obj, {
-      params,
+      ...backendOptions,
+      params: requestParams,
     });
   }
 
@@ -273,6 +281,14 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       };
     });
   }
+}
+
+function cleanRequestOptions(requestOptions?: ResourceClientWriteParams['requestOptions']) {
+  if (!requestOptions) {
+    return undefined;
+  }
+
+  return Object.fromEntries(Object.entries(requestOptions).filter(([, value]) => value !== undefined));
 }
 
 // add the origin annotations so we know what was set from the UI

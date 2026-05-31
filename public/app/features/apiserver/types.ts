@@ -10,6 +10,8 @@
 
 import { type Observable } from 'rxjs';
 
+import { type BackendSrvRequest } from '@grafana/runtime';
+
 /** The object type and version */
 export interface TypeMeta<K = string> {
   apiVersion: string;
@@ -253,6 +255,7 @@ export interface ResourceEvent<T = object, S = object, K = string> {
 export type ResourceClientWriteParams = {
   dryRun?: 'All';
   fieldValidation?: 'Ignore' | 'Warn' | 'Strict';
+  requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>;
 };
 
 export interface ResourceClient<T = object, S = object, K = string> {
