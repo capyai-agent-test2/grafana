@@ -4,6 +4,7 @@ import { behaviors, sceneGraph, type VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
+import { areKeyboardShortcutsDisabled } from 'app/core/services/keyboardShortcuts';
 import { InspectTab } from 'app/features/inspector/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -23,6 +24,10 @@ import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
+  if (areKeyboardShortcutsDisabled(locationService.getSearchObject())) {
+    return () => {};
+  }
+
   const keybindings = new KeybindingSet();
   let vizPanelPathId: string | null = null;
 

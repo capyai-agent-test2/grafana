@@ -15,6 +15,14 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 jest.mock('app/core/services/KeybindingSet');
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  locationService: {
+    getSearchObject: jest.fn(() => ({})),
+    partial: jest.fn(),
+    push: jest.fn(),
+  },
+}));
 const mockOnRefresh = jest.fn();
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
@@ -33,6 +41,8 @@ describe('setupKeyboardShortcuts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnRefresh.mockClear();
+    const { locationService } = jest.requireMock('@grafana/runtime');
+    locationService.getSearchObject.mockReturnValue({});
 
     // Mock KeybindingSet
     mockKeybindingSet = jest.mocked(new KeybindingSet());
@@ -70,6 +80,18 @@ describe('setupKeyboardShortcuts', () => {
     // Call cleanup function
     cleanup();
     expect(mockKeybindingSet.removeAll).toHaveBeenCalled();
+  });
+
+  it('should not setup keyboard shortcuts when disabled by URL', () => {
+    const { locationService } = jest.requireMock('@grafana/runtime');
+    locationService.getSearchObject.mockReturnValue({ disableShortcuts: true });
+    jest.clearAllMocks();
+
+    const cleanup = setupKeyboardShortcuts(mockScene);
+
+    expect(KeybindingSet).not.toHaveBeenCalled();
+    expect(appEvents.subscribe).not.toHaveBeenCalled();
+    expect(typeof cleanup).toBe('function');
   });
 
   describe('mod+o shortcut (toggle shared crosshair)', () => {

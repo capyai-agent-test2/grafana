@@ -24,6 +24,7 @@ import { HelpModal } from '../components/help/HelpModal';
 import { type RouteDescriptor } from '../navigation/types';
 import { contextSrv } from '../services/context_srv';
 
+import { areKeyboardShortcutsDisabled } from './keyboardShortcuts';
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
 
@@ -43,6 +44,10 @@ export class KeybindingSrv {
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     mousetrap.reset();
+
+    if (areKeyboardShortcutsDisabled(this.locationService.getSearchObject())) {
+      return;
+    }
 
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
@@ -265,6 +270,10 @@ export class KeybindingSrv {
   }
 
   setupDashboardBindings(dashboard: DashboardModel) {
+    if (areKeyboardShortcutsDisabled(this.locationService.getSearchObject())) {
+      return;
+    }
+
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       dashboard.events.publish(new LegacyGraphHoverClearEvent());
