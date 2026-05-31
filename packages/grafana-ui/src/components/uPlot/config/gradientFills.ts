@@ -96,14 +96,15 @@ type ScaleValueStops = ValueStop[];
 
 export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValueStops, discrete = false) {
   let scale = u.scales[scaleKey];
+  const sortedScaleStops = [...scaleStops].sort((a, b) => a[0] - b[0]);
 
   // we want the stop below or at the scaleMax
   // and the stop below or at the scaleMin, else the stop above scaleMin
   let minStopIdx: number | null = null;
   let maxStopIdx: number | null = null;
 
-  for (let i = 0; i < scaleStops.length; i++) {
-    let stopVal = scaleStops[i][0];
+  for (let i = 0; i < sortedScaleStops.length; i++) {
+    let stopVal = sortedScaleStops[i][0];
 
     if (stopVal <= scale.min! || minStopIdx == null) {
       minStopIdx = i;
@@ -117,11 +118,11 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
   }
 
   if (minStopIdx === maxStopIdx) {
-    return scaleStops[minStopIdx!][1];
+    return sortedScaleStops[minStopIdx!][1];
   }
 
-  let minStopVal = scaleStops[minStopIdx!][0];
-  let maxStopVal = scaleStops[maxStopIdx!][0];
+  let minStopVal = sortedScaleStops[minStopIdx!][0];
+  let maxStopVal = sortedScaleStops[maxStopIdx!][0];
 
   if (minStopVal === -Infinity) {
     minStopVal = scale.min!;
@@ -137,7 +138,7 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
   let range = minStopPos - maxStopPos;
 
   if (range === 0) {
-    return scaleStops[maxStopIdx!][1];
+    return sortedScaleStops[maxStopIdx!][1];
   }
 
   let x0, y0, x1, y1;
@@ -159,12 +160,13 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
   let prevColor: string;
 
   for (let i = minStopIdx!; i <= maxStopIdx!; i++) {
-    let s = scaleStops[i];
+    let s = sortedScaleStops[i];
 
     let stopPos =
       i === minStopIdx ? minStopPos : i === maxStopIdx ? maxStopPos : Math.round(u.valToPos(s[0], scaleKey, true));
 
     let pct = (minStopPos - stopPos) / range;
+    pct = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : 0;
 
     if (discrete && i > minStopIdx!) {
       grd.addColorStop(pct, prevColor!);
