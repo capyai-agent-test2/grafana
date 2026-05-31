@@ -317,7 +317,7 @@ function vizPanelDataToPanel(
       }
       return query;
     });
-    panel.maxDataPoints = queryRunner.state.maxDataPoints;
+    Reflect.set(panel, 'maxDataPoints', queryRunner.state.maxDataPoints);
     // Only set panel-level datasource if explicitly specified
     if (queryRunner.state.datasource) {
       panel.datasource = queryRunner.state.datasource;

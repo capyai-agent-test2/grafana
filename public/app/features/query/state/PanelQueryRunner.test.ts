@@ -12,6 +12,7 @@ import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
+import { type MaxDataPoints } from '../utils/relativeMaxDataPoints';
 
 import {
   createDashboardQueryRunner,
@@ -75,7 +76,7 @@ interface ScenarioContext {
   setup: (fn: () => void) => void;
 
   // Options used in setup
-  maxDataPoints?: number | null;
+  maxDataPoints?: MaxDataPoints | null;
   dsInterval?: string;
   minInterval?: string;
   scopedVars: grafanaData.ScopedVars;

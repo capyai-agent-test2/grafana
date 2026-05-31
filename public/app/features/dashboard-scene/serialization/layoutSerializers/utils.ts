@@ -24,6 +24,8 @@ import {
   type DataQueryKind,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { getAbsoluteMaxDataPoints, setMaxDataPoints } from 'app/features/query/utils/relativeMaxDataPoints';
+import { supportRelativeMaxDataPointsInScenes } from 'app/features/query/utils/relativeMaxDataPointsScenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -180,6 +182,8 @@ export function createPanelDataProvider(
   panelKind: PanelKind,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {
+  supportRelativeMaxDataPointsInScenes();
+
   const panel = panelKind.spec;
 
   const targets =
@@ -203,19 +207,24 @@ export function createPanelDataProvider(
   let dataProvider: SceneDataProvider | undefined = undefined;
   const datasource = getPanelDataSource(panelKind);
 
-  dataProvider = new SceneQueryRunner({
-    datasource,
-    queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
-    maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
-    maxDataPointsFromWidth: true,
-    cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-    queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-    minInterval: panel.data.spec.queryOptions.interval ?? undefined,
-    dataLayerFilter: {
-      panelId: panel.id,
-    },
-    $behaviors: [new DashboardDatasourceBehaviour({})],
-  });
+  dataProvider = new SceneQueryRunner(
+    setMaxDataPoints(
+      {
+        datasource,
+        queries: queriesWithUniqueRefIds.map(panelQueryKindToSceneQuery),
+        maxDataPoints: getAbsoluteMaxDataPoints(panel.data.spec.queryOptions.maxDataPoints),
+        maxDataPointsFromWidth: true,
+        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+        minInterval: panel.data.spec.queryOptions.interval ?? undefined,
+        dataLayerFilter: {
+          panelId: panel.id,
+        },
+        $behaviors: [new DashboardDatasourceBehaviour({})],
+      },
+      panel.data.spec.queryOptions.maxDataPoints
+    )
+  );
 
   // Wrap inner data provider in a data transformer
   return new SceneDataTransformer({

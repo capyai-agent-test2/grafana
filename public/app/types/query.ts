@@ -1,9 +1,11 @@
 import { type DataQuery, type DataSourceRef } from '@grafana/data';
 
+import { type MaxDataPoints } from '../features/query/utils/relativeMaxDataPoints';
+
 export interface QueryGroupOptions {
   queries: DataQuery[];
   dataSource: QueryGroupDataSource;
-  maxDataPoints?: number | null;
+  maxDataPoints?: MaxDataPoints | null;
   minInterval?: string | null;
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;

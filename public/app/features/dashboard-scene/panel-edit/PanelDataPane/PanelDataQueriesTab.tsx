@@ -30,6 +30,7 @@ import { GroupActionComponents } from 'app/features/query/components/QueryAction
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
+import { setMaxDataPoints } from 'app/features/query/utils/relativeMaxDataPoints';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type QueryGroupOptions } from 'app/types/query';
@@ -238,7 +239,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     const panelStateUpdate: Partial<VizPanel['state']> = {};
 
     if (options.maxDataPoints !== dataObj.state.maxDataPoints) {
-      dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
+      setMaxDataPoints(dataObjStateUpdate, options.maxDataPoints);
     }
 
     if (options.minInterval !== dataObj.state.minInterval) {

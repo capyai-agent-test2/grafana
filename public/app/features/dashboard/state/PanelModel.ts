@@ -34,6 +34,7 @@ import {
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { getMaxDataPointsFromWidth, type MaxDataPoints } from '../../query/utils/relativeMaxDataPoints';
 import { type TimeOverrideResult } from '../utils/panel';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
@@ -176,7 +177,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   };
   declare fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number | null;
+  maxDataPoints?: MaxDataPoints | null;
   interval?: string | null;
   description?: string;
   links?: DataLink[];
@@ -377,7 +378,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
-      maxDataPoints: this.maxDataPoints || Math.floor(width),
+      maxDataPoints: getMaxDataPointsFromWidth(this.maxDataPoints, width),
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
