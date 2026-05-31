@@ -8,6 +8,7 @@ import {
   getIntrinsicTags,
   getTagsByScope,
   getUnscopedTags,
+  isNilFilterValue,
 } from './SearchTraceQLEditor/utils';
 import { DEFAULT_TIME_RANGE_FOR_TAGS } from './configuration/TagsTimeRangeSettings';
 import { type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -218,7 +219,12 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
 
     return filters
-      .filter((f) => f.tag && f.operator && (Array.isArray(f.value) ? f.value.length : f.value !== undefined))
+      .filter(
+        (f) =>
+          f.tag &&
+          f.operator &&
+          (Array.isArray(f.value) ? f.value.length : f.value !== undefined && (f.value !== '' || isNilFilterValue(f)))
+      )
       .map((f) => filterToQuerySection(f, filters, this));
   }
 

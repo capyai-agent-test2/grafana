@@ -148,6 +148,14 @@ describe('Language_provider', () => {
       ).toBe('{.footag=nil}');
     });
 
+    it('a non-equality field with an empty value', () => {
+      expect(
+        lp.generateQueryFromFilters({
+          traceqlFilters: [{ id: 'foo', tag: 'footag', value: '', operator: '>', valueType: 'integer' }],
+        })
+      ).toBe('{}');
+    });
+
     it('a field with valueType as integer', () => {
       expect(
         lp.generateQueryFromFilters({
