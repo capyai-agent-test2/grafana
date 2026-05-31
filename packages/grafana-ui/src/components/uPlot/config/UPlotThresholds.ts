@@ -15,6 +15,7 @@ export interface UPlotThresholdOptions {
   hardMax?: number | null;
   softMin?: number | null;
   softMax?: number | null;
+  softSpan?: number | null;
 }
 
 export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
@@ -97,7 +98,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     ctx.fillRect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
   }
 
-  const { scaleKey, thresholds, theme, config, hardMin, hardMax, softMin, softMax } = options;
+  const { scaleKey, thresholds, theme, config, hardMin, hardMax, softMin, softMax, softSpan } = options;
 
   return (u: uPlot) => {
     const ctx = u.ctx;
@@ -111,7 +112,7 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     let { steps, mode } = thresholds;
 
     if (mode === ThresholdsMode.Percentage) {
-      let [min, max] = getGradientRange(u, scaleKey, hardMin, hardMax, softMin, softMax);
+      let [min, max] = getGradientRange(u, scaleKey, hardMin, hardMax, softMin, softMax, softSpan);
       let range = max - min;
 
       steps = steps.map((step) => ({

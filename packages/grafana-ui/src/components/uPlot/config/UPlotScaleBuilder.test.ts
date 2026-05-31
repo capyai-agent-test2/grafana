@@ -223,6 +223,12 @@ describe('UPlotScaleBuilder', () => {
       }).getConfig()['y'].range as uPlot.Range.Function;
       expect(rangeFn(mockUPlot('y', 3), 100, 102, 'y')).toEqual([100, 1000]);
     });
+
+    it('does not exceed configured hard bounds', () => {
+      const rangeFn = new UPlotScaleBuilder({ ...baseProps, max: 105, softMax: 110, softSpan: 10 }).getConfig()['y']
+        .range as uPlot.Range.Function;
+      expect(rangeFn(mockUPlot('y', 1), 100, 102, 'y')).toEqual([96, 105]);
+    });
   });
 
   describe('getConfig range - decimals=0', () => {

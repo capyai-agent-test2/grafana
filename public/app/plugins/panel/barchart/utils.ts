@@ -379,6 +379,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
           hardMax: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          softSpan: customConfig.axisSoftSpan,
         });
       }
     }
@@ -399,6 +400,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       hardMax: field.config.max,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
+      softSpan: customConfig.axisSoftSpan,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here

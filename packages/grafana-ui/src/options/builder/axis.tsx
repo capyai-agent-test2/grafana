@@ -127,6 +127,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       settings: {
         placeholder: t('grafana-ui.builder.axis.placeholder-soft-span', 'Auto'),
       },
+      showIf: (c) => c.scaleDistribution?.type !== ScaleDistribution.Log,
     });
 }
 

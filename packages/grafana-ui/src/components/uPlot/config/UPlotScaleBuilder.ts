@@ -191,6 +191,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           const center = dataMin! + dataSpan / 2;
 
           minMax = [center - span / 2, center + span / 2];
+
+          if (hardMin != null) {
+            minMax[0] = Math.max(minMax[0]!, hardMin);
+          }
+
+          if (hardMax != null) {
+            minMax[1] = Math.min(minMax[1]!, hardMax);
+          }
         } else if (scale.distr === 4) {
           minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, true);
         } else {
