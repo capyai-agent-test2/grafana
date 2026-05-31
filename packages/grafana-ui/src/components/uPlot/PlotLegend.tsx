@@ -17,6 +17,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 import { usePanelContext } from '../PanelChrome';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type AdHocFilterItem } from '../Table/types';
 import { Toggletip } from '../Toggletip/Toggletip';
 import { VizLayout, type VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { FacetedLabelsFilter } from '../VizLegend/FacetedLabelsFilter';
@@ -71,7 +72,7 @@ export const PlotLegend = memo(function PlotLegend({
 }: PlotLegendProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPlotLegendStyles);
-  const { onToggleSeriesVisibility } = usePanelContext();
+  const { getFiltersBasedOnGrouping, onAddAdHocFilters, onToggleSeriesVisibility } = usePanelContext();
 
   const [selectedLabels, setSelectedLabels] = useState<Record<string, string[]>>({});
 
@@ -103,6 +104,17 @@ export const PlotLegend = memo(function PlotLegend({
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
 
+      let adHocFilters: AdHocFilterItem[] = [];
+      if (field.labels && field.config.filterable && getFiltersBasedOnGrouping && onAddAdHocFilters) {
+        adHocFilters = getFiltersBasedOnGrouping(
+          Object.entries(field.labels).map(([key, value]) => ({
+            key,
+            operator: FILTER_FOR_OPERATOR,
+            value,
+          }))
+        );
+      }
+
       return {
         disabled: !(seriesConfig.show ?? true),
         fieldIndex,
@@ -112,6 +124,10 @@ export const PlotLegend = memo(function PlotLegend({
         getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
         getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
         lineStyle: seriesConfig.lineStyle,
+        onFilterFor: adHocFilters.length ? () => onAddAdHocFilters?.(adHocFilters) : undefined,
+        onFilterOut: adHocFilters.length
+          ? () => onAddAdHocFilters?.(adHocFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR })))
+          : undefined,
       };
     })
     .filter((i): i is VizLegendItem => i !== undefined);

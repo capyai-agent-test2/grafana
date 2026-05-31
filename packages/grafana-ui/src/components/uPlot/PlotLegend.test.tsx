@@ -6,6 +6,7 @@ import { LegendDisplayMode } from '@grafana/schema';
 
 import { PanelContextProvider } from '../PanelChrome/PanelContext';
 import { SeriesVisibilityChangeMode } from '../PanelChrome/types';
+import { type AdHocFilterItem } from '../Table/types';
 
 import { PlotLegend } from './PlotLegend';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -31,8 +32,8 @@ const defaultProps: React.ComponentProps<typeof PlotLegend> = {
       length: 2,
       fields: [
         { name: 'time', type: FieldType.time, values: [1, 2], config: {} },
-        { name: 'cpu', type: FieldType.number, values: [1, 2], config: {}, labels: { host: 'a' } },
-        { name: 'mem', type: FieldType.number, values: [1, 2], config: {}, labels: { host: 'b' } },
+        { name: 'cpu', type: FieldType.number, values: [1, 2], config: { filterable: true }, labels: { host: 'a' } },
+        { name: 'mem', type: FieldType.number, values: [1, 2], config: { filterable: true }, labels: { host: 'b' } },
       ],
     },
   ],
@@ -46,13 +47,23 @@ const defaultProps: React.ComponentProps<typeof PlotLegend> = {
 
 function renderWithContext(overrides: Partial<React.ComponentProps<typeof PlotLegend>> = {}) {
   const toggle = jest.fn();
+  const getFiltersBasedOnGrouping = jest.fn((filters: AdHocFilterItem[]) => filters);
+  const onAddAdHocFilters = jest.fn();
   const onPinnedToSidebarChange = jest.fn();
   return {
     toggle,
+    getFiltersBasedOnGrouping,
+    onAddAdHocFilters,
     onPinnedToSidebarChange,
     ...render(
       <PanelContextProvider
-        value={{ eventsScope: 'test', eventBus: { publish: jest.fn() } as never, onToggleSeriesVisibility: toggle }}
+        value={{
+          eventsScope: 'test',
+          eventBus: { publish: jest.fn() } as never,
+          getFiltersBasedOnGrouping,
+          onAddAdHocFilters,
+          onToggleSeriesVisibility: toggle,
+        }}
       >
         <PlotLegend {...defaultProps} onPinnedToSidebarChange={onPinnedToSidebarChange} {...overrides} />
       </PanelContextProvider>
@@ -105,5 +116,24 @@ describe('PlotLegend faceted filter', () => {
     await userEvent.click(screen.getByLabelText('Unpin'));
 
     expect(onPinnedToSidebarChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('PlotLegend ad hoc filtering', () => {
+  it('adds filter actions for filterable labeled series', async () => {
+    const { onAddAdHocFilters } = renderWithContext();
+
+    await userEvent.click(screen.getAllByLabelText('Filter for value')[0]);
+    expect(onAddAdHocFilters).toHaveBeenCalledWith([{ key: 'host', operator: '=', value: 'a' }]);
+
+    await userEvent.click(screen.getAllByLabelText('Filter out value')[0]);
+    expect(onAddAdHocFilters).toHaveBeenCalledWith([{ key: 'host', operator: '!=', value: 'a' }]);
+  });
+
+  it('does not render filter actions without dashboard ad hoc callbacks', () => {
+    render(<PlotLegend {...defaultProps} />);
+
+    expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
   });
 });

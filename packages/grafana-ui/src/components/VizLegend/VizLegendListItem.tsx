@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { IconButton } from '../IconButton/IconButton';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendStatsList } from './VizLegendStatsList';
@@ -101,6 +102,23 @@ export const VizLegendListItem = <T = unknown,>({
       >
         {item.label}
       </button>
+
+      {!readonly && item.onFilterFor && (
+        <IconButton
+          name="search-plus"
+          size="sm"
+          onClick={item.onFilterFor}
+          tooltip={t('grafana-ui.viz-legend.filter-on', 'Filter for value')}
+        />
+      )}
+      {!readonly && item.onFilterOut && (
+        <IconButton
+          name="search-minus"
+          size="sm"
+          onClick={item.onFilterOut}
+          tooltip={t('grafana-ui.viz-legend.filter-out', 'Filter out value')}
+        />
+      )}
 
       {item.getDisplayValues && <VizLegendStatsList stats={item.getDisplayValues()} />}
     </div>

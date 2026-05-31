@@ -3,10 +3,11 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/ThemeContext';
 import { hoverColor } from '../../themes/mixins';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { IconButton } from '../IconButton/IconButton';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { type VizLegendItem } from './types';
@@ -97,6 +98,22 @@ export const LegendTableItem = ({
               </span>
             )}
           </button>
+          {!readonly && item.onFilterFor && (
+            <IconButton
+              name="search-plus"
+              size="sm"
+              onClick={item.onFilterFor}
+              tooltip={t('grafana-ui.viz-legend.filter-on', 'Filter for value')}
+            />
+          )}
+          {!readonly && item.onFilterOut && (
+            <IconButton
+              name="search-minus"
+              size="sm"
+              onClick={item.onFilterOut}
+              tooltip={t('grafana-ui.viz-legend.filter-out', 'Filter out value')}
+            />
+          )}
         </span>
       </td>
       {item.getDisplayValues &&
