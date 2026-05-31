@@ -223,7 +223,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
         (f) =>
           f.tag &&
           f.operator &&
-          (Array.isArray(f.value) ? f.value.length : f.value !== undefined && (f.value !== '' || isNilFilterValue(f)))
+          (Array.isArray(f.value)
+            ? f.value.some((value) => value !== '') || isNilFilterValue(f)
+            : f.value !== undefined && (f.value !== '' || isNilFilterValue(f)))
       )
       .map((f) => filterToQuerySection(f, filters, this));
   }

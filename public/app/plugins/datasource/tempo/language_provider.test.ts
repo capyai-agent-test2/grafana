@@ -154,6 +154,11 @@ describe('Language_provider', () => {
           traceqlFilters: [{ id: 'foo', tag: 'footag', value: '', operator: '>', valueType: 'integer' }],
         })
       ).toBe('{}');
+      expect(
+        lp.generateQueryFromFilters({
+          traceqlFilters: [{ id: 'foo', tag: 'footag', value: [''], operator: '!=', valueType: 'string' }],
+        })
+      ).toBe('{}');
     });
 
     it('a field with valueType as integer', () => {
