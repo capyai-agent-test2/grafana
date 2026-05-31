@@ -138,6 +138,7 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
     return inputs;
   }
 
+  const datasourceVariableNames = getDatasourceVariableNames(dashboard);
   const dashboardInputs = dashboard.__inputs;
   if (Array.isArray(dashboardInputs)) {
     for (const input of dashboardInputs) {
@@ -157,7 +158,7 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
 
       if (input.type === InputType.DataSource) {
         // Expression datasources do not need user input
-        if (inputModel.pluginId !== ExpressionDatasourceRef.type) {
+        if (inputModel.pluginId !== ExpressionDatasourceRef.type && !datasourceVariableNames.has(inputModel.name)) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           (inputModel as DataSourceInput).description = getDataSourceDescription(input);
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -176,6 +177,16 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
   inputs.libraryPanels = await getLibraryPanelInputs(elements ? { __elements: elements } : undefined);
 
   return inputs;
+}
+
+function getDatasourceVariableNames(dashboard: { templating?: Dashboard['templating'] }): Set<string> {
+  const names = new Set<string>();
+  for (const variable of dashboard.templating?.list ?? []) {
+    if (isRecord(variable) && variable.type === 'datasource' && typeof variable.name === 'string') {
+      names.add(variable.name);
+    }
+  }
+  return names;
 }
 
 /**
@@ -424,16 +435,17 @@ export function applyV1Inputs(
   inputs: { dataSources: DataSourceInput[]; constants?: DashboardInput[] },
   form: ImportDashboardDTO
 ): Dashboard {
+  const datasourceVariableNames = getDatasourceVariableNames(dashboard);
   const annotations = (dashboard.annotations?.list ?? []).map((annotation: AnnotationQuery) => {
-    return processAnnotation(annotation, inputs, form);
+    return processAnnotation(annotation, inputs, form, datasourceVariableNames);
   });
 
   const panels = (dashboard.panels ?? []).map((panel: Panel) => {
-    return processPanel(panel, inputs, form);
+    return processPanel(panel, inputs, form, datasourceVariableNames);
   });
 
   const variables = (dashboard.templating?.list ?? []).map((variable: VariableModel) => {
-    return processVariable(variable, inputs, form);
+    return processVariable(variable, inputs, form, datasourceVariableNames);
   });
 
   return {
@@ -712,16 +724,24 @@ function extractDatasourcePlaceholder(datasource: unknown): string | undefined {
   return undefined;
 }
 
+function getPlaceholderName(placeholder: string): string {
+  return placeholder.replace(/\$\{(.*)\}/, '$1');
+}
+
 /**
  * Resolve a datasource placeholder to the user-selected datasource.
  */
 function resolveDatasource(
   datasource: unknown,
   datasourceInputs: DataSourceInput[],
-  userDsInputs: DataSourceInstanceSettings[]
+  userDsInputs: DataSourceInstanceSettings[],
+  preservedDatasourceVariables = new Set<string>()
 ): { uid: string; type: string } | undefined {
   const placeholder = extractDatasourcePlaceholder(datasource);
   if (!placeholder) {
+    return undefined;
+  }
+  if (preservedDatasourceVariables.has(getPlaceholderName(placeholder))) {
     return undefined;
   }
   const userInput = checkUserInputMatch(placeholder, datasourceInputs, userDsInputs);
@@ -736,7 +756,7 @@ function checkUserInputMatch(
   datasourceInputs: DataSourceInput[],
   userDsInputs: DataSourceInstanceSettings[]
 ) {
-  const dsName = templateizedUid.replace(/\$\{(.*)\}/, '$1');
+  const dsName = getPlaceholderName(templateizedUid);
   const input = datasourceInputs?.find((ds) => ds.name === dsName);
   const userInput = input && userDsInputs.find((ds) => ds.type === input.pluginId);
   return userInput;
@@ -745,9 +765,15 @@ function checkUserInputMatch(
 function processAnnotation(
   annotation: AnnotationQuery,
   inputs: { dataSources: DataSourceInput[] },
-  form: ImportDashboardDTO
+  form: ImportDashboardDTO,
+  preservedDatasourceVariables: Set<string>
 ): AnnotationQuery {
-  const resolved = resolveDatasource(annotation.datasource, inputs.dataSources, form.dataSources);
+  const resolved = resolveDatasource(
+    annotation.datasource,
+    inputs.dataSources,
+    form.dataSources,
+    preservedDatasourceVariables
+  );
   if (resolved) {
     return { ...annotation, datasource: resolved };
   }
@@ -757,20 +783,31 @@ function processAnnotation(
 function processPanel(
   panel: Panel | RowPanel,
   inputs: { dataSources: DataSourceInput[] },
-  form: ImportDashboardDTO
+  form: ImportDashboardDTO,
+  preservedDatasourceVariables: Set<string>
 ): Panel | RowPanel {
-  const resolvedPanelDs = resolveDatasource(panel.datasource, inputs.dataSources, form.dataSources);
+  const resolvedPanelDs = resolveDatasource(
+    panel.datasource,
+    inputs.dataSources,
+    form.dataSources,
+    preservedDatasourceVariables
+  );
 
   return {
     ...panel,
     ...(resolvedPanelDs && { datasource: resolvedPanelDs }),
     ...('panels' in panel && {
-      panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
+      panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form, preservedDatasourceVariables)),
     }),
     ...('targets' in panel &&
       panel.targets && {
         targets: panel.targets.map((target) => {
-          const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+          const resolved = resolveDatasource(
+            target.datasource,
+            inputs.dataSources,
+            form.dataSources,
+            preservedDatasourceVariables
+          );
           return resolved ? { ...target, datasource: resolved } : target;
         }),
       }),
@@ -780,7 +817,8 @@ function processPanel(
 function processVariable(
   variable: VariableModel,
   inputs: { dataSources: DataSourceInput[]; constants?: DashboardInput[] },
-  form: ImportDashboardDTO
+  form: ImportDashboardDTO,
+  preservedDatasourceVariables: Set<string>
 ) {
   const variableType = variable.type;
 
@@ -806,7 +844,12 @@ function processVariable(
   }
 
   if (variableType === 'query' && 'datasource' in variable) {
-    const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
+    const resolved = resolveDatasource(
+      variable.datasource,
+      inputs.dataSources,
+      form.dataSources,
+      preservedDatasourceVariables
+    );
     if (resolved) {
       return { ...variable, datasource: resolved };
     }
@@ -815,6 +858,9 @@ function processVariable(
   if (variableType === 'datasource' && 'current' in variable && isRecord(variable.current)) {
     const currentValue = variable.current.value;
     if (currentValue && String(currentValue).startsWith('$')) {
+      if (preservedDatasourceVariables.has(getPlaceholderName(String(currentValue)))) {
+        return variable;
+      }
       const userInput = checkUserInputMatch(String(currentValue), inputs.dataSources, form.dataSources);
       if (userInput) {
         const selected = typeof variable.current.selected === 'boolean' ? variable.current.selected : undefined;
