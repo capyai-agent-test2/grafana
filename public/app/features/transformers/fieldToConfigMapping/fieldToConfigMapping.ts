@@ -1,7 +1,9 @@
 import { isArray } from 'lodash';
+import tinycolor from 'tinycolor2';
 
 import {
   anyToNumber,
+  colorManipulator,
   type DataFrame,
   FieldColorModeId,
   type FieldConfig,
@@ -153,7 +155,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'color',
-    processor: (value) => ({ fixedColor: value, mode: FieldColorModeId.Fixed }),
+    processor: toFixedColorConfigOrUndefined,
   },
   {
     key: 'threshold1',
@@ -270,6 +272,72 @@ function toNumericOrUndefined(value: unknown) {
   }
 
   return numeric;
+}
+
+const grafanaColorNames = new Set([
+  'super-light-red',
+  'light-red',
+  'red',
+  'semi-dark-red',
+  'dark-red',
+  'super-light-orange',
+  'light-orange',
+  'orange',
+  'semi-dark-orange',
+  'dark-orange',
+  'super-light-yellow',
+  'light-yellow',
+  'yellow',
+  'semi-dark-yellow',
+  'dark-yellow',
+  'super-light-green',
+  'light-green',
+  'green',
+  'semi-dark-green',
+  'dark-green',
+  'super-light-blue',
+  'light-blue',
+  'blue',
+  'semi-dark-blue',
+  'dark-blue',
+  'super-light-purple',
+  'light-purple',
+  'purple',
+  'semi-dark-purple',
+  'dark-purple',
+  'transparent',
+  'panel-bg',
+  'text',
+]);
+
+function toFixedColorConfigOrUndefined(value: unknown) {
+  if (typeof value !== 'string') {
+    return;
+  }
+
+  const color = value.trim();
+  if (!isValidFixedColor(color)) {
+    return;
+  }
+
+  return { fixedColor: color, mode: FieldColorModeId.Fixed };
+}
+
+function isValidFixedColor(color: string) {
+  if (grafanaColorNames.has(color) || tinycolor(color).isValid()) {
+    return true;
+  }
+
+  if (!color.includes('(')) {
+    return false;
+  }
+
+  try {
+    colorManipulator.decomposeColor(color);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getConfigHandlerKeyForField(fieldName: string, mappings: FieldToConfigMapping[]) {
