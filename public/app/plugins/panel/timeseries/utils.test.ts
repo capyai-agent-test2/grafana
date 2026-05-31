@@ -497,7 +497,7 @@ describe('setClassicPaletteIdxs', () => {
     expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
   });
 
-  it('falls back to sequential indices when compare frame has mismatched field count', () => {
+  it('matches compare fields by name and labels when frame field counts differ', () => {
     const mainFrame = toDataFrame({
       refId: 'A',
       fields: [
@@ -518,7 +518,7 @@ describe('setClassicPaletteIdxs', () => {
     setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
     expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
     expect(mainFrame.fields[2].state?.seriesIndex).toBe(1);
-    expect(compareFrame.fields[1].state?.seriesIndex).toBe(2);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
   });
 
   it('falls back to sequential indices for compare frame without refId', () => {
@@ -572,6 +572,33 @@ describe('setClassicPaletteIdxs', () => {
     expect(main2.fields[1].state?.seriesIndex).toBe(1);
     expect(compare1.fields[1].state?.seriesIndex).toBe(0);
     expect(compare2.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('matches compare fields to main fields by labels when high-cardinality series differ between time ranges', () => {
+    const mainFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', labels: { pod: 'pod-a' }, type: FieldType.number, values: [10, 20] },
+        { name: 'value', labels: { pod: 'pod-b' }, type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', labels: { pod: 'pod-b' }, type: FieldType.number, values: [25, 35] },
+        { name: 'value', labels: { pod: 'pod-c' }, type: FieldType.number, values: [45, 55] },
+      ],
+    });
+
+    setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
+
+    expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
+    expect(mainFrame.fields[2].state?.seriesIndex).toBe(1);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(1);
+    expect(compareFrame.fields[2].state?.seriesIndex).toBe(2);
   });
 
   it('does not assign seriesIndex to string or time fields', () => {
