@@ -1,4 +1,5 @@
 import { act, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -59,6 +60,24 @@ describe('DashboardLinksControls', () => {
     //expect getAnchorInfo to be called twice, once for each link, after time range change
     expect(mockGetAnchorInfo).toHaveBeenCalledTimes(2);
   });
+
+  it('renders external links marked as dropdown in one menu', async () => {
+    const user = userEvent.setup();
+    const { controls } = buildTestScene([
+      { title: 'Link 1', asDropdown: true },
+      { title: 'Link 2', asDropdown: true },
+    ]);
+    const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
+
+    expect(renderer.getAllByTestId(selectors.components.DashboardLinks.container)).toHaveLength(1);
+
+    await user.click(renderer.getByTestId(selectors.components.DashboardLinks.dropDown));
+
+    const links = await renderer.findAllByTestId(selectors.components.DashboardLinks.link);
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveTextContent('Link 1');
+    expect(links[1]).toHaveTextContent('Link 2');
+  });
 });
 
 function renderInGrafanaContext(child: ReactNode) {
@@ -66,7 +85,10 @@ function renderInGrafanaContext(child: ReactNode) {
   return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
 }
 
-function buildTestScene(): { controls: DashboardControls; dashboard: DashboardScene } {
+function buildTestScene(linkOverrides: Array<Partial<{ title: string; asDropdown: boolean }>> = []): {
+  controls: DashboardControls;
+  dashboard: DashboardScene;
+} {
   const dashboard = new DashboardScene({
     uid: 'A',
     links: [
@@ -81,6 +103,7 @@ function buildTestScene(): { controls: DashboardControls; dashboard: DashboardSc
         tags: [],
         targetBlank: false,
         tooltip: 'Link 1',
+        ...linkOverrides[0],
       },
       {
         title: 'Link 2',
@@ -93,6 +116,7 @@ function buildTestScene(): { controls: DashboardControls; dashboard: DashboardSc
         tags: [],
         targetBlank: false,
         tooltip: 'Link 2',
+        ...linkOverrides[1],
       },
     ],
     controls: new DashboardControls({}),

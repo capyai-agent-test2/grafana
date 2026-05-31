@@ -147,12 +147,6 @@ function useEditPaneOptions(
         new OptionsPaneItemDescriptor({
           title: t('dashboard-scene.link-options.show-as-dropdown', 'Show as dropdown'),
           id: asDropdownId,
-          useShowIf: () => {
-            const dashboard = linkEdit.state.dashboardRef.resolve();
-            const { links } = dashboard.useState();
-            const link = (links ?? [])[linkEdit.state.linkIndex];
-            return link?.type === 'dashboards';
-          },
           render: (d) => <LinkBooleanSwitch linkEdit={linkEdit} id={d.props.id} prop="asDropdown" />,
         })
       )

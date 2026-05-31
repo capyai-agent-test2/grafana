@@ -10,7 +10,11 @@ import { LINK_ICON_MAP } from 'app/features/dashboard-scene/settings/links/utils
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { type DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
+import {
+  DashboardExternalLinksDropdown,
+  DashboardLinkButton,
+  DashboardLinksDashboard,
+} from './DashboardLinksDashboard';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -29,36 +33,46 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
     return null;
   }
 
-  return (
-    <>
-      {links.map((link: DashboardLink, index: number) => {
-        const linkInfo = getLinkSrv().getAnchorInfo(link);
-        const key = `${link.title}-$${index}`;
+  const dropdownLinks = links.filter((link) => link.type === 'link' && link.asDropdown);
+  let hasRenderedDropdown = false;
 
-        if (link.type === 'dashboards') {
-          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboard.uid} />;
-        }
+  const renderedLinks = links.map((link: DashboardLink, index: number) => {
+    const linkInfo = getLinkSrv().getAnchorInfo(link);
+    const key = `${link.title}-$${index}`;
 
-        const icon = LINK_ICON_MAP[link.icon];
+    if (link.type === 'dashboards') {
+      return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboard.uid} />;
+    }
 
-        const linkElement = (
-          <DashboardLinkButton
-            href={sanitizeUrl(linkInfo.href)}
-            target={link.targetBlank ? '_blank' : undefined}
-            rel="noreferrer"
-            data-testid={selectors.components.DashboardLinks.link}
-            icon={icon}
-          >
-            {linkInfo.title}
-          </DashboardLinkButton>
-        );
+    if (link.asDropdown) {
+      if (hasRenderedDropdown) {
+        return null;
+      }
 
-        return (
-          <div key={key} data-testid={selectors.components.DashboardLinks.container}>
-            {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
-          </div>
-        );
-      })}
-    </>
-  );
+      hasRenderedDropdown = true;
+      return <DashboardExternalLinksDropdown key={key} links={dropdownLinks} />;
+    }
+
+    const icon = LINK_ICON_MAP[link.icon];
+
+    const linkElement = (
+      <DashboardLinkButton
+        href={sanitizeUrl(linkInfo.href)}
+        target={link.targetBlank ? '_blank' : undefined}
+        rel="noreferrer"
+        data-testid={selectors.components.DashboardLinks.link}
+        icon={icon}
+      >
+        {linkInfo.title}
+      </DashboardLinkButton>
+    );
+
+    return (
+      <div key={key} data-testid={selectors.components.DashboardLinks.container}>
+        {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
+      </div>
+    );
+  });
+
+  return <>{renderedLinks}</>;
 };

@@ -116,16 +116,14 @@ export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFor
         >
           <Stack direction="column" gap={2}>
             {/* Show as dropdown */}
-            {link.type === 'dashboards' && (
-              <Field noMargin>
-                <Checkbox
-                  label={t('dashboard-scene.dashboard-link-form.label-show-as-dropdown', 'Show as dropdown')}
-                  name="asDropdown"
-                  value={link.asDropdown}
-                  onChange={onChange}
-                />
-              </Field>
-            )}
+            <Field noMargin>
+              <Checkbox
+                label={t('dashboard-scene.dashboard-link-form.label-show-as-dropdown', 'Show as dropdown')}
+                name="asDropdown"
+                value={link.asDropdown}
+                onChange={onChange}
+              />
+            </Field>
 
             {/* Include time range */}
             <Field noMargin>

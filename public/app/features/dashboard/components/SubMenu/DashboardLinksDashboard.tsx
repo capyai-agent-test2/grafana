@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
 import { Dropdown, Icon, LinkButton, Button, Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { type ButtonLinkProps } from '@grafana/ui/internal';
+import { LINK_ICON_MAP } from 'app/features/dashboard-scene/settings/links/utils';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 
@@ -24,6 +25,32 @@ interface Props {
 interface DashboardLinksMenuProps {
   link: DashboardLink;
   dashboardUID?: string;
+}
+
+interface DashboardExternalLinksMenuProps {
+  links: DashboardLink[];
+}
+
+function DashboardExternalLinksMenu({ links }: DashboardExternalLinksMenuProps) {
+  return (
+    <Menu>
+      {links.map((link, index) => {
+        const linkInfo = getLinkSrv().getAnchorInfo(link);
+        const icon = LINK_ICON_MAP[link.icon];
+
+        return (
+          <Menu.Item
+            key={`external-dashlink-dropdown-item-${link.title}-${index}`}
+            icon={icon}
+            url={sanitizeUrl(linkInfo.href)}
+            target={link.targetBlank ? '_blank' : undefined}
+            label={linkInfo.title}
+            testId={selectors.components.DashboardLinks.link}
+          />
+        );
+      })}
+    </Menu>
+  );
 }
 
 function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
@@ -116,6 +143,28 @@ export const DashboardLinksDashboard = ({ link, linkInfo, dashboardUID }: Props)
     </>
   );
 };
+
+export function DashboardExternalLinksDropdown({ links }: DashboardExternalLinksMenuProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.linkContainer} data-testid={selectors.components.DashboardLinks.container}>
+      <Dropdown overlay={<DashboardExternalLinksMenu links={links} />}>
+        <DashboardLinkButton
+          data-placement="bottom"
+          data-toggle="dropdown"
+          aria-haspopup="menu"
+          fill="outline"
+          variant="secondary"
+          data-testid={selectors.components.DashboardLinks.dropDown}
+        >
+          <Icon aria-hidden name="external-link-alt" className={styles.iconMargin} />
+          <span>{t('dashboard.external-links-dropdown.title', 'Links')}</span>
+        </DashboardLinkButton>
+      </Dropdown>
+    </div>
+  );
+}
 
 const useResolvedLinks = ({ link, dashboardUID }: Pick<Props, 'link' | 'dashboardUID'>): ResolvedLinkDTO[] => {
   const { tags } = link;
