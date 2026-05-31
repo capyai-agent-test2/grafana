@@ -153,6 +153,14 @@ describe('duration', () => {
     const str = toDurationInSeconds(1, 0);
     expect(formattedValueToString(str)).toBe('1 second');
   });
+  it('seconds below millisecond precision', () => {
+    const str = toDurationInSeconds(0.0005, 0);
+    expect(formattedValueToString(str)).toBe('500 microseconds');
+  });
+  it('seconds below microsecond precision', () => {
+    const str = toDurationInSeconds(0.0000005, 0);
+    expect(formattedValueToString(str)).toBe('500 nanoseconds');
+  });
   it('minutes', () => {
     const str = toDuration(1, 0, Interval.Minute);
     expect(formattedValueToString(str)).toBe('1 minute');
