@@ -1,4 +1,11 @@
-import { toDataFrame, FieldType, ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
+import {
+  toDataFrame,
+  FieldColorModeId,
+  FieldType,
+  ReducerID,
+  DataTransformerID,
+  transformDataFrame,
+} from '@grafana/data';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
 
 import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
@@ -125,6 +132,42 @@ describe('config from data', () => {
     expect(results.length).toBe(1);
     expect(results[0].fields[1].config.displayName).toBe('first-name');
   });
+
+  it('With color mapping skips non-color values', () => {
+    const config = toDataFrame({
+      fields: [{ name: 'Color', type: FieldType.number, values: [-3] }],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Color', handlerKey: 'color' }],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results[0].fields[1].config.color).toBeUndefined();
+  });
+
+  it.each(['semi-dark-blue', 'rebeccapurple', 'color(display-p3 0 1 0)'])(
+    'With color mapping applies supported color value %s',
+    (color) => {
+      const config = toDataFrame({
+        fields: [{ name: 'Color', type: FieldType.string, values: [color] }],
+        refId: 'A',
+      });
+
+      const options: ConfigFromQueryTransformOptions = {
+        configRefId: 'A',
+        mappings: [{ fieldName: 'Color', handlerKey: 'color' }],
+      };
+
+      const results = extractConfigFromQuery(options, [config, seriesA]);
+      expect(results[0].fields[1].config.color).toEqual({
+        fixedColor: color,
+        mode: FieldColorModeId.Fixed,
+      });
+    }
+  );
 });
 
 describe('preserves frame properties', () => {
