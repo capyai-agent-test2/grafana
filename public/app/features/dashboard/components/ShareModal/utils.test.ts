@@ -3,6 +3,14 @@ import { type TimeRange } from '@grafana/data';
 import { buildParams } from './utils';
 
 describe('buildParams', () => {
+  beforeAll(() => {
+    jest.useFakeTimers({ now: new Date('2019-02-11T14:00:00Z').getTime() });
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   it.each`
     search                                         | useCurrentTimeRange | selectedTheme | panelId      | expected
     ${''}                                          | ${true}             | ${'current'}  | ${undefined} | ${'from=1000&to=2000&orgId=2'}
@@ -44,4 +52,23 @@ describe('buildParams', () => {
       expect(result.toString()).toEqual(expected);
     }
   );
+
+  it('uses fixed absolute panel time range in share params', () => {
+    const range: TimeRange = {
+      from: 1000,
+      to: 2000,
+      raw: { from: 'now-6h', to: 'now' },
+    } as unknown as TimeRange;
+    const orgId = 2;
+    const result = buildParams({
+      useCurrentTimeRange: true,
+      selectedTheme: 'current',
+      timeFrom: '2018-01-01T00:00:00Z to 2018-01-01T00:00:00Z||+35d',
+      search: '',
+      range,
+      orgId,
+    });
+
+    expect(result.toString()).toEqual('from=1514764800000&to=1517788800000&orgId=2');
+  });
 });

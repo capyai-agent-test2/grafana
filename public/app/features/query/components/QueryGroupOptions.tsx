@@ -35,7 +35,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const onOverrideTime = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
       const newValue = emptyToNull(event.target.value);
-      const isValid = timeRangeValidation(newValue);
+      const isValid = panelTimeRangeValidation(newValue);
 
       if (isValid && options.timeRange?.from !== newValue) {
         onChange({
@@ -55,7 +55,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const onTimeShift = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
       const newValue = emptyToNull(event.target.value);
-      const isValid = timeRangeValidation(newValue);
+      const isValid = relativeTimeRangeValidation(newValue);
 
       if (isValid && options.timeRange?.shift !== newValue) {
         onChange({
@@ -410,8 +410,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
 QueryGroupOptionsEditor.displayName = 'QueryGroupOptionsEditor';
 
-function timeRangeValidation(value: string | null) {
+function panelTimeRangeValidation(value: string | null) {
   return !value || rangeUtil.isValidTimeSpan(value) || isValidAbsoluteTimeRange(value);
+}
+
+function relativeTimeRangeValidation(value: string | null) {
+  return !value || rangeUtil.isValidTimeSpan(value);
 }
 
 function isValidAbsoluteTimeRange(value: string) {
