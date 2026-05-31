@@ -583,7 +583,8 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
     lowLimitMs = intervalToMs(lowLimitInterval);
   }
 
-  let intervalMs = roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
+  const rangeMs = range.to.valueOf() - range.from.valueOf();
+  let intervalMs = resolution === 1 ? rangeMs : roundInterval(rangeMs / resolution);
   if (lowLimitMs > intervalMs) {
     intervalMs = lowLimitMs;
   }

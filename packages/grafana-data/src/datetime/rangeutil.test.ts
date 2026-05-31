@@ -3,6 +3,7 @@ import { type RawTimeRange, type TimeOption, type TimeRange } from '../types/tim
 import { dateTime } from './moment_wrapper';
 import {
   convertRawToRange,
+  calculateInterval,
   describeInterval,
   describeTimeRange,
   isRelativeTimeRange,
@@ -256,6 +257,34 @@ describe('Range Utils', () => {
 
     it('rounds >6w to 1y', () => {
       expect(roundInterval(3628800000)).toEqual(31536000000);
+    });
+  });
+
+  describe('calculateInterval', () => {
+    it('uses the full time range when resolution is one', () => {
+      const range: TimeRange = {
+        from: dateTime('2023-07-01T00:00:00Z'),
+        to: dateTime('2023-07-07T00:00:00Z'),
+        raw: { from: 'now-6d', to: 'now' },
+      };
+
+      expect(calculateInterval(range, 1)).toEqual({
+        intervalMs: 518400000,
+        interval: '6d',
+      });
+    });
+
+    it('still applies lower limit when resolution is one', () => {
+      const range: TimeRange = {
+        from: dateTime('2023-07-01T00:00:00Z'),
+        to: dateTime('2023-07-01T00:00:01Z'),
+        raw: { from: 'now-1s', to: 'now' },
+      };
+
+      expect(calculateInterval(range, 1, '1m')).toEqual({
+        intervalMs: 60000,
+        interval: '1m',
+      });
     });
   });
 
