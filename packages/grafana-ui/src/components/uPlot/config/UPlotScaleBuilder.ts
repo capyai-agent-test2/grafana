@@ -13,6 +13,7 @@ export interface ScaleProps {
   max?: number | null;
   softMin?: number | null;
   softMax?: number | null;
+  softSpan?: number | null;
   range?: Scale.Range;
   distribution?: ScaleDistribution;
   orientation: ScaleOrientation;
@@ -56,6 +57,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       max: hardMax,
       softMin,
       softMax,
+      softSpan,
       range,
       direction,
       orientation,
@@ -183,7 +185,13 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           dataMax = max;
         }
 
-        if (scale.distr === 4) {
+        if (softSpan != null && softSpan > 0) {
+          const dataSpan = dataMax! - dataMin!;
+          const span = Math.max(dataSpan, softSpan);
+          const center = dataMin! + dataSpan / 2;
+
+          minMax = [center - span / 2, center + span / 2];
+        } else if (scale.distr === 4) {
           minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, true);
         } else {
           // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta

@@ -51,6 +51,7 @@ const graphPanelStyleConfig: PanelStyleConfig = {
       'axisPlacement',
       'axisSoftMax',
       'axisSoftMin',
+      'axisSoftSpan',
       'axisWidth',
       // Graph field config
       'drawStyle',
@@ -77,6 +78,7 @@ const axisCustomDefaults: readonly string[] = [
   'axisWidth',
   'axisSoftMin',
   'axisSoftMax',
+  'axisSoftSpan',
   'axisGridShow',
   'axisBorderShow',
   'axisCenteredZero',
@@ -235,6 +237,7 @@ const barGaugePanelStyleConfig: PanelStyleConfig = {
  *   axisWidth        – axis width
  *   axisSoftMin      – soft minimum for axis scale
  *   axisSoftMax      – soft maximum for axis scale
+ *   axisSoftSpan     – soft span for axis scale
  *   axisGridShow     – show axis grid lines
  *   axisBorderShow   – show axis border
  *   axisCenteredZero – center axis at zero
@@ -269,6 +272,7 @@ const barChartPanelStyleConfig: PanelStyleConfig = {
       'axisWidth',
       'axisSoftMin',
       'axisSoftMax',
+      'axisSoftSpan',
       'axisGridShow',
       'axisBorderShow',
       'axisCenteredZero',

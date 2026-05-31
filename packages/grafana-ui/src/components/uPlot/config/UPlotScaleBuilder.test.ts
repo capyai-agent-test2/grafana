@@ -201,6 +201,30 @@ describe('UPlotScaleBuilder', () => {
     });
   });
 
+  describe('getConfig range - softSpan', () => {
+    it('keeps the configured span centered around the data', () => {
+      const rangeFn = new UPlotScaleBuilder({ ...baseProps, softSpan: 10 }).getConfig()['y']
+        .range as uPlot.Range.Function;
+      expect(rangeFn(mockUPlot('y', 1), 100, 102, 'y')).toEqual([96, 106]);
+    });
+
+    it('expands beyond the configured span when data needs more room', () => {
+      const rangeFn = new UPlotScaleBuilder({ ...baseProps, softSpan: 10 }).getConfig()['y']
+        .range as uPlot.Range.Function;
+      expect(rangeFn(mockUPlot('y', 1), 100, 120, 'y')).toEqual([100, 120]);
+    });
+
+    it('does not apply soft span to logarithmic scales', () => {
+      const rangeFn = new UPlotScaleBuilder({
+        ...baseProps,
+        distribution: ScaleDistribution.Log,
+        log: 10,
+        softSpan: 10,
+      }).getConfig()['y'].range as uPlot.Range.Function;
+      expect(rangeFn(mockUPlot('y', 3), 100, 102, 'y')).toEqual([100, 1000]);
+    });
+  });
+
   describe('getConfig range - decimals=0', () => {
     it('rounds linear scale range bounds to integers', () => {
       const rangeFn = new UPlotScaleBuilder({ ...baseProps, decimals: 0 }).getConfig()['y']

@@ -15,7 +15,7 @@ export function buildScaleKey(config: FieldConfig<GraphFieldConfig>, fieldType: 
 
   const scaleSoftRange = `${config.custom?.axisSoftMin !== undefined ? config.custom.axisSoftMin : defaultPart}-${
     config.custom?.axisSoftMax !== undefined ? config.custom.axisSoftMax : defaultPart
-  }`;
+  }-${config.custom?.axisSoftSpan !== undefined ? config.custom.axisSoftSpan : defaultPart}`;
 
   const scalePlacement = `${
     config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : AxisPlacement.Auto

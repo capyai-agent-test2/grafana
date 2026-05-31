@@ -92,6 +92,7 @@ AxisConfig: {
 	axisWidth?:         number
 	axisSoftMin?:       number
 	axisSoftMax?:       number
+	axisSoftSpan?:      number
 	axisGridShow?:      bool
 	scaleDistribution?: ScaleDistributionConfig
 	axisCenteredZero?:  bool

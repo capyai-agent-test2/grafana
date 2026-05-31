@@ -318,6 +318,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     max: fieldConfig.max,
     softMin: customConfig?.axisSoftMin,
     softMax: customConfig?.axisSoftMax,
+    softSpan: customConfig?.axisSoftSpan,
     centeredZero: customConfig?.axisCenteredZero,
     decimals: fieldConfig.decimals,
     range: xIsTime ? (u, min, max) => [min, max] : undefined,
@@ -377,6 +378,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
       max: config.max,
       softMin: customConfig?.axisSoftMin,
       softMax: customConfig?.axisSoftMax,
+      softSpan: customConfig?.axisSoftSpan,
       centeredZero: customConfig?.axisCenteredZero,
       decimals: config.decimals,
     });

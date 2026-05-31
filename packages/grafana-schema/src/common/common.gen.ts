@@ -389,6 +389,7 @@ export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisSoftMax?: number;
   axisSoftMin?: number;
+  axisSoftSpan?: number;
   axisWidth?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }

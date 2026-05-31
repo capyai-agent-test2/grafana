@@ -419,6 +419,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       max: field.config.max,
       softMin,
       softMax,
+      softSpan: customConfig.axisSoftSpan,
       centeredZero: customConfig.axisCenteredZero,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
