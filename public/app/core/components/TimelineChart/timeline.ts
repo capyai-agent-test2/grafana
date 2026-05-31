@@ -134,7 +134,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     const doOne = (i: number) => {
       const slotTop = i * slotH;
       const lH = barArea > 0 ? labelHeightPx : 0;
-      draw(i, slotTop, lH, slotTop + labelHeightPx, barH);
+      draw(i, slotTop, lH, slotTop + lH, barH);
     };
 
     if (yIdx == null) {

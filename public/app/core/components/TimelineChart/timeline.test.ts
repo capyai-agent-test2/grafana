@@ -140,6 +140,16 @@ describe('StateTimeline uPlot integration', () => {
 
           expect(mockUplot.ctx.fillText).not.toHaveBeenCalled();
         });
+
+        it('does not reserve label space for bar splits when rows are too small', () => {
+          const { ySplits } = getConfig(buildTestCoreOptions({ namePosition: 'top', rowHeight: 0.9, numSeries: 50 }));
+          const mockUplot = buildMockUplotInstance();
+          mockUplot.posToVal = jest.fn((pos: number) => pos) as unknown as uPlot['posToVal'];
+
+          ySplits(mockUplot);
+
+          expect(mockUplot.posToVal).toHaveBeenNthCalledWith(1, 0, expect.anything());
+        });
       });
 
       describe('null and NaN values', () => {
