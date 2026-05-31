@@ -166,6 +166,44 @@ describe('panelMenuBehavior', () => {
       );
     });
 
+    it('should contain menu item from link extension when dashboard is in edit mode', async () => {
+      getObservablePluginLinksMock.mockReturnValue(
+        of([
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Open in Logs Drilldown',
+            description: 'Open current query in Logs Drilldown',
+            path: '/a/grafana-lokiexplore-app/explore',
+          },
+        ])
+      );
+
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ isEditing: true });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Open in Logs Drilldown',
+            href: '/a/grafana-lokiexplore-app/explore',
+          }),
+        ])
+      );
+    });
+
     it('should truncate menu item title to 25 chars', async () => {
       getObservablePluginLinksMock.mockReturnValue(
         of([
