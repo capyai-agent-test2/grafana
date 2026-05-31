@@ -1,0 +1,4 @@
+{{ HiddenSubject .Subject "Deleted dashboard: {{.DashboardTitle}}" }}
+The dashboard "{{ .DashboardTitle }}" was deleted.
+
+A JSON backup is attached.

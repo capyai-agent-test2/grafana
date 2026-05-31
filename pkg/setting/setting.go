@@ -285,6 +285,8 @@ type Cfg struct {
 	MinRefreshInterval               string
 	DefaultHomeDashboardPath         string
 	DashboardPerformanceMetrics      []string
+	DashboardDeletionEmailEnabled    bool
+	DashboardDeletionEmailRecipients []string
 	PanelSeriesLimit                 int
 	DashboardSchemaMigrationCacheTTL time.Duration
 
@@ -1531,6 +1533,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
+	cfg.DashboardDeletionEmailEnabled = dashboards.Key("email_deleted_dashboard").MustBool(false)
+	cfg.DashboardDeletionEmailRecipients = util.SplitEmails(dashboards.Key("email_deleted_dashboard_recipients").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 

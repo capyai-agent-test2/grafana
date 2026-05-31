@@ -70,6 +70,33 @@ func TestSendEmailSync(t *testing.T) {
 		require.Equal(t, []string{"asdf@grafana.com"}, sent.To)
 	})
 
+	t.Run("When sending a deleted dashboard email", func(t *testing.T) {
+		ns, mailer := createSut(t, bus)
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
+				To:       []string{"admin@grafana.com"},
+				Template: "deleted_dashboard",
+				Data: map[string]any{
+					"DashboardTitle": "Team Overview",
+					"DashboardUID":   "dash-uid",
+				},
+				AttachedFiles: []*SendEmailAttachFile{{
+					Name:    "team-overview.json",
+					Content: []byte(`{"title":"Team Overview"}`),
+				}},
+			},
+		}
+
+		err := ns.SendEmailCommandHandlerSync(context.Background(), cmd)
+		require.NoError(t, err)
+
+		require.NotEmpty(t, mailer.Sent)
+		sent := mailer.Sent[len(mailer.Sent)-1]
+		require.Equal(t, "Deleted dashboard: Team Overview", sent.Subject)
+		require.Len(t, sent.AttachedFiles, 1)
+		require.Equal(t, "team-overview.json", sent.AttachedFiles[0].Name)
+	})
+
 	t.Run("When using Single Email mode with multiple recipients", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
 		cmd := &SendEmailCommandSync{

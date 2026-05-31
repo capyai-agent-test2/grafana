@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -962,6 +963,35 @@ func TestDeleteDashboard(t *testing.T) {
 		k8sCliMock.AssertExpectations(t)
 		k8sCliMock.AssertExpectations(t)
 	})
+}
+
+func TestEmailDeletedDashboard(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AdminEmail = "admin@example.com"
+	cfg.DashboardDeletionEmailEnabled = true
+	emailSender := notifications.MockNotificationService()
+	service := &DashboardServiceImpl{
+		cfg:         cfg,
+		emailSender: emailSender,
+	}
+	dash := &dashboards.Dashboard{
+		UID:   "dash-uid",
+		Title: "Team Overview",
+		Data: simplejson.NewFromAny(map[string]any{
+			"title": "Team Overview",
+			"uid":   "dash-uid",
+		}),
+	}
+
+	err := service.emailDeletedDashboard(context.Background(), dash)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"admin@example.com"}, emailSender.Email.To)
+	require.Equal(t, "deleted_dashboard", emailSender.Email.Template)
+	require.Equal(t, "Deleted dashboard: Team Overview", emailSender.Email.Subject)
+	require.Len(t, emailSender.Email.AttachedFiles, 1)
+	require.Equal(t, "team-overview.json", emailSender.Email.AttachedFiles[0].Name)
+	assert.JSONEq(t, `{"title":"Team Overview","uid":"dash-uid"}`, string(emailSender.Email.AttachedFiles[0].Content))
 }
 
 func TestDeleteAllDashboards(t *testing.T) {

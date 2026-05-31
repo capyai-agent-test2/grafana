@@ -660,7 +660,16 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, userimplService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
-	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, sqlStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, v3, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
+	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
+	mailer, err := notifications.ProvideSmtpService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	notificationService, err := notifications.ProvideService(inProcBus, cfg, mailer, tempuserService)
+	if err != nil {
+		return nil, err
+	}
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, sqlStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, v3, notificationService, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
 	}
@@ -685,18 +694,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
-	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
 	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service13)
 	correlationsService, err := correlations.ProvideService(sqlStore, routeRegisterImpl, service13, accessControl, inProcBus, quotaService, cfg)
-	if err != nil {
-		return nil, err
-	}
-	mailer, err := notifications.ProvideSmtpService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	notificationService, err := notifications.ProvideService(inProcBus, cfg, mailer, tempuserService)
 	if err != nil {
 		return nil, err
 	}
@@ -1378,7 +1378,16 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	k8sHandlerWithFallback := client.ProvideK8sClientWithFallback(cfg, eventualRestConfigProvider, userimplService, resourceClient, featureToggles, dualwriteService, sortService, registerer)
-	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, sqlStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, v3, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
+	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
+	mailer, err := notifications.ProvideSmtpService(cfg)
+	if err != nil {
+		return nil, err
+	}
+	notificationService, err := notifications.ProvideService(inProcBus, cfg, mailer, tempuserService)
+	if err != nil {
+		return nil, err
+	}
+	dashboardServiceImpl, err := service7.ProvideDashboardServiceImpl(cfg, sqlStore, featureToggles, folderPermissionsService, accessControl, acimplService, folderimplService, registerer, quotaService, orgService, v3, notificationService, dualwriteService, serverLockService, kvStore, k8sHandlerWithFallback)
 	if err != nil {
 		return nil, err
 	}
@@ -1407,18 +1416,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
-	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
 	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service13)
 	correlationsService, err := correlations.ProvideService(sqlStore, routeRegisterImpl, service13, accessControl, inProcBus, quotaService, cfg)
-	if err != nil {
-		return nil, err
-	}
-	mailer, err := notifications.ProvideSmtpService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	notificationService, err := notifications.ProvideService(inProcBus, cfg, mailer, tempuserService)
 	if err != nil {
 		return nil, err
 	}

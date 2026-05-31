@@ -47,6 +47,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -94,6 +95,7 @@ type DashboardServiceImpl struct {
 	acService              accesscontrol.Service
 	k8sclient              dashboardclient.K8sHandlerWithFallback
 	metrics                *dashboardsMetrics
+	emailSender            notifications.EmailSender
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
@@ -408,6 +410,7 @@ func ProvideDashboardServiceImpl(
 	quotaService quota.Service,
 	orgService org.Service,
 	publicDashboardService publicdashboards.ServiceWrapper,
+	emailSender notifications.EmailSender,
 	_ dualwrite.Service,
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
@@ -425,6 +428,7 @@ func ProvideDashboardServiceImpl(
 		orgService:                orgService,
 		k8sclient:                 k8sClient,
 		metrics:                   newDashboardsMetrics(r),
+		emailSender:               emailSender,
 		dashboardPermissionsReady: make(chan struct{}),
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
@@ -1871,6 +1875,16 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 		cmd.UID = result.UID
 	}
 
+	var dashToEmail *dashboards.Dashboard
+	if dr.shouldEmailDeletedDashboard() {
+		dash, err := dr.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+		if err != nil {
+			dr.log.Warn("Failed to load dashboard JSON for deletion email", "uid", cmd.UID, "orgId", cmd.OrgID, "err", err)
+		} else {
+			dashToEmail = dash
+		}
+	}
+
 	// use a grace period of 0 to indicate to skip the check of deleting provisioned dashboards
 	var gracePeriod *int64
 	if !validateProvisionedDashboard {
@@ -1878,8 +1892,59 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 		gracePeriod = &noGracePeriod
 	}
 
-	return dr.k8sclient.Delete(ctx, cmd.UID, cmd.OrgID, v1.DeleteOptions{
+	if err := dr.k8sclient.Delete(ctx, cmd.UID, cmd.OrgID, v1.DeleteOptions{
 		GracePeriodSeconds: gracePeriod,
+	}); err != nil {
+		return err
+	}
+
+	if dashToEmail != nil {
+		if err := dr.emailDeletedDashboard(ctx, dashToEmail); err != nil {
+			dr.log.Warn("Failed to queue deleted dashboard email", "uid", dashToEmail.UID, "orgId", dashToEmail.OrgID, "err", err)
+		}
+	}
+
+	return nil
+}
+
+func (dr *DashboardServiceImpl) shouldEmailDeletedDashboard() bool {
+	return dr.cfg != nil && dr.cfg.DashboardDeletionEmailEnabled && dr.emailSender != nil
+}
+
+func (dr *DashboardServiceImpl) emailDeletedDashboard(ctx context.Context, dash *dashboards.Dashboard) error {
+	recipients := dr.cfg.DashboardDeletionEmailRecipients
+	if len(recipients) == 0 && dr.cfg.AdminEmail != "" {
+		recipients = []string{dr.cfg.AdminEmail}
+	}
+	if len(recipients) == 0 {
+		return nil
+	}
+
+	content, err := dash.Data.EncodePretty()
+	if err != nil {
+		return err
+	}
+
+	filename := slugify.Slugify(dash.Title)
+	if filename == "" {
+		filename = dash.UID
+	}
+	if filename == "" {
+		filename = "dashboard"
+	}
+
+	return dr.emailSender.SendEmailCommandHandler(ctx, &notifications.SendEmailCommand{
+		To:       recipients,
+		Template: "deleted_dashboard",
+		Subject:  fmt.Sprintf("Deleted dashboard: %s", dash.Title),
+		Data: map[string]any{
+			"DashboardTitle": dash.Title,
+			"DashboardUID":   dash.UID,
+		},
+		AttachedFiles: []*notifications.SendEmailAttachFile{{
+			Name:    filename + ".json",
+			Content: content,
+		}},
 	})
 }
 
