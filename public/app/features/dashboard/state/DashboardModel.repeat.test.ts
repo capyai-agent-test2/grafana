@@ -403,6 +403,30 @@ describe('given dashboard with row repeat', () => {
     expect(dashboard.panels[7].id).toBe(5);
   });
 
+  it('should update dashboard data source references to panels in the same repeated row', () => {
+    dashboardJSON.panels = [
+      {
+        id: 1,
+        type: 'row',
+        gridPos: { x: 0, y: 0, h: 1, w: 24 },
+        repeat: 'apps',
+      },
+      { id: 2, type: 'graph', gridPos: { x: 0, y: 1, h: 1, w: 6 } },
+      {
+        id: 3,
+        type: 'graph',
+        datasource: { type: 'datasource', uid: '-- Dashboard --' },
+        targets: [{ refId: 'A', panelId: 2 }],
+        gridPos: { x: 6, y: 1, h: 1, w: 6 },
+      },
+    ];
+    dashboard = getDashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels[2].targets[0].panelId).toBe(2);
+    expect(dashboard.panels[5].targets[0].panelId).toBe(dashboard.panels[4].id);
+  });
+
   it('should repeat only row if it is collapsed', () => {
     dashboardJSON.panels = [
       {
@@ -426,6 +450,33 @@ describe('given dashboard with row repeat', () => {
     expect(panelTypes).toEqual(['row', 'row', 'row', 'timeseries']);
     expect(dashboard.panels[0].panels).toHaveLength(2);
     expect(dashboard.panels[1].panels).toHaveLength(2);
+  });
+
+  it('should update collapsed row dashboard data source references to panels in the same repeated row', () => {
+    dashboardJSON.panels = [
+      {
+        id: 1,
+        type: 'row',
+        collapsed: true,
+        repeat: 'apps',
+        gridPos: { x: 0, y: 0, h: 1, w: 24 },
+        panels: [
+          { id: 2, type: 'graph', gridPos: { x: 0, y: 1, h: 1, w: 6 } },
+          {
+            id: 3,
+            type: 'graph',
+            datasource: { type: 'datasource', uid: '-- Dashboard --' },
+            targets: [{ refId: 'A', panelId: 2 }],
+            gridPos: { x: 6, y: 1, h: 1, w: 6 },
+          },
+        ],
+      },
+    ];
+    dashboard = getDashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    expect(dashboard.panels[0].panels?.[1].targets[0].panelId).toBe(2);
+    expect(dashboard.panels[1].panels?.[1].targets[0].panelId).toBe(dashboard.panels[1].panels?.[0].id);
   });
 
   it('should properly repeat multiple rows', () => {
