@@ -9,7 +9,10 @@ import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@gra
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import {
+  collapseOptionsPaneCategoriesAfterFirst,
+  type OptionsPaneCategoryDescriptor,
+} from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -57,23 +60,15 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   } else {
     switch (listMode) {
       case OptionFilter.All:
-        if (isPanelModelLibraryPanel(panel)) {
-          // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.renderElement());
-        }
-        // Panel frame options second
-        mainBoxElements.push(panelFrameOptions.renderElement());
+        const allOptionCategories = [...allOptions, ...justOverrides];
+        collapseOptionsPaneCategoriesAfterFirst(allOptionCategories);
 
-        // Then add all panel and field defaults
-        for (const item of vizOptions) {
-          mainBoxElements.push(item.renderElement());
-        }
-
-        for (const item of justOverrides) {
+        for (const item of allOptionCategories) {
           mainBoxElements.push(item.renderElement());
         }
         break;
       case OptionFilter.Overrides:
+        collapseOptionsPaneCategoriesAfterFirst(justOverrides);
         for (const override of justOverrides) {
           mainBoxElements.push(override.renderElement());
         }

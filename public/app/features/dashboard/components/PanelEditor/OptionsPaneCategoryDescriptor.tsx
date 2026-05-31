@@ -79,3 +79,16 @@ export class OptionsPaneCategoryDescriptor {
     );
   }
 }
+
+export function collapseOptionsPaneCategoriesAfterFirst(categories: OptionsPaneCategoryDescriptor[]) {
+  let hasOpenCategory = false;
+
+  for (const category of categories) {
+    if (category.props.customRender) {
+      continue;
+    }
+
+    category.props.isOpenDefault = !hasOpenCategory;
+    hasOpenCategory = true;
+  }
+}
