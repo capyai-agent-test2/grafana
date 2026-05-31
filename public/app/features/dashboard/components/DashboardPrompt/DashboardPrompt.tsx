@@ -34,6 +34,7 @@ const AUTO_SAVE_OPTIONS = { saveTimerange: false, saveVariables: false };
 export const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const autoSaveInFlight = useRef(false);
+  const lastFailedAutoSave = useRef<string | null>(null);
   const dispatch = useDispatch();
   const { original, originalPath } = state;
   const { showModal, hideModal } = useContext(ModalsContext);
@@ -84,21 +85,29 @@ export const DashboardPrompt = memo(({ dashboard }: Props) => {
 
       try {
         const clone = dashboard.getSaveModelClone(AUTO_SAVE_OPTIONS);
+        const serializedClone = JSON.stringify(clone);
+        if (serializedClone === lastFailedAutoSave.current) {
+          return;
+        }
+
         const result = await (
           await getDashboardAPI()
         ).saveDashboard({
           dashboard: clone,
           folderUid: dashboard.meta.folderUid ?? clone.meta?.folderUid,
           message: t('dashboard.dashboard-prompt.auto-save-message', 'Auto-saved dashboard changes'),
-          overwrite: true,
           showErrorAlert: false,
           k8s: dashboard.meta.k8s,
         });
 
+        lastFailedAutoSave.current = null;
         dashboard.version = result.version;
         clone.version = result.version;
         dashboard.clearUnsavedChanges(clone, AUTO_SAVE_OPTIONS);
         appEvents.publish(new DashboardSavedEvent());
+      } catch (error) {
+        lastFailedAutoSave.current = JSON.stringify(dashboard.getSaveModelClone(AUTO_SAVE_OPTIONS));
+        throw error;
       } finally {
         autoSaveInFlight.current = false;
       }

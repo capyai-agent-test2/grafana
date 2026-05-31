@@ -98,7 +98,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       obj.metadata.name = dashboard.uid;
       delete obj.metadata.labels?.[DeprecatedInternalId];
 
-      return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client
+        .update(obj, { fieldValidation: 'Ignore', requestOptions: { showErrorAlert: options.showErrorAlert } })
+        .then((v) => this.asSaveDashboardResponseDTO(v));
     }
 
     // non-scene dashboard will have obj.metadata.name when trying to save a dashboard copy
@@ -106,7 +108,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // on create, always clear the id to prevent duplicate ids
     delete obj.spec.id;
     delete obj.metadata.labels?.[DeprecatedInternalId];
-    return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
+    return this.client
+      .create(obj, { fieldValidation: 'Ignore', requestOptions: { showErrorAlert: options.showErrorAlert } })
+      .then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
