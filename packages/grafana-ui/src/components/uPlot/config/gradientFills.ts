@@ -13,6 +13,8 @@ import { ScaleOrientation } from '@grafana/schema';
 
 import { getCanvasContext } from '../../../utils/measureText';
 
+const LOG_DISTRIBUTION = 3;
+
 function makeDirectionalGradient(direction: GradientDirection, bbox: uPlot.BBox, ctx: CanvasRenderingContext2D) {
   let x0 = 0,
     y0 = 0,
@@ -217,8 +219,9 @@ export function getGradientRange(
   softMax?: number | null,
   softSpan?: number | null
 ) {
-  if (softSpan != null && softSpan > 0) {
-    const scale = u.scales[scaleKey];
+  const scale = u.scales[scaleKey];
+
+  if (softSpan != null && softSpan > 0 && scale.distr !== LOG_DISTRIBUTION) {
     return [scale.min ?? 0, scale.max ?? 100];
   }
 
