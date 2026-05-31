@@ -141,10 +141,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     queryParams.kiosk === '1' ||
     queryParams.kiosk === true ||
     queryParams.kiosk === '' ||
-    (config.defaultKioskMode &&
-      queryParams.kiosk !== '0' &&
-      queryParams.kiosk !== 'false' &&
-      queryParams.kiosk !== false);
+    (config.defaultKioskMode && queryParams.kiosk == null);
   const hideFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
 
   return (

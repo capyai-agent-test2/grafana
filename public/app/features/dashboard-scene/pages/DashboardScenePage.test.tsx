@@ -259,6 +259,16 @@ describe('DashboardScenePage', () => {
     expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
   });
 
+  it('does not show Powered by footer for invalid explicit kiosk values when default kiosk mode is enabled', async () => {
+    config.defaultKioskMode = true;
+
+    setup({ routeProps: { queryParams: { kiosk: 'foo' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
   it('uses kiosk dashboard CTA url', async () => {
     setup({ routeProps: { queryParams: { kiosk: true } } });
 
