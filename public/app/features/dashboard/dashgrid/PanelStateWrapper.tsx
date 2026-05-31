@@ -23,14 +23,14 @@ import {
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { RefreshEvent, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
+import { locationService, RefreshEvent, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
 import { type VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
   PanelChrome,
   type PanelContext,
   PanelContextProvider,
-  type SeriesVisibilityChangeMode,
+  SeriesVisibilityChangeMode,
   type AdHocFilterItem,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -58,6 +58,26 @@ import { liveTimer } from './liveTimer';
 import { PanelOptionsLogger } from './panelOptionsLogger';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
+const LEGEND_QUERY_PARAM = 'legend';
+
+function getLegendSeriesFromUrl(panelId: number): string[] {
+  const search = locationService.getSearch();
+  const urlPanelId = search.get('viewPanel') ?? search.get('editPanel') ?? search.get('panelId');
+
+  if (urlPanelId != null && urlPanelId !== String(panelId)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      search
+        .getAll(LEGEND_QUERY_PARAM)
+        .flatMap((value) => value.split(','))
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
 
 export interface Props {
   panel: PanelModel;
@@ -171,9 +191,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   onSeriesVisibilityChange = (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => {
-    if (typeof label !== 'string') {
-      return;
-    }
     this.onFieldConfigChange(
       seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
     );
@@ -227,8 +244,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Move snapshot data into the query response
     if (this.hasPanelSnapshot) {
+      const data = loadSnapshotData(panel, dashboard);
+
+      this.applyLegendSelectionFromUrl(data);
+
       this.setState({
-        data: loadSnapshotData(panel, dashboard),
+        data,
         isFirstLoad: false,
       });
       return;
@@ -344,11 +365,29 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         if (isFirstLoad) {
           isFirstLoad = false;
+          this.applyLegendSelectionFromUrl(data);
         }
         break;
     }
 
     this.setState({ isFirstLoad, errorMessage, data, liveTime: undefined });
+  }
+
+  applyLegendSelectionFromUrl(data: PanelData) {
+    const legendSeries = getLegendSeriesFromUrl(this.props.panel.id);
+
+    if (legendSeries.length === 0) {
+      return;
+    }
+
+    this.onFieldConfigChange(
+      seriesVisibilityConfigFactory(
+        legendSeries,
+        SeriesVisibilityChangeMode.SetExactly,
+        this.props.panel.fieldConfig,
+        data.series
+      )
+    );
   }
 
   onRefresh = () => {

@@ -17,15 +17,47 @@ const displayOverrideRef = 'hideSeriesFrom';
 export const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
 export function seriesVisibilityConfigFactory(
-  label: string,
+  label: string | string[] | null,
   mode: SeriesVisibilityChangeMode,
   fieldConfig: FieldConfigSource,
   data: DataFrame[]
 ) {
   const { overrides } = fieldConfig;
 
-  const displayName = label;
   const currentIndex = overrides.findIndex(isHideSeriesOverride);
+
+  if (mode === SeriesVisibilityChangeMode.SetExactly) {
+    const overridesCopy = Array.from(overrides);
+
+    if (currentIndex >= 0) {
+      overridesCopy.splice(currentIndex, 1);
+    }
+
+    if (label === null) {
+      return {
+        ...fieldConfig,
+        overrides: overridesCopy,
+      };
+    }
+
+    const availableDisplayNames = new Set(getDisplayNames(data));
+    const displayNames = (Array.isArray(label) ? label : [label]).filter((name) => availableDisplayNames.has(name));
+
+    if (displayNames.length === 0) {
+      return fieldConfig;
+    }
+
+    return {
+      ...fieldConfig,
+      overrides: [...overridesCopy, createOverride(Array.from(new Set(displayNames)))],
+    };
+  }
+
+  if (typeof label !== 'string') {
+    return fieldConfig;
+  }
+
+  const displayName = label;
 
   if (currentIndex < 0) {
     if (mode === SeriesVisibilityChangeMode.ToggleSelection) {
