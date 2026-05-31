@@ -4532,7 +4532,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardThreshold(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"value", "color"},
+				Required: []string{"color"},
 			},
 		},
 	}

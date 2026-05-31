@@ -593,7 +593,7 @@ export type DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap = {
 export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
-  value: number;
+  value?: number;
 };
 export type DashboardThresholdsConfig = {
   mode: string;

@@ -4696,7 +4696,7 @@ func schema_pkg_apis_dashboard_v2_DashboardThreshold(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"value", "color"},
+				Required: []string{"color"},
 			},
 		},
 	}

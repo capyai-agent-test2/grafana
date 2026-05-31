@@ -441,7 +441,7 @@ lineage: schemas: [{
 		#Threshold: {
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 			// Nulls currently appear here when serializing -Infinity to JSON.
-			value: number | null @grafanamaturity(NeedsExpertReview)
+			value?: number | null @grafanamaturity(NeedsExpertReview)
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)

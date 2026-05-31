@@ -4700,7 +4700,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardThreshold(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"value", "color"},
+				Required: []string{"color"},
 			},
 		},
 	}
