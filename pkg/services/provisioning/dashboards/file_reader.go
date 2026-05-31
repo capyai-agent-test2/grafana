@@ -2,6 +2,8 @@ package dashboards
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -358,6 +360,10 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 		dash.Dashboard.ID = 0
 	}
 
+	if dash.Dashboard.UID == "" {
+		dash.Dashboard.SetUID(provisionedDashboardUID(fr.Cfg.OrgID, fr.Cfg.Name, path))
+	}
+
 	if alreadyProvisioned {
 		dash.Dashboard.SetID(provisionedData.DashboardID)
 	}
@@ -408,6 +414,11 @@ func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, servic
 	}
 
 	return byPath, nil
+}
+
+func provisionedDashboardUID(orgID int64, name string, path string) string {
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%d:%s:%s", orgID, name, path)))
+	return base64.RawURLEncoding.EncodeToString(sum[:])[:40]
 }
 
 // getOrCreateFolderInternal is the shared logic for getting or creating a folder.
