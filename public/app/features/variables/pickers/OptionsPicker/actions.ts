@@ -199,14 +199,30 @@ export function mapToCurrent(picker: OptionsPickerState): VariableOption | undef
 
   const texts: string[] = [];
   const values: string[] = [];
+  const addedValues = new Set<string>();
 
   for (const option of selectedValues) {
     if (!option.selected) {
       continue;
     }
 
-    texts.push(option.text.toString());
-    values.push(option.value.toString());
+    const optionValues = Array.isArray(option.value) ? option.value : [option.value];
+    const optionTexts = Array.isArray(option.properties?.textValues)
+      ? option.properties.textValues
+      : Array.isArray(option.text)
+        ? option.text
+        : [option.text];
+
+    for (let index = 0; index < optionValues.length; index++) {
+      const value = optionValues[index].toString();
+      if (addedValues.has(value)) {
+        continue;
+      }
+
+      addedValues.add(value);
+      values.push(value);
+      texts.push((optionTexts[index] ?? option.text).toString());
+    }
   }
 
   return {

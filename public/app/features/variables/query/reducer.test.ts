@@ -9,6 +9,7 @@ import { toVariablePayload } from '../utils';
 
 import { createQueryVariableAdapter } from './adapter';
 import {
+  expandRegexStaticOptions,
   metricNamesToVariableValues,
   queryVariableReducer,
   sortVariableValues,
@@ -59,6 +60,42 @@ describe('queryVariableReducer', () => {
             options: [
               { text: 'A', value: 'A', selected: false },
               { text: 'B', value: 'B', selected: false },
+            ],
+          } as unknown as QueryVariableModel,
+        });
+    });
+  });
+
+  describe('when updateVariableOptions is dispatched with regex static options', () => {
+    it('then state includes an option that selects matching query values', () => {
+      const { initialState } = getVariableTestContext(adapter, {
+        includeAll: true,
+        staticOptions: [
+          { text: 'webservers', value: 'webservers', selected: false, properties: { regex: '/^www-/' } },
+        ],
+      });
+      const metrics = [createMetric('www-1'), createMetric('db-1'), createMetric('www-2')];
+      const update = { results: metrics, templatedRegex: '' };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': {
+            ...initialState[0],
+            options: [
+              { text: 'All', value: '$__all', selected: false },
+              {
+                text: 'webservers',
+                value: ['www-1', 'www-2'],
+                selected: false,
+                properties: { regex: '/^www-/', textValues: ['www-1', 'www-2'] },
+              },
+              { text: 'www-1', value: 'www-1', selected: false },
+              { text: 'db-1', value: 'db-1', selected: false },
+              { text: 'www-2', value: 'www-2', selected: false },
             ],
           } as unknown as QueryVariableModel,
         });
@@ -262,6 +299,50 @@ describe('queryVariableReducer', () => {
           } as unknown as QueryVariableModel,
         });
     });
+  });
+});
+
+describe('expandRegexStaticOptions', () => {
+  it('expands regex static option values from matching query options', () => {
+    const options = [
+      { text: 'www-1.example.org', value: 'www-1.example.org', selected: false },
+      { text: 'db-1.example.org', value: 'db-1.example.org', selected: false },
+      { text: 'www-2.example.org', value: 'www-2.example.org', selected: false },
+    ];
+    const staticOptions = [
+      { text: 'webservers', value: 'webservers', selected: false, properties: { regex: '/^www-/' } },
+    ];
+
+    expect(expandRegexStaticOptions(staticOptions, options)).toEqual([
+      {
+        text: 'webservers',
+        value: ['www-1.example.org', 'www-2.example.org'],
+        selected: false,
+        properties: {
+          regex: '/^www-/',
+          textValues: ['www-1.example.org', 'www-2.example.org'],
+        },
+      },
+    ]);
+  });
+
+  it('uses a regex value when the static option has no regex property', () => {
+    const options = [
+      { text: 'www-1.example.org', value: 'www-1.example.org', selected: false },
+      { text: 'db-1.example.org', value: 'db-1.example.org', selected: false },
+    ];
+    const staticOptions = [{ text: 'webservers', value: '/^www-/', selected: false }];
+
+    expect(expandRegexStaticOptions(staticOptions, options)).toEqual([
+      {
+        text: 'webservers',
+        value: ['www-1.example.org'],
+        selected: false,
+        properties: {
+          textValues: ['www-1.example.org'],
+        },
+      },
+    ]);
   });
 });
 

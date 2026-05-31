@@ -129,6 +129,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     this.props.onPropChange({ propName: 'allValue', propValue: event.currentTarget.value });
   };
 
+  onStaticOptionsChange = (staticOptions: QueryVariableModel['staticOptions']) => {
+    this.props.onPropChange({ propName: 'staticOptions', propValue: staticOptions, updateOptions: true });
+  };
+
+  onStaticOptionsOrderChange = (staticOptionsOrder: QueryVariableModel['staticOptionsOrder']) => {
+    this.props.onPropChange({ propName: 'staticOptionsOrder', propValue: staticOptionsOrder, updateOptions: true });
+  };
+
   render() {
     const { extended, variable } = this.props;
     if (!extended || !extended.dataSource) {
@@ -157,6 +165,10 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         onMultiChange={this.onMultiChange}
         onIncludeAllChange={this.onIncludeAllChange}
         onAllValueChange={this.onAllValueChange}
+        staticOptions={variable.staticOptions}
+        staticOptionsOrder={variable.staticOptionsOrder}
+        onStaticOptionsChange={this.onStaticOptionsChange}
+        onStaticOptionsOrderChange={this.onStaticOptionsOrderChange}
         options={variable.options.map((o) => ({
           label: String(o.text),
           value: String(o.value),
