@@ -1,6 +1,14 @@
 import { lastValueFrom } from 'rxjs';
 
-import { dateTime, FieldType, toDataFrame, type DataFrame, type PanelData, type TimeRange } from '@grafana/data';
+import {
+  dateMath,
+  dateTime,
+  FieldType,
+  toDataFrame,
+  type DataFrame,
+  type PanelData,
+  type TimeRange,
+} from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
 import { getCompareSeriesRefId, getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
@@ -9,6 +17,12 @@ function makeTimeRange(fromIso: string, toIso: string): TimeRange {
   const from = dateTime(fromIso);
   const to = dateTime(toIso);
   return { from, to, raw: { from, to } };
+}
+
+function makeRelativeTimeRange(rawFrom: string, rawTo: string): TimeRange {
+  const from = dateMath.toDateTime(rawFrom, {})!;
+  const to = dateMath.toDateTime(rawTo, { roundUp: true })!;
+  return { from, to, raw: { from: rawFrom, to: rawTo } };
 }
 
 function makePanelData(timeRange: TimeRange, series: DataFrame[] = []): PanelData {
@@ -61,12 +75,18 @@ describe('panel-timerange/utils', () => {
       expect(result.to.toISOString()).toBe(expectedTo);
     });
 
-    it('should populate raw to match the shifted range', () => {
+    it('should populate raw to match the shifted range when the source range is absolute', () => {
       // raw.from/to are typed `string | DateTime`; dateTime() normalizes either for ISO comparison.
       const result = getCompareTimeRange(baseRange, '1d')!;
 
       expect(dateTime(result.raw.from).toISOString()).toBe('2024-01-09T06:00:00.000Z');
       expect(dateTime(result.raw.to).toISOString()).toBe('2024-01-09T12:00:00.000Z');
+    });
+
+    it('should preserve relative raw values when shifting a rolling time range', () => {
+      const result = getCompareTimeRange(makeRelativeTimeRange('now-6h', 'now'), '1d')!;
+
+      expect(result.raw).toEqual({ from: 'now-6h-1d', to: 'now-1d' });
     });
   });
 
