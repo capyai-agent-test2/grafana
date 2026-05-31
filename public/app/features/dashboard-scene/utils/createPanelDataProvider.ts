@@ -4,6 +4,7 @@ import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { MixedDatasourceAdHocFiltersBehavior } from '../scene/MixedDatasourceAdHocFiltersBehavior';
 
 export function createPanelDataProvider(
   panel: PanelModel,
@@ -33,7 +34,7 @@ export function createPanelDataProvider(
     dataLayerFilter: {
       panelId: panel.id,
     },
-    $behaviors: [new DashboardDatasourceBehaviour({})],
+    $behaviors: [new DashboardDatasourceBehaviour({}), new MixedDatasourceAdHocFiltersBehavior({})],
   });
 
   // Wrap inner data provider in a data transformer
