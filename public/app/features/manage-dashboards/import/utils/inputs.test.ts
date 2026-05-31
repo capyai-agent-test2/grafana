@@ -154,6 +154,7 @@ describe('extractV1Inputs', () => {
       ]),
       templating: {
         list: [
+          null,
           {
             type: 'datasource',
             name: 'DS_PROMETHEUS',

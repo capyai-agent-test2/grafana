@@ -182,7 +182,7 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
 function getDatasourceVariableNames(dashboard: { templating?: Dashboard['templating'] }): Set<string> {
   const names = new Set<string>();
   for (const variable of dashboard.templating?.list ?? []) {
-    if (variable.type === 'datasource' && 'name' in variable && typeof variable.name === 'string') {
+    if (isRecord(variable) && variable.type === 'datasource' && typeof variable.name === 'string') {
       names.add(variable.name);
     }
   }
