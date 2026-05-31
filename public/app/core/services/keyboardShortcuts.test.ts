@@ -9,6 +9,10 @@ describe('areKeyboardShortcutsDisabled', () => {
     expect(areKeyboardShortcutsDisabled({ disableKeyboardShortcuts })).toBe(true);
   });
 
+  it('returns true when repeated params include an enabled value', () => {
+    expect(areKeyboardShortcutsDisabled({ disableShortcuts: ['0', '1'] })).toBe(true);
+  });
+
   it.each([undefined, false, '0', 'false'])('returns false when the disable params are not enabled: %p', (value) => {
     expect(areKeyboardShortcutsDisabled({ disableShortcuts: value, disableKeyboardShortcuts: value })).toBe(false);
   });

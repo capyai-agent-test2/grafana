@@ -46,6 +46,7 @@ export class KeybindingSrv {
     mousetrap.reset();
 
     if (areKeyboardShortcutsDisabled(this.locationService.getSearchObject())) {
+      this.clearAssistantSubscription();
       return;
     }
 
@@ -131,9 +132,7 @@ export class KeybindingSrv {
 
   private bindAssistantShortcutIfAvailable() {
     // Clean up any existing subscription
-    if (this.assistantSubscription) {
-      this.assistantSubscription.unsubscribe();
-    }
+    this.clearAssistantSubscription();
     // Subscribe to assistant availability and bind/unbind shortcut accordingly
     this.assistantSubscription = isAssistantAvailable().subscribe((available) => {
       if (available) {
@@ -143,6 +142,13 @@ export class KeybindingSrv {
         mousetrap.unbind('mod+.');
       }
     });
+  }
+
+  private clearAssistantSubscription() {
+    if (this.assistantSubscription) {
+      this.assistantSubscription.unsubscribe();
+      this.assistantSubscription = null;
+    }
   }
 
   private toggleAssistant() {
