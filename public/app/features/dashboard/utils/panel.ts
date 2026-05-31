@@ -113,6 +113,41 @@ export interface TimeOverrideResult {
   timeInfo: string;
 }
 
+const absoluteTimeRangeDelimiter = /\s+to\s+/i;
+
+function parsePanelAbsoluteTimeRange(expr: string, timeRange: TimeRange): TimeOverrideResult | undefined {
+  const parts = expr.split(absoluteTimeRangeDelimiter);
+  if (parts.length !== 2) {
+    return undefined;
+  }
+
+  const [fromRaw, toRaw] = parts.map((part) => part.trim());
+  if (!fromRaw || !toRaw) {
+    return undefined;
+  }
+
+  const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
+  const toTimezone = dateTimeAsMoment(timeRange.to).tz();
+  const from = dateMath.parse(fromRaw, false, fromTimezone);
+  const to = dateMath.parse(toRaw, true, toTimezone);
+
+  if (!from || !to || !from.isValid() || !to.isValid() || to.isBefore(from)) {
+    return undefined;
+  }
+
+  return {
+    timeInfo: `${fromRaw} to ${toRaw}`,
+    timeRange: {
+      from,
+      to,
+      raw: {
+        from: fromRaw,
+        to: toRaw,
+      },
+    },
+  };
+}
+
 export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange): TimeOverrideResult {
   const newTimeData = {
     timeInfo: '',
@@ -123,11 +158,15 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     const timeFromInterpolated = getTemplateSrv().replace(panel.timeFrom, panel.scopedVars);
     const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
     if (timeFromInfo.invalid) {
-      newTimeData.timeInfo = 'invalid time override';
-      return newTimeData;
-    }
-
-    if (_isString(timeRange.raw.from)) {
+      const absoluteTimeRange = parsePanelAbsoluteTimeRange(timeFromInterpolated, timeRange);
+      if (absoluteTimeRange) {
+        newTimeData.timeInfo = absoluteTimeRange.timeInfo;
+        newTimeData.timeRange = absoluteTimeRange.timeRange;
+      } else {
+        newTimeData.timeInfo = 'invalid time override';
+        return newTimeData;
+      }
+    } else if (_isString(timeRange.raw.from)) {
       const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
       const toTimezone = dateTimeAsMoment(timeRange.to).tz();
       const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, fromTimezone)!;

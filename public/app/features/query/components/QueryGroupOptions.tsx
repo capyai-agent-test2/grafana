@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, type ChangeEvent, type FocusEvent, useCallback } from 'react';
 
-import { rangeUtil, type PanelData, type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
+import { dateMath, rangeUtil, type PanelData, type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -342,17 +342,17 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           htmlFor="relative-time-input"
           tooltip={
             <Trans
-              i18nKey="query.query-group-options-editor.relative-time-tooltip"
+              i18nKey="query.query-group-options-editor.time-range-tooltip"
               values={{ relativeFrom: 'now-5m', relativeTo: '5m', variable: '$_relativeTime' }}
             >
-              Overrides the relative time range for individual panels, which causes them to be different than what is
-              selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
-              the Last 5 minutes the Relative time should be <code>{'{{relativeFrom}}'}</code> and{' '}
-              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+              Overrides the time range for individual panels, which causes them to be different than what is selected in
+              the dashboard time picker in the top-right corner of the dashboard. For example to configure the Last 5
+              minutes the Time range should be <code>{'{{relativeFrom}}'}</code> and <code>{'{{relativeTo}}'}</code>, or
+              variables like <code>{'{{variable}}'}</code>.
             </Trans>
           }
         >
-          <Trans i18nKey="query.query-group-options-editor.relative-time">Relative time</Trans>
+          <Trans i18nKey="query.query-group-options-editor.time-range">Time range</Trans>
         </InlineLabel>
         <Input
           id="relative-time-input"
@@ -411,7 +411,23 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 QueryGroupOptionsEditor.displayName = 'QueryGroupOptionsEditor';
 
 function timeRangeValidation(value: string | null) {
-  return !value || rangeUtil.isValidTimeSpan(value);
+  return !value || rangeUtil.isValidTimeSpan(value) || isValidAbsoluteTimeRange(value);
+}
+
+function isValidAbsoluteTimeRange(value: string) {
+  const parts = value.split(/\s+to\s+/i);
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const [from, to] = parts.map((part) => part.trim());
+  if (!from || !to) {
+    return false;
+  }
+
+  const fromDate = dateMath.parse(from, false);
+  const toDate = dateMath.parse(to, true);
+  return Boolean(fromDate?.isValid() && toDate?.isValid() && !toDate.isBefore(fromDate));
 }
 
 function emptyToNull(value: string) {
