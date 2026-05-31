@@ -157,9 +157,11 @@ setPluginImportUtils({
 });
 
 const loadDashboardMock = jest.fn();
+const loadSnapshotMock = jest.fn();
 
 setDashboardLoaderSrv({
   loadDashboard: loadDashboardMock,
+  loadSnapshot: loadSnapshotMock,
   // disabling type checks since this is a test util
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 } as unknown as DashboardLoaderSrv);
@@ -178,6 +180,8 @@ describe('DashboardScenePage', () => {
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
+    loadSnapshotMock.mockClear();
+    loadSnapshotMock.mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
@@ -251,20 +255,22 @@ describe('DashboardScenePage', () => {
   it('shows Powered by footer for snapshots', async () => {
     (useParams as jest.Mock).mockReturnValue({ type: 'snapshot', slug: 'snapshot-key' });
 
-    setup();
+    setup({ routeProps: { route: { ...getRouteComponentProps().route, routeName: DashboardRoutes.Normal } } });
 
     await waitForDashboardToRender();
 
+    expect(loadSnapshotMock).toHaveBeenCalledWith('snapshot-key');
     expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
   });
 
   it('uses snapshot CTA url for snapshots', async () => {
     (useParams as jest.Mock).mockReturnValue({ type: 'snapshot', slug: 'snapshot-key' });
 
-    setup();
+    setup({ routeProps: { route: { ...getRouteComponentProps().route, routeName: DashboardRoutes.Normal } } });
 
     await waitForDashboardToRender();
 
+    expect(loadSnapshotMock).toHaveBeenCalledWith('snapshot-key');
     const footer = await screen.findByTestId(selectors.pages.PublicDashboard.footer);
     const link = footer.querySelector('a');
     expect(link).toHaveAttribute('href', 'https://grafana.com/?src=grafananet&cnt=dashboard-snapshot');
