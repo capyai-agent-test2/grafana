@@ -631,6 +631,67 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 					})
 			}
 		})
+
+		t.Run("Given a dashboard with a missing library panel reference", func(t *testing.T) {
+			cmd := dashboards.SaveDashboardCommand{
+				OrgID: 1,
+				Dashboard: simplejson.NewFromAny(map[string]any{
+					"title": "Dash",
+					"panels": []any{
+						map[string]any{
+							"id":    1,
+							"title": "Library Panel",
+							"type":  "text",
+							"libraryPanel": map[string]any{
+								"uid":  "missing-library-panel",
+								"name": "Missing Library Panel",
+							},
+						},
+					},
+				}),
+			}
+
+			dashboardService := dashboards.NewFakeDashboardService(t)
+			postDashboardScenario(t, "Expect bad request when calling POST on",
+				"/api/dashboards", "/api/dashboards", cmd, dashboardService, nil, func(sc *scenarioContext) {
+					callPostDashboard(sc)
+					assert.Equal(t, http.StatusBadRequest, sc.resp.Code, sc.resp.Body.String())
+				})
+		})
+
+		t.Run("Given a k8s-wrapped dashboard with a missing library panel reference", func(t *testing.T) {
+			cmd := dashboards.SaveDashboardCommand{
+				OrgID: 1,
+				Dashboard: simplejson.NewFromAny(map[string]any{
+					"apiVersion": "dashboard.grafana.app/v1beta1",
+					"kind":       "Dashboard",
+					"metadata": map[string]any{
+						"name": "dash",
+					},
+					"spec": map[string]any{
+						"title": "Dash",
+						"panels": []any{
+							map[string]any{
+								"id":    1,
+								"title": "Library Panel",
+								"type":  "text",
+								"libraryPanel": map[string]any{
+									"uid":  "missing-library-panel",
+									"name": "Missing Library Panel",
+								},
+							},
+						},
+					},
+				}),
+			}
+
+			dashboardService := dashboards.NewFakeDashboardService(t)
+			postDashboardScenario(t, "Expect bad request when calling POST on",
+				"/api/dashboards", "/api/dashboards", cmd, dashboardService, nil, func(sc *scenarioContext) {
+					callPostDashboard(sc)
+					assert.Equal(t, http.StatusBadRequest, sc.resp.Code, sc.resp.Body.String())
+				})
+		})
 	})
 
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
