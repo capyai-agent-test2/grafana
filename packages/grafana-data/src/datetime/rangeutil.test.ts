@@ -286,6 +286,19 @@ describe('Range Utils', () => {
         interval: '1m',
       });
     });
+
+    it('keeps interval and intervalMs equivalent for non-day-aligned single-point ranges', () => {
+      const range: TimeRange = {
+        from: dateTime('2023-07-01T00:00:00Z'),
+        to: dateTime('2023-07-07T12:00:00Z'),
+        raw: { from: 'now-6d12h', to: 'now' },
+      };
+
+      expect(calculateInterval(range, 1)).toEqual({
+        intervalMs: 561600000,
+        interval: '156h',
+      });
+    });
   });
 
   describe('relativeToTimeRange', () => {
