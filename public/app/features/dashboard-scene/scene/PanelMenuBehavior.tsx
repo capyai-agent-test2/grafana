@@ -291,7 +291,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       })
     );
 
-    if (extensions.length > 0 && !dashboard.state.isEditing) {
+    if (extensions.length > 0) {
       const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
       const reservedNames = new Set<string>(items.map((m) => m.text));
       reservedNames.add(t('panel.header-menu.styles', `Styles`));
