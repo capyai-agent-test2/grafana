@@ -166,6 +166,7 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
+    (useParams as jest.Mock).mockReturnValue({ uid: 'my-dash-uid' });
     setPublicDashboardConfigFn({
       footerHide: false,
       footerText: 'Powered by',
@@ -245,6 +246,28 @@ describe('DashboardScenePage', () => {
     const footer = await screen.findByTestId(selectors.pages.PublicDashboard.footer);
     const link = footer.querySelector('a');
     expect(link).toHaveAttribute('href', 'https://grafana.com/?src=grafananet&cnt=kiosk-dashboard');
+  });
+
+  it('shows Powered by footer for snapshots', async () => {
+    (useParams as jest.Mock).mockReturnValue({ type: 'snapshot', slug: 'snapshot-key' });
+
+    setup();
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('uses snapshot CTA url for snapshots', async () => {
+    (useParams as jest.Mock).mockReturnValue({ type: 'snapshot', slug: 'snapshot-key' });
+
+    setup();
+
+    await waitForDashboardToRender();
+
+    const footer = await screen.findByTestId(selectors.pages.PublicDashboard.footer);
+    const link = footer.querySelector('a');
+    expect(link).toHaveAttribute('href', 'https://grafana.com/?src=grafananet&cnt=dashboard-snapshot');
   });
 
   it('hides Powered by footer in kiosk mode when hideLogo is present', async () => {
