@@ -363,6 +363,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         if (dashboard.snapshot) {
           panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
         }
+      // eslint-disable-next-line no-fallthrough
+      case LoadingState.Streaming:
         if (isFirstLoad) {
           isFirstLoad = false;
           this.applyLegendSelectionFromUrl(data);
@@ -380,14 +382,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       return;
     }
 
-    this.onFieldConfigChange(
-      seriesVisibilityConfigFactory(
-        legendSeries,
-        SeriesVisibilityChangeMode.SetExactly,
-        this.props.panel.fieldConfig,
-        data.series
-      )
+    const fieldConfig = seriesVisibilityConfigFactory(
+      legendSeries,
+      SeriesVisibilityChangeMode.SetExactly,
+      this.props.panel.fieldConfig,
+      data.series
     );
+
+    if (fieldConfig !== this.props.panel.fieldConfig) {
+      this.onFieldConfigChange(fieldConfig);
+    }
   }
 
   onRefresh = () => {

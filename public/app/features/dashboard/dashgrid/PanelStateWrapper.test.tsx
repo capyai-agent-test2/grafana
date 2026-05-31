@@ -182,6 +182,38 @@ describe('PanelStateWrapper', () => {
       })
     );
   });
+
+  it('applies the legend query parameter on first streaming data load', () => {
+    locationService.push('/d/test?viewPanel=123&legend=A');
+    const { props, subject } = setupTestContext({});
+    const updateFieldConfig = jest.spyOn(props.panel, 'updateFieldConfig');
+
+    act(() => {
+      subject.next({
+        state: LoadingState.Streaming,
+        series: [makeSeries(['A', 'B'])],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    expect(updateFieldConfig).toHaveBeenCalled();
+  });
+
+  it('does not update field config when legend query parameter does not match any series', () => {
+    locationService.push('/d/test?viewPanel=123&legend=missing');
+    const { props, subject } = setupTestContext({});
+    const updateFieldConfig = jest.spyOn(props.panel, 'updateFieldConfig');
+
+    act(() => {
+      subject.next({
+        state: LoadingState.Done,
+        series: [makeSeries(['A', 'B'])],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    expect(updateFieldConfig).not.toHaveBeenCalled();
+  });
 });
 
 const TestPanelComponent = () => <div>Plugin Panel to Render</div>;

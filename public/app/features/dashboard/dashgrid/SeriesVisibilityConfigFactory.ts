@@ -44,7 +44,7 @@ export function seriesVisibilityConfigFactory(
     const displayNames = (Array.isArray(label) ? label : [label]).filter((name) => availableDisplayNames.has(name));
 
     if (displayNames.length === 0) {
-      return fieldConfig;
+      return currentIndex >= 0 ? { ...fieldConfig, overrides: overridesCopy } : fieldConfig;
     }
 
     return {
