@@ -115,6 +115,33 @@ describe('StateTimeline uPlot integration', () => {
     });
 
     describe('#drawPaths', () => {
+      describe('series labels', () => {
+        it('draws series labels above each row when called', () => {
+          const labelFn = jest.fn((idx: number) => `Series ${idx}`);
+          const config = getConfig(buildTestCoreOptions({ namePosition: 'top', label: labelFn, rowHeight: 0.9 }));
+          const mockUplot = buildMockUplotInstance();
+
+          config.drawSeriesLabels!(mockUplot);
+
+          expect(mockUplot.ctx.fillText).toHaveBeenCalledWith('Series 1', 0, 0);
+        });
+
+        it('does not draw series labels when name position is left', () => {
+          const config = getConfig(buildTestCoreOptions({ namePosition: 'left', rowHeight: 0.9 }));
+
+          expect(config.drawSeriesLabels).toBeUndefined();
+        });
+
+        it('skips above-bar labels when rows are too small', () => {
+          const config = getConfig(buildTestCoreOptions({ namePosition: 'top', rowHeight: 0.9, numSeries: 50 }));
+          const mockUplot = buildMockUplotInstance();
+
+          config.drawSeriesLabels!(mockUplot);
+
+          expect(mockUplot.ctx.fillText).not.toHaveBeenCalled();
+        });
+      });
+
       describe('null and NaN values', () => {
         // these tests are attempting to determine whether `shouldDrawYVal` is returning false
         // and preventing a draw for a given value. this is being done by checking the number of
