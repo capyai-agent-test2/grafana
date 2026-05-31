@@ -20,6 +20,8 @@ export enum Interval {
   Minute = 'minute',
   Second = 'second',
   Millisecond = 'millisecond',
+  Microsecond = 'microsecond',
+  Nanosecond = 'nanosecond',
 }
 
 const UNITS = [
@@ -33,6 +35,8 @@ const UNITS = [
   Interval.Millisecond,
 ];
 
+const SUB_MILLISECOND_UNITS = [Interval.Microsecond, Interval.Nanosecond];
+
 const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
   [Interval.Year]: 31536000,
   [Interval.Month]: 2592000,
@@ -42,6 +46,8 @@ const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
   [Interval.Minute]: 60,
   [Interval.Second]: 1,
   [Interval.Millisecond]: 0.001,
+  [Interval.Microsecond]: 0.000001,
+  [Interval.Nanosecond]: 0.000000001,
 };
 
 export function toNanoSeconds(size: number, decimals?: DecimalCount): FormattedValue {
@@ -226,13 +232,14 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     decimalsCount = decimals;
   }
 
-  for (let i = 0; i < UNITS.length && decimalsCount >= 0; i++) {
-    const interval = INTERVALS_IN_SECONDS[UNITS[i]] * 1000;
+  const units = size < 1 ? SUB_MILLISECOND_UNITS : UNITS;
+  for (let i = 0; i < units.length && decimalsCount >= 0; i++) {
+    const interval = INTERVALS_IN_SECONDS[units[i]] * 1000;
     const value = size / interval;
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
-      const floor = Math.floor(value);
-      const unit = UNITS[i] + (floor !== 1 ? 's' : '');
+      const floor = Math.floor(value + (units === SUB_MILLISECOND_UNITS ? 1e-9 : 0));
+      const unit = units[i] + (floor !== 1 ? 's' : '');
       strings.push(floor + ' ' + unit);
       size = size % interval;
       decimalsCount--;
