@@ -32,7 +32,17 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
 
 const isRegExpOperator = (operator: string) => operator === '=~' || operator === '!~';
 
+export const isNilFilterValue = (f: Pick<TraceqlFilter, 'operator' | 'value'>) => {
+  return (
+    f.operator === '=' && (f.value === '' || (Array.isArray(f.value) && f.value.length === 1 && f.value[0] === ''))
+  );
+};
+
 export const valueHelper = (f: TraceqlFilter) => {
+  if (isNilFilterValue(f)) {
+    return 'nil';
+  }
+
   let value = f.value;
 
   if (Array.isArray(value) && !f.isCustomValue) {
