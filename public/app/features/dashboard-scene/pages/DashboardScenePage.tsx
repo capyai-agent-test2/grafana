@@ -3,7 +3,7 @@ import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -137,7 +137,14 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }
 
   // `locationSearchToObject()` parses `?kiosk` as `true` (boolean param). Some clients can emit `?kiosk=`, which parses as ''.
-  const isKioskMode = queryParams.kiosk === '1' || queryParams.kiosk === true || queryParams.kiosk === '';
+  const isKioskMode =
+    queryParams.kiosk === '1' ||
+    queryParams.kiosk === true ||
+    queryParams.kiosk === '' ||
+    (config.defaultKioskMode &&
+      queryParams.kiosk !== '0' &&
+      queryParams.kiosk !== 'false' &&
+      queryParams.kiosk !== false);
   const hideFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
 
   return (

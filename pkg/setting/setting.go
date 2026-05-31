@@ -284,6 +284,7 @@ type Cfg struct {
 	DashboardVersionsToKeep          int
 	MinRefreshInterval               string
 	DefaultHomeDashboardPath         string
+	DefaultKioskMode                 bool
 	DashboardPerformanceMetrics      []string
 	PanelSeriesLimit                 int
 	DashboardSchemaMigrationCacheTTL time.Duration
@@ -1530,6 +1531,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+	cfg.DefaultKioskMode = dashboards.Key("default_kiosk_mode").MustBool(false)
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)

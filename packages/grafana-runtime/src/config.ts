@@ -91,6 +91,7 @@ export class GrafanaBootConfig {
   apps: Record<string, AppPluginConfigGrafanaData> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
+  defaultKioskMode = false;
   appUrl = '';
   appSubUrl = '';
   namespace = 'default';
