@@ -185,11 +185,15 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			cfg.Options["path"] = oneDashboard
 
 			inserted := 0
+			absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
+			require.NoError(t, err)
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).
 				Return(&dashboards.Dashboard{}, nil).Once().
 				Run(func(args mock.Arguments) {
 					inserted++
+					dto := args.Get(1).(*dashboards.SaveDashboardDTO)
+					require.Equal(t, provisionedDashboardUID(cfg.OrgID, cfg.Name, absPath), dto.Dashboard.UID)
 				})
 
 			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
