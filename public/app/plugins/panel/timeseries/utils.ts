@@ -257,6 +257,7 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
 
 export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
+  const compareRefIdSuffix = '-compare';
 
   const updateFieldDisplay = (field: Field, idx: number) => {
     field.state = { ...field.state, seriesIndex: idx };
@@ -270,61 +271,72 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
     );
   };
 
-  // Pre-pass to group main frames by refId
-  const mainFramesByRefId = new Map<string, DataFrame[]>();
+  const getFieldKey = (field: Field) => {
+    const labelKeys = Object.keys(field.labels ?? {}).sort();
+    return `${field.name}\n${labelKeys.map((key) => `${key}=${field.labels?.[key]}`).join('\n')}`;
+  };
+
+  const mainFieldsByRefIdAndKey = new Map<string, Map<string, Field[]>>();
   for (const frame of frames) {
-    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
-      if (!mainFramesByRefId.has(frame.refId)) {
-        mainFramesByRefId.set(frame.refId, []);
-      }
-      mainFramesByRefId.get(frame.refId)!.push(frame);
+    if (frame.meta?.timeCompare?.isTimeShiftQuery) {
+      continue;
     }
+
+    let mainFieldsByKey: Map<string, Field[]> | undefined;
+    if (frame.refId) {
+      mainFieldsByKey = mainFieldsByRefIdAndKey.get(frame.refId);
+      if (!mainFieldsByKey) {
+        mainFieldsByKey = new Map();
+        mainFieldsByRefIdAndKey.set(frame.refId, mainFieldsByKey);
+      }
+    }
+
+    frame.fields.forEach((field, fieldIdx) => {
+      if (mainFieldsByKey && shouldProcessField(field, fieldIdx)) {
+        const fieldKey = getFieldKey(field);
+        const fields = mainFieldsByKey.get(fieldKey);
+        if (fields) {
+          fields.push(field);
+        } else {
+          mainFieldsByKey.set(fieldKey, [field]);
+        }
+      }
+    });
   }
 
-  // Counter for comparison indices per baseRefId
-  const compareIndicesByRefId = new Map<string, number>();
+  const matchedMainFieldsByRefIdAndKey = new Map<string, Map<string, number>>();
+  const getMatchedMainField = (baseRefId: string, field: Field) => {
+    const fieldKey = getFieldKey(field);
+    const mainFields = mainFieldsByRefIdAndKey.get(baseRefId)?.get(fieldKey);
+    if (!mainFields?.length) {
+      return undefined;
+    }
+
+    let matchedMainFieldsByKey = matchedMainFieldsByRefIdAndKey.get(baseRefId);
+    if (!matchedMainFieldsByKey) {
+      matchedMainFieldsByKey = new Map();
+      matchedMainFieldsByRefIdAndKey.set(baseRefId, matchedMainFieldsByKey);
+    }
+
+    const matchIndex = matchedMainFieldsByKey.get(fieldKey) ?? 0;
+    matchedMainFieldsByKey.set(fieldKey, matchIndex + 1);
+
+    return mainFields[matchIndex];
+  };
 
   for (const frame of frames) {
-    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
+    if (frame.meta?.timeCompare?.isTimeShiftQuery) {
+      const baseRefId = frame.refId?.endsWith(compareRefIdSuffix)
+        ? frame.refId.slice(0, -compareRefIdSuffix.length)
+        : undefined;
 
-    if (isCompareFrame) {
-      const baseRefId = frame.refId?.replace('-compare', '');
-
-      if (baseRefId) {
-        // Get and increment the comparison index
-        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
-        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
-
-        // Get the matching main frame using the index
-        const mainFrames = mainFramesByRefId.get(baseRefId);
-        const mainFrame = mainFrames?.[compareIndex];
-
-        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
-          // Match series indices with main frame
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              const mainField = mainFrame.fields[fieldIdx];
-              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
-            }
-          });
-        } else {
-          // Fallback
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              updateFieldDisplay(field, seriesIndex++);
-            }
-          });
+      frame.fields.forEach((field, fieldIdx) => {
+        if (shouldProcessField(field, fieldIdx)) {
+          const mainField = baseRefId ? getMatchedMainField(baseRefId, field) : undefined;
+          updateFieldDisplay(field, mainField?.state?.seriesIndex ?? seriesIndex++);
         }
-      } else {
-        // Fallback when no baseRefId
-        frame.fields.forEach((field, fieldIdx) => {
-          if (shouldProcessField(field, fieldIdx)) {
-            updateFieldDisplay(field, seriesIndex++);
-          }
-        });
-      }
+      });
     } else {
-      // Main frames
       frame.fields.forEach((field, fieldIdx) => {
         if (shouldProcessField(field, fieldIdx)) {
           updateFieldDisplay(field, seriesIndex++);
