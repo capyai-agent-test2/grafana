@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/folder"
+	libraryelementsmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -430,6 +431,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	ctx = c.Req.Context()
 
+	if rsp := hs.validateLibraryPanelReferences(ctx, c.SignedInUser, cmd.GetDashboardModel()); rsp != nil {
+		return rsp
+	}
+
 	var userID int64
 	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
 		userID = id
@@ -492,6 +497,58 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		"url":       dashboard.GetURL(),
 		"folderUid": dashboard.FolderUID,
 	})
+}
+
+func (hs *HTTPServer) validateLibraryPanelReferences(ctx context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) response.Response {
+	if dash == nil || dash.Data == nil {
+		return nil
+	}
+
+	uids := map[string]struct{}{}
+	if err := collectLibraryPanelUIDs(dash.Data.Get("panels").MustArray(), uids); err != nil {
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
+	}
+
+	for uid := range uids {
+		if hs.LibraryElementService == nil {
+			return response.Error(http.StatusInternalServerError, "Error while validating library panels", nil)
+		}
+
+		_, err := hs.LibraryElementService.GetElement(ctx, signedInUser, libraryelementsmodel.GetLibraryElementCommand{UID: uid})
+		if err == nil {
+			continue
+		}
+		if errors.Is(err, libraryelementsmodel.ErrLibraryElementNotFound) {
+			return response.Error(http.StatusBadRequest, fmt.Sprintf("Library panel %q could not be found", uid), nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Error while validating library panels", err)
+	}
+
+	return nil
+}
+
+func collectLibraryPanelUIDs(panels []any, uids map[string]struct{}) error {
+	for _, panel := range panels {
+		panelJSON := simplejson.NewFromAny(panel)
+		if panelJSON.Get("type").MustString() == "row" {
+			if err := collectLibraryPanelUIDs(panelJSON.Get("panels").MustArray(), uids); err != nil {
+				return err
+			}
+			continue
+		}
+
+		libraryPanel := panelJSON.Get("libraryPanel")
+		if libraryPanel.Interface() == nil {
+			continue
+		}
+
+		uid := strings.TrimSpace(libraryPanel.Get("uid").MustString())
+		if uid == "" {
+			return errors.New("Library panel is missing required uid property")
+		}
+		uids[uid] = struct{}{}
+	}
+	return nil
 }
 
 func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand, obj *unstructured.Unstructured) response.Response {
