@@ -1,6 +1,8 @@
 package api
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -378,6 +380,76 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 		assert.Equal(t, data.Meta.CanAdmin, true)
 
 		require.NoError(t, res.Body.Close())
+	})
+}
+
+func TestHTTPServer_ExportDashboards(t *testing.T) {
+	setup := func() *webtest.Server {
+		return SetupAPITestServer(t, func(hs *HTTPServer) {
+			dash1 := dashboards.NewDashboard("My First Dashboard")
+			dash1.ID = 1
+			dash1.UID = "first"
+			dash1.Version = 3
+			dash1.Data.Set("panels", []any{})
+
+			dash2 := dashboards.NewDashboard("My Second Dashboard")
+			dash2.ID = 2
+			dash2.UID = "second"
+			dash2.Version = 5
+			dash2.Data.Set("panels", []any{})
+
+			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{dash1, dash2}, nil).Maybe()
+			hs.DashboardService = dashSvc
+		})
+	}
+
+	t.Run("requires dashboard read permission", func(t *testing.T) {
+		server := setup()
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/export"), userWithPermissions(1, nil)))
+		require.NoError(t, err)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+
+		require.Equal(t, http.StatusForbidden, res.StatusCode)
+	})
+
+	t.Run("returns a zip archive with all dashboards", func(t *testing.T) {
+		server := setup()
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/export"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+		})))
+		require.NoError(t, err)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+
+		require.Equal(t, http.StatusOK, res.StatusCode)
+		require.Equal(t, "application/zip", res.Header.Get("Content-Type"))
+		require.Equal(t, `attachment;filename="grafana-dashboards.zip"`, res.Header.Get("Content-Disposition"))
+
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
+		require.NoError(t, err)
+		require.Len(t, reader.File, 2)
+
+		files := map[string]map[string]any{}
+		for _, file := range reader.File {
+			rc, err := file.Open()
+			require.NoError(t, err)
+			content, err := io.ReadAll(rc)
+			require.NoError(t, err)
+			require.NoError(t, rc.Close())
+
+			var dashboard map[string]any
+			require.NoError(t, json.Unmarshal(content, &dashboard))
+			files[file.Name] = dashboard
+		}
+
+		require.Equal(t, "My First Dashboard", files["my-first-dashboard-first.json"]["title"])
+		require.Equal(t, "first", files["my-first-dashboard-first.json"]["uid"])
+		require.Equal(t, float64(3), files["my-first-dashboard-first.json"]["version"])
+		require.Equal(t, "My Second Dashboard", files["my-second-dashboard-second.json"]["title"])
+		require.Equal(t, "second", files["my-second-dashboard-second.json"]["uid"])
+		require.Equal(t, float64(5), files["my-second-dashboard-second.json"]["version"])
 	})
 }
 

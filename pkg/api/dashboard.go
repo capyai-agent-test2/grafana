@@ -1,6 +1,8 @@
 package api
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -233,6 +235,78 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	return response.JSON(http.StatusOK, dto)
+}
+
+// swagger:route GET /dashboards/export dashboards exportDashboards
+//
+// Export all dashboards.
+//
+// Responses:
+// 200: body:[]byte
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) ExportDashboards(c *contextmodel.ReqContext) response.Response {
+	dashes, err := hs.DashboardService.GetAllDashboardsByOrgId(c.Req.Context(), c.GetOrgID())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error while exporting dashboards", err)
+	}
+
+	buf := bytes.NewBuffer(nil)
+	zipWriter := zip.NewWriter(buf)
+	seenNames := map[string]int{}
+
+	for _, dash := range dashes {
+		if dash == nil || dash.Data == nil {
+			continue
+		}
+
+		dash.Data.Set("id", dash.ID)
+		dash.Data.Set("uid", dash.UID)
+		dash.Data.Set("version", dash.Version)
+
+		name := dashboardExportFileName(dash, seenNames)
+		fileWriter, err := zipWriter.Create(name)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Error while exporting dashboards", err)
+		}
+
+		body, err := dash.Data.EncodePretty()
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Error while exporting dashboards", err)
+		}
+		if _, err := fileWriter.Write(body); err != nil {
+			return response.Error(http.StatusInternalServerError, "Error while exporting dashboards", err)
+		}
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		return response.Error(http.StatusInternalServerError, "Error while exporting dashboards", err)
+	}
+
+	return response.Respond(http.StatusOK, buf.Bytes()).
+		SetHeader("Content-Type", "application/zip").
+		SetHeader("Content-Disposition", `attachment;filename="grafana-dashboards.zip"`)
+}
+
+func dashboardExportFileName(dash *dashboards.Dashboard, seenNames map[string]int) string {
+	slug := dash.Slug
+	if slug == "" {
+		slug = slugify.Slugify(dash.Title)
+	}
+
+	if dash.UID != "" {
+		slug = fmt.Sprintf("%s-%s", slug, dash.UID)
+	}
+
+	name := slug + ".json"
+	if seenNames[name] == 0 {
+		seenNames[name] = 1
+		return name
+	}
+
+	seenNames[name]++
+	return fmt.Sprintf("%s-%d.json", strings.TrimSuffix(name, ".json"), seenNames[name])
 }
 
 func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dashboardsV1.AnnotationActions, scope string) {
