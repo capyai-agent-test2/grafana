@@ -52,6 +52,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       category,
       settings: {
         placeholder: 'Auto',
+        allowTemplateVariables: true,
       },
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
     })

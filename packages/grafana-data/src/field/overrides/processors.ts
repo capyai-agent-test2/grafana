@@ -17,6 +17,7 @@ export interface NumberFieldConfigSettings {
   min?: number;
   max?: number;
   step?: number;
+  allowTemplateVariables?: boolean;
 }
 
 export const numberOverrideProcessor = (

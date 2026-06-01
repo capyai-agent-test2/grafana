@@ -33,7 +33,7 @@ export const NumberValueEditor = ({ value, onChange, item, id }: Props) => {
       placeholder={settings?.placeholder}
       onChange={onValueChange}
       onChangeString={onStringValueChange}
-      allowTemplateVariables
+      allowTemplateVariables={settings?.allowTemplateVariables}
     />
   );
 };

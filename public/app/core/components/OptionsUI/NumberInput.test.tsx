@@ -119,4 +119,29 @@ describe('NumberInput', () => {
     expect(onChangeString).toHaveBeenCalledWith('$legendWidth');
     expect(input).toHaveValue('$legendWidth');
   });
+
+  it('clears range validation when switching to a template variable', () => {
+    const onChange = jest.fn();
+    const onChangeString = jest.fn();
+    render(
+      <NumberInput
+        value={15}
+        min={-10}
+        max={10}
+        onChange={onChange}
+        onChangeString={onChangeString}
+        allowTemplateVariables
+      />
+    );
+    let input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
+
+    fireEvent.blur(input, { target: { value: '100' } });
+    expect(screen.getByText('Out of range -10 < > 10')).toBeInTheDocument();
+
+    input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
+    fireEvent.blur(input, { target: { value: '$legendWidth' } });
+
+    expect(onChangeString).toHaveBeenCalledWith('$legendWidth');
+    expect(screen.queryByText('Out of range -10 < > 10')).not.toBeInTheDocument();
+  });
 });

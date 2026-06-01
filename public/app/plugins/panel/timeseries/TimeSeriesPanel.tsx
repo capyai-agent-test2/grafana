@@ -109,13 +109,10 @@ export const TimeSeriesPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
-  const legend = useMemo(
-    () => ({
-      ...options.legend,
-      width: interpolateNumberOption(options.legend.width, replaceVariables),
-    }),
-    [options.legend, replaceVariables]
-  );
+  const legend = {
+    ...options.legend,
+    width: interpolateNumberOption(options.legend.width, replaceVariables),
+  };
 
   const onPinnedToSidebarChange = useCallback(
     (pinned: boolean) => {

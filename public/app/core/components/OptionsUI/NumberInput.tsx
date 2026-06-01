@@ -73,6 +73,7 @@ export const NumberInput = memo(
         setText(newValue);
         setInputCorrected(corrected);
       } else if (txt && Number.isNaN(currentValue) && allowTemplateVariables) {
+        setInputCorrected(false);
         onChangeString?.(txt);
         return;
       }
