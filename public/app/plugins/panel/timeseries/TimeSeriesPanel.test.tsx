@@ -9,7 +9,7 @@ import { PanelContextProvider } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
-import { TimeSeriesPanel } from './TimeSeriesPanel';
+import { interpolateNumberOption, TimeSeriesPanel } from './TimeSeriesPanel';
 import { type Options } from './panelcfg.gen';
 
 const defaultOptions: Options = {
@@ -96,6 +96,20 @@ function renderPanelWithFacetedFilter(
 }
 
 describe('TimeSeriesPanel', () => {
+  describe('interpolateNumberOption', () => {
+    it('returns numeric values unchanged', () => {
+      expect(interpolateNumberOption(25, (value) => value)).toBe(25);
+    });
+
+    it('returns interpolated template variables as numbers', () => {
+      expect(interpolateNumberOption('$legendWidth', () => '180')).toBe(180);
+    });
+
+    it('ignores values that do not resolve to a number', () => {
+      expect(interpolateNumberOption('$legendWidth', () => 'auto')).toBeUndefined();
+    });
+  });
+
   let consoleSpy: jest.SpyInstance;
 
   beforeEach(() => {

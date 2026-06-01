@@ -296,6 +296,7 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-min', 'auto'),
+      allowTemplateVariables: true,
     },
     shouldApply: (field) => field.type === FieldType.number,
     category,
@@ -316,6 +317,7 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-max', 'auto'),
+      allowTemplateVariables: true,
     },
 
     shouldApply: (field) => field.type === FieldType.number,

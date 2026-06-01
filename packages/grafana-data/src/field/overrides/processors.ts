@@ -17,6 +17,7 @@ export interface NumberFieldConfigSettings {
   min?: number;
   max?: number;
   step?: number;
+  allowTemplateVariables?: boolean;
 }
 
 export const numberOverrideProcessor = (
@@ -26,6 +27,10 @@ export const numberOverrideProcessor = (
 ) => {
   if (value === undefined || value === null) {
     return undefined;
+  }
+
+  if (typeof value === 'string' && context.replaceVariables) {
+    value = context.replaceVariables(value, context.field?.state?.scopedVars);
   }
 
   return parseFloat(String(value));

@@ -108,6 +108,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       category,
       settings: {
         placeholder: t('grafana-ui.builder.axis.placeholder-soft-min', 'See: Standard options > Min'),
+        allowTemplateVariables: true,
       },
     })
     .addNumberInput({
@@ -117,6 +118,7 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       category,
       settings: {
         placeholder: t('grafana-ui.builder.axis.placeholder-soft-max', 'See: Standard options > Max'),
+        allowTemplateVariables: true,
       },
     });
 }
@@ -257,6 +259,7 @@ export function addAxisWidth(builder: FieldConfigEditorBuilder<AxisConfig>) {
     category: [t('grafana-ui.builder.axis.category-axis', 'Axis')],
     settings: {
       placeholder: t('grafana-ui.builder.axis.placeholder-width', 'Auto'),
+      allowTemplateVariables: true,
     },
     showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
   });

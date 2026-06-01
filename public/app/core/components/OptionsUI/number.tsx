@@ -16,6 +16,13 @@ export const NumberValueEditor = ({ value, onChange, item, id }: Props) => {
     [onChange, settings?.integer]
   );
 
+  const onStringValueChange = useCallback(
+    (value: string) => {
+      Reflect.apply(onChange, undefined, [value]);
+    },
+    [onChange]
+  );
+
   return (
     <NumberInput
       id={id}
@@ -25,6 +32,8 @@ export const NumberValueEditor = ({ value, onChange, item, id }: Props) => {
       step={settings?.step}
       placeholder={settings?.placeholder}
       onChange={onValueChange}
+      onChangeString={onStringValueChange}
+      allowTemplateVariables={settings?.allowTemplateVariables}
     />
   );
 };
