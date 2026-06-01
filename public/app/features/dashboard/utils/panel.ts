@@ -152,8 +152,13 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
 
     const timeShift = rangeUtil.invertTimeShift(timeShiftInterpolated);
     newTimeData.timeInfo += ' timeshift ' + timeShift;
-    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false)!;
-    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true)!;
+    const from = dateMath.parseDateMath(timeShift, newTimeData.timeRange.from, false);
+    const to = dateMath.parseDateMath(timeShift, newTimeData.timeRange.to, true);
+
+    if (!from || !to) {
+      newTimeData.timeInfo = 'invalid timeshift';
+      return newTimeData;
+    }
 
     newTimeData.timeRange = {
       from,
