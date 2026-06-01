@@ -85,22 +85,24 @@ export const VariableOptions = memo(
     return (
       <div className={styles.variableValueDropdown}>
         <div className={styles.variableOptionsWrapper}>
+          {renderMultiToggle()}
           <ul
             className={styles.variableOptionsColumn}
             data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+            role="listbox"
+            aria-multiselectable={multi || undefined}
             {...restProps}
           >
-            {renderMultiToggle()}
             {values.map((option, index) => {
               const isAllOption = option.value === ALL_VARIABLE_VALUE;
 
               return (
-                <li key={`${option.value}`}>
+                <li key={`${option.value}`} role="presentation">
                   <button
                     data-testid={selectors.components.Variables.variableOption}
-                    role="checkbox"
+                    role="option"
                     type="button"
-                    aria-checked={option.selected}
+                    aria-selected={option.selected}
                     className={cx(
                       buttonReset,
                       styles.variableOption,

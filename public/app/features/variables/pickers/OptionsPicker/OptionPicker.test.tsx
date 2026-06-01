@@ -135,8 +135,15 @@ describe('OptionPicker', () => {
         pickerState: { id: defaultVariable.id, options: defaultVariable.options, multi: defaultVariable.multi },
       });
 
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
-      expect(screen.getByRole('textbox')).toHaveValue('');
+      const input = screen.getByRole('combobox');
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveValue('');
+      expect(input).toHaveAttribute('aria-autocomplete', 'list');
+      expect(input).toHaveAttribute('aria-haspopup', 'listbox');
+      expect(input).toHaveAttribute('aria-expanded', 'true');
+      expect(input).toHaveAttribute('aria-controls', `options-${defaultVariable.id}`);
+      expect(screen.getByRole('listbox')).toHaveAttribute('aria-multiselectable', 'true');
+      expect(screen.getAllByRole('option')).toHaveLength(3);
       expect(
         screen.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown)
       ).toBeInTheDocument();
