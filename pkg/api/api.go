@@ -467,7 +467,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashUIDScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 
-			dashboardRoute.Get("/export", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.ExportDashboards))
+			dashboardRoute.Get("/export", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsAll)), routing.Wrap(hs.ExportDashboards))
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead, dashUIDScope)), routing.Wrap(hs.GetDashboard))
 			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.DeleteDashboardByUID))
 

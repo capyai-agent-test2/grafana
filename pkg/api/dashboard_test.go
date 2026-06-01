@@ -413,6 +413,17 @@ func TestHTTPServer_ExportDashboards(t *testing.T) {
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 	})
 
+	t.Run("requires dashboard read permission for all dashboards", func(t *testing.T) {
+		server := setup()
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/export"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:first"},
+		})))
+		require.NoError(t, err)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+
+		require.Equal(t, http.StatusForbidden, res.StatusCode)
+	})
+
 	t.Run("returns a zip archive with all dashboards", func(t *testing.T) {
 		server := setup()
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/export"), userWithPermissions(1, []accesscontrol.Permission{
