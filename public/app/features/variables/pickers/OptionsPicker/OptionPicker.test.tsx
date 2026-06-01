@@ -142,6 +142,8 @@ describe('OptionPicker', () => {
       expect(input).toHaveAttribute('aria-haspopup', 'listbox');
       expect(input).toHaveAttribute('aria-expanded', 'true');
       expect(input).toHaveAttribute('aria-controls', `options-${defaultVariable.id}`);
+      expect(screen.getByRole('listbox')).toHaveAttribute('aria-multiselectable', 'true');
+      expect(screen.getAllByRole('option')).toHaveLength(3);
       expect(
         screen.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown)
       ).toBeInTheDocument();
