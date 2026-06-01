@@ -297,10 +297,16 @@ export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined 
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
   const explicitUid = variable.spec.query.datasource?.name;
   const queryType = variable.spec.query.group;
+  const queryLabels = variable.spec.query.labels;
 
   // If explicit UID provided, resolve fully
   if (explicitUid) {
     return getDataSourceForQuery({ uid: explicitUid, type: queryType }, queryType);
+  }
+
+  const labelMatch = getDataSourceForLabels(queryType, queryLabels);
+  if (labelMatch) {
+    return labelMatch;
   }
 
   // If only type provided (no explicit UID), return type-only to match backend V2→V1 conversion
@@ -323,10 +329,16 @@ export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataS
 export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef | undefined {
   const explicitUid = query.datasource?.name;
   const queryType = query.group;
+  const queryLabels = query.labels;
 
   // If explicit UID provided, resolve fully
   if (explicitUid) {
     return getDataSourceForQuery({ uid: explicitUid, type: queryType }, queryType);
+  }
+
+  const labelMatch = getDataSourceForLabels(queryType, queryLabels);
+  if (labelMatch) {
+    return labelMatch;
   }
 
   // If only type provided (no explicit UID), return type-only to match backend V2→V1 conversion
@@ -336,6 +348,28 @@ export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef |
 
   // Neither UID nor type - no datasource
   return undefined;
+}
+
+function getDataSourceForLabels(queryKind: string, labels?: Record<string, string>): DataSourceRef | undefined {
+  if (!queryKind || !labels || Object.keys(labels).length === 0) {
+    return undefined;
+  }
+
+  const dsList = config.datasources;
+  const match = Object.values(dsList ?? {}).find((ds) => {
+    if (ds.meta.id !== queryKind) {
+      return false;
+    }
+
+    const datasourceLabels = ds.labels;
+    return Object.entries(labels).every(([key, value]) => datasourceLabels?.[key] === value);
+  });
+
+  if (!match) {
+    return undefined;
+  }
+
+  return { uid: match.uid, type: match.meta.id };
 }
 
 /**

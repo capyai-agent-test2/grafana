@@ -802,6 +802,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
    */
   database?: string;
   isDefault?: boolean;
+  labels?: Record<string, string>;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)
 
   /**

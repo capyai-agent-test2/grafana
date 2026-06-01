@@ -1,8 +1,10 @@
+import { config } from '@grafana/runtime';
 import {
   defaultDataQueryKind,
   defaultPanelSpec,
   type PanelKind,
   type PanelQueryKind,
+  type QueryVariableKind,
   type QueryOptionsSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
@@ -10,9 +12,41 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 
-import { buildVizPanel, ensureUniqueRefIds, getPanelDataSource, getRuntimePanelDataSource } from './utils';
+import {
+  buildVizPanel,
+  ensureUniqueRefIds,
+  getPanelDataSource,
+  getRuntimePanelDataSource,
+  getRuntimeVariableDataSource,
+} from './utils';
 
 describe('getRuntimePanelDataSource', () => {
+  const originalDatasources = config.datasources;
+
+  beforeEach(() => {
+    config.datasources = {};
+    Object.assign(config.datasources, {
+      PrometheusProd: {
+        uid: 'prometheus-prod',
+        name: 'Prometheus prod',
+        type: 'prometheus',
+        meta: { id: 'prometheus' },
+        labels: { env: 'prod', region: 'eu-west-1' },
+      },
+      PrometheusDev: {
+        uid: 'prometheus-dev',
+        name: 'Prometheus dev',
+        type: 'prometheus',
+        meta: { id: 'prometheus' },
+        labels: { env: 'dev', region: 'eu-west-1' },
+      },
+    });
+  });
+
+  afterEach(() => {
+    config.datasources = originalDatasources;
+  });
+
   it('should return uid and type when explicit datasource UID is provided', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
@@ -57,6 +91,75 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
+      type: 'prometheus',
+    });
+  });
+
+  it('should resolve a stateless query to a datasource matching its labels', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          labels: { env: 'prod', region: 'eu-west-1' },
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      uid: 'prometheus-prod',
+      type: 'prometheus',
+    });
+  });
+
+  it('should keep a stateless query type-only when no datasource labels match', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          labels: { env: 'prod', region: 'us-east-1' },
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      type: 'prometheus',
+    });
+  });
+
+  it('should resolve a stateless query variable to a datasource matching its labels', () => {
+    const variable = {
+      kind: 'QueryVariable',
+      spec: {
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          labels: { env: 'dev', region: 'eu-west-1' },
+          spec: {},
+        },
+      },
+    } as QueryVariableKind;
+
+    const result = getRuntimeVariableDataSource(variable);
+
+    expect(result).toEqual({
+      uid: 'prometheus-dev',
       type: 'prometheus',
     });
   });
