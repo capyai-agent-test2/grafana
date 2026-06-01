@@ -27,6 +27,7 @@ import {
   setFieldConfigDefaults,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
+import { numberOverrideProcessor } from './overrides/processors';
 
 const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
@@ -548,6 +549,26 @@ describe('applyFieldOverrides', () => {
 
     // Don't Automatically pick the min value
     expect(range.min).toEqual(-20);
+  });
+
+  it('will interpolate templated number override values', () => {
+    const field = createDataFrame({
+      fields: [{ name: 'value', type: FieldType.number, values: [1], config: {}, state: { scopedVars: {} } }],
+    }).fields[0];
+
+    expect(
+      numberOverrideProcessor('$min', {
+        field,
+        data: [],
+        dataFrameIndex: 0,
+        replaceVariables: (value) => {
+          if (value === '$min') {
+            return '-10';
+          }
+          return value;
+        },
+      })
+    ).toEqual(-10);
   });
 
   it('should calculate min/max per field when fieldMinMax is set', () => {

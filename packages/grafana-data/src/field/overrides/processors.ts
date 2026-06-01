@@ -28,6 +28,10 @@ export const numberOverrideProcessor = (
     return undefined;
   }
 
+  if (typeof value === 'string' && context.replaceVariables) {
+    value = context.replaceVariables(value, context.field?.state?.scopedVars);
+  }
+
   return parseFloat(String(value));
 };
 

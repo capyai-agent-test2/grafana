@@ -106,4 +106,17 @@ describe('NumberInput', () => {
       expect(screen.getByTestId('input-wrapper').firstChild?.firstChild).toHaveValue(test.expected);
     });
   });
+
+  it('preserves template variable strings when enabled', () => {
+    const onChange = jest.fn();
+    const onChangeString = jest.fn();
+    render(<NumberInput value={'$width'} onChange={onChange} onChangeString={onChangeString} allowTemplateVariables />);
+    const input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
+
+    fireEvent.blur(input, { target: { value: '$legendWidth' } });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onChangeString).toHaveBeenCalledWith('$legendWidth');
+    expect(input).toHaveValue('$legendWidth');
+  });
 });

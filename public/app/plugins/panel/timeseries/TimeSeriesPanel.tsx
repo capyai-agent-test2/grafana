@@ -9,6 +9,7 @@ import {
   type PanelProps,
   shouldAlignTimeCompare,
   useDataLinksContext,
+  type InterpolateFunction,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
@@ -108,6 +109,13 @@ export const TimeSeriesPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+  const legend = useMemo(
+    () => ({
+      ...options.legend,
+      width: interpolateNumberOption(options.legend.width, replaceVariables),
+    }),
+    [options.legend, replaceVariables]
+  );
 
   const onPinnedToSidebarChange = useCallback(
     (pinned: boolean) => {
@@ -138,7 +146,7 @@ export const TimeSeriesPanel = ({
       timeZone={timezones}
       width={width}
       height={height}
-      legend={options.legend}
+      legend={legend}
       options={options}
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
@@ -258,3 +266,16 @@ export const TimeSeriesPanel = ({
     </TimeSeries>
   );
 };
+
+export function interpolateNumberOption(value: unknown, replaceVariables: InterpolateFunction): number | undefined {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const numericValue = Number(replaceVariables(value));
+  return Number.isFinite(numericValue) ? numericValue : undefined;
+}
