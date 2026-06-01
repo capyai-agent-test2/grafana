@@ -484,6 +484,27 @@ export const isValidTimeSpan = (value: string) => {
   return info.invalid !== true;
 };
 
+export const isValidTimeShift = (value: string) => {
+  if (value.indexOf('$') === 0 || value.indexOf('+$') === 0 || value.indexOf('-$') === 0) {
+    return true;
+  }
+
+  const valueWithoutSign = value.indexOf('-') === 0 || value.indexOf('+') === 0 ? value.slice(1) : value;
+  return valueWithoutSign.indexOf('now') === -1 && isValidTimeSpan(valueWithoutSign);
+};
+
+export const invertTimeShift = (value: string) => {
+  if (value.indexOf('-') === 0) {
+    return '+' + value.slice(1);
+  }
+
+  if (value.indexOf('+') === 0) {
+    return '-' + value.slice(1);
+  }
+
+  return '-' + value;
+};
+
 export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZone) => {
   if (isDateTime(range.from)) {
     return timeZoneAbbrevation(range.from, { timeZone });

@@ -58,6 +58,23 @@ describe('applyPanelTimeOverrides', () => {
     expect((overrides.timeRange.raw.to as DateTime).toISOString()).toEqual(expectedToDate.toISOString());
   });
 
+  it('should apply negative time shift forward', () => {
+    const panelModel = {
+      timeShift: '-2h',
+    };
+
+    const expectedFromDate = dateTime([2019, 1, 11, 14, 0, 0]).toDate();
+    const expectedToDate = dateTime([2019, 1, 11, 20, 0, 0]).toDate();
+
+    // @ts-ignore: PanelModel type inconsistency
+    const overrides = applyPanelTimeOverrides(panelModel, dashboardTimeRange);
+
+    expect(overrides.timeRange.from.toISOString()).toBe(expectedFromDate.toISOString());
+    expect(overrides.timeRange.to.toISOString()).toBe(expectedToDate.toISOString());
+    expect((overrides.timeRange.raw.from as DateTime).toISOString()).toEqual(expectedFromDate.toISOString());
+    expect((overrides.timeRange.raw.to as DateTime).toISOString()).toEqual(expectedToDate.toISOString());
+  });
+
   it('should apply both relative time and time shift', () => {
     const panelModel = {
       timeFrom: '2h',

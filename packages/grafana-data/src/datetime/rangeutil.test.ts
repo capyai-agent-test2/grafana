@@ -5,7 +5,9 @@ import {
   convertRawToRange,
   describeInterval,
   describeTimeRange,
+  invertTimeShift,
   isRelativeTimeRange,
+  isValidTimeShift,
   relativeToTimeRange,
   roundInterval,
   timeRangeToRelative,
@@ -441,6 +443,18 @@ describe('describeTextRange', () => {
     expect(info.display).toBe('Next 3 hours');
     expect(info.from).toBe('now');
     expect(info.to).toBe('now+3h');
+  });
+
+  it('should validate negative time shifts', () => {
+    expect(isValidTimeShift('-3h')).toBe(true);
+    expect(isValidTimeShift('3h')).toBe(true);
+    expect(isValidTimeShift('now-3h')).toBe(false);
+  });
+
+  it('should invert time shifts', () => {
+    expect(invertTimeShift('3h')).toBe('-3h');
+    expect(invertTimeShift('-3h')).toBe('+3h');
+    expect(invertTimeShift('+3h')).toBe('-3h');
   });
 
   it('should handle now/d', () => {

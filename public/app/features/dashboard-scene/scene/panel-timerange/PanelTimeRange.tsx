@@ -137,7 +137,8 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
     if (timeShift) {
       const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
-      const reverseShift = '+' + timeShiftInterpolated;
+      const shift = rangeUtil.invertTimeShift(timeShiftInterpolated);
+      const reverseShift = rangeUtil.invertTimeShift(shift);
 
       const from = dateMath.parseDateMath(reverseShift, timeRange.from, false);
       const to = dateMath.parseDateMath(reverseShift, timeRange.to, true);
@@ -184,14 +185,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
     if (timeShift) {
       const timeShiftInterpolated = sceneGraph.interpolate(this, this.state.timeShift);
-      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
 
-      if (timeShiftInfo.invalid) {
+      if (!rangeUtil.isValidTimeShift(timeShiftInterpolated)) {
         newTimeData.timeInfo = 'invalid timeshift';
         return newTimeData;
       }
 
-      const shift = '-' + timeShiftInterpolated;
+      const shift = rangeUtil.invertTimeShift(timeShiftInterpolated);
       infoBlocks.push('timeshift ' + shift);
 
       if (rangeUtil.isRelativeTimeRange(newTimeData.timeRange.raw)) {
