@@ -46,7 +46,8 @@ function setup(
   logs: LogListModel[],
   order: LogsSortOrder,
   infiniteScrollMode: InfiniteScrollMode = 'interval',
-  { element, events } = getMockElement(startPosition)
+  { element, events } = getMockElement(startPosition),
+  props: Partial<Omit<Props, 'children' | 'scrollElement'>> = {}
 ) {
   function scrollTo(position: number, timeStamp?: number) {
     element.scrollTop = position;
@@ -83,6 +84,7 @@ function setup(
   render(
     <InfiniteScroll
       {...defaultProps}
+      {...props}
       sortOrder={order}
       logs={logs}
       scrollElement={element as unknown as HTMLDivElement}
@@ -116,6 +118,9 @@ describe('InfiniteScroll', () => {
       let logs: LogListModel[];
       beforeEach(() => {
         logs = createLogs(absoluteRange.from + 2 * SCROLLING_THRESHOLD, absoluteRange.to - 2 * SCROLLING_THRESHOLD);
+      });
+      afterEach(() => {
+        jest.useRealTimers();
       });
 
       test.each([
@@ -248,6 +253,39 @@ describe('InfiniteScroll', () => {
           expect(loadMoreMock).not.toHaveBeenCalled();
           expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
           expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+        });
+
+        test('Allows retrying newer logs after time advances', async () => {
+          jest.useFakeTimers();
+          jest.setSystemTime(new Date(absoluteRange.to));
+
+          const logs = createLogs(absoluteRange.from, absoluteRange.to);
+          const relativeRange = rangeUtil.convertRawToRange({ from: 'now-5m', to: 'now' });
+          const loadMoreMock = jest.fn();
+          const { scrollTo } = setup(loadMoreMock, 50, logs, LogsSortOrder.Ascending, 'interval', undefined, {
+            timeRange: relativeRange,
+          });
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          scrollTo(59, 1);
+          scrollTo(60, 600);
+
+          expect(loadMoreMock).not.toHaveBeenCalled();
+          expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
+
+          jest.setSystemTime(new Date(absoluteRange.to + SCROLLING_THRESHOLD + 1));
+
+          scrollTo(59, 1200);
+          scrollTo(60, 1800);
+
+          expect(loadMoreMock).toHaveBeenCalledWith(
+            {
+              from: absoluteRange.to,
+              to: absoluteRange.to + SCROLLING_THRESHOLD + 1,
+            },
+            ScrollDirection.Bottom
+          );
         });
       });
 
