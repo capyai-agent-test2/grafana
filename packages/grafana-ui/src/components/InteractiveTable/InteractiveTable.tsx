@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo } from 'react';
+import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import {
   type HeaderGroup,
   type PluginHook,
@@ -143,6 +143,14 @@ interface BaseProps<TableData extends object> {
    */
   pageSize?: number;
   /**
+   * Optional 1-based page number to navigate to when pagination is enabled.
+   */
+  page?: number;
+  /**
+   * Called whenever the current 1-based page changes while pagination is enabled.
+   */
+  onPageChange?: (page: number) => void;
+  /**
    * A custom function to fetch data when the table is sorted. If not provided, the table will be sorted client-side.
    * It's important for this function to have a stable identity, e.g. being wrapped into useCallback to prevent unnecessary
    * re-renders of the table.
@@ -192,7 +200,9 @@ export function InteractiveTable<TableData extends object>({
   data,
   getRowId,
   headerTooltips,
+  page,
   pageSize = 0,
+  onPageChange,
   renderExpandedRow,
   showExpandAll = false,
   fetchData,
@@ -215,6 +225,9 @@ export function InteractiveTable<TableData extends object>({
 
   const multiplePages = data.length > pageSize;
   const paginationEnabled = pageSize > 0;
+  const totalPages = paginationEnabled ? Math.max(1, Math.ceil(data.length / pageSize)) : 1;
+  const normalizedPage =
+    page == null || !Number.isFinite(page) || !paginationEnabled ? undefined : Math.max(1, Math.min(Math.floor(page), totalPages));
 
   if (paginationEnabled) {
     tableHooks.push(usePagination);
@@ -240,6 +253,8 @@ export function InteractiveTable<TableData extends object>({
             .map((c) => c.id)
             .filter(isTruthy),
         ].filter(isTruthy),
+        pageIndex: normalizedPage != null ? normalizedPage - 1 : 0,
+        pageSize: paginationEnabled ? pageSize : undefined,
         sortBy: initialSortBy,
       },
     },
@@ -247,6 +262,10 @@ export function InteractiveTable<TableData extends object>({
   );
 
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
+  const lastReportedPageRef = useRef<number | undefined>(undefined);
+  const previousNormalizedPageRef = useRef<number | undefined>(normalizedPage);
+  const syncingControlledPageRef = useRef<number | undefined>(undefined);
+  const currentPage = tableInstance.state.pageIndex + 1;
 
   const { sortBy } = tableInstance.state;
   useEffect(() => {
@@ -260,6 +279,44 @@ export function InteractiveTable<TableData extends object>({
       tableInstance.setPageSize(pageSize);
     }
   }, [paginationEnabled, pageSize, tableInstance.setPageSize, tableInstance]);
+
+  useEffect(() => {
+    if (normalizedPage !== previousNormalizedPageRef.current) {
+      syncingControlledPageRef.current = normalizedPage;
+      previousNormalizedPageRef.current = normalizedPage;
+    }
+  }, [normalizedPage]);
+
+  useEffect(() => {
+    if (!paginationEnabled || normalizedPage == null || currentPage === normalizedPage) {
+      return;
+    }
+
+    tableInstance.gotoPage(normalizedPage - 1);
+  }, [currentPage, normalizedPage, paginationEnabled, tableInstance]);
+
+  useEffect(() => {
+    if (paginationEnabled && normalizedPage != null && currentPage === normalizedPage) {
+      syncingControlledPageRef.current = undefined;
+    }
+  }, [currentPage, normalizedPage, paginationEnabled]);
+
+  useEffect(() => {
+    if (!paginationEnabled || !onPageChange) {
+      return;
+    }
+
+    if (normalizedPage != null && syncingControlledPageRef.current === normalizedPage && currentPage !== normalizedPage) {
+      return;
+    }
+
+    if (lastReportedPageRef.current === currentPage) {
+      return;
+    }
+
+    lastReportedPageRef.current = currentPage;
+    onPageChange(currentPage);
+  }, [currentPage, normalizedPage, onPageChange, paginationEnabled]);
 
   return (
     <div className={styles.container}>
