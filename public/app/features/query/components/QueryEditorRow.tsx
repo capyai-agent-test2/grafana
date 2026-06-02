@@ -363,6 +363,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           </>
         }
         tooltip={serializedWarnings}
+        tooltipInteractive
       />
     );
   };
