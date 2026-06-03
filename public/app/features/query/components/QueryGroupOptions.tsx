@@ -55,7 +55,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
   const onTimeShift = useCallback(
     (event: FocusEvent<HTMLInputElement>) => {
       const newValue = emptyToNull(event.target.value);
-      const isValid = timeRangeValidation(newValue);
+      const isValid = timeRangeValidation(newValue, { allowNegative: true });
 
       if (isValid && options.timeRange?.shift !== newValue) {
         onChange({
@@ -410,8 +410,8 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
 QueryGroupOptionsEditor.displayName = 'QueryGroupOptionsEditor';
 
-function timeRangeValidation(value: string | null) {
-  return !value || rangeUtil.isValidTimeSpan(value);
+function timeRangeValidation(value: string | null, options?: { allowNegative?: boolean }) {
+  return !value || (options?.allowNegative ? rangeUtil.isValidTimeShift(value) : rangeUtil.isValidTimeSpan(value));
 }
 
 function emptyToNull(value: string) {

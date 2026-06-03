@@ -15,8 +15,8 @@ import { QueryOptionField } from '../types';
 
 import { OptionField } from './OptionField';
 
-function timeRangeValidation(value: string | null) {
-  return !value || rangeUtil.isValidTimeSpan(value);
+function timeRangeValidation(value: string | null, options?: { allowNegative?: boolean }) {
+  return !value || (options?.allowNegative ? rangeUtil.isValidTimeShift(value) : rangeUtil.isValidTimeSpan(value));
 }
 
 function emptyToNull(value: string) {
@@ -69,7 +69,7 @@ export function QueryEditorDetailsSidebar() {
 
       // Handle time range fields
       if (field === QueryOptionField.relativeTime || field === QueryOptionField.timeShift) {
-        const isValid = timeRangeValidation(stringValue);
+        const isValid = timeRangeValidation(stringValue, { allowNegative: field === QueryOptionField.timeShift });
         const timeRangeField = field === QueryOptionField.relativeTime ? 'from' : 'shift';
         if (isValid && stringValue !== options.timeRange?.[timeRangeField]) {
           onQueryOptionsChange({

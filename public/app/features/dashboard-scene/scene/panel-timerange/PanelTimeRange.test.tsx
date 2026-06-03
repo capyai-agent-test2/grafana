@@ -46,6 +46,16 @@ describe('PanelTimeRange', () => {
     expect(panelTime.state.timeInfo).toBe('Timeshift -2h');
   });
 
+  it('should apply negative time shift forward', () => {
+    const panelTime = new PanelTimeRange({ timeShift: '-2h' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.value.from.toISOString()).toBe('2019-02-11T15:00:00.000Z');
+    expect(panelTime.state.value.to.toISOString()).toBe('2019-02-11T21:00:00.000Z');
+    expect(panelTime.state.timeInfo).toBe('Timeshift +2h');
+  });
+
   it('should preserve uppercase unit characters in timeshift label', () => {
     const panelTime = new PanelTimeRange({ timeShift: '1M' });
 
