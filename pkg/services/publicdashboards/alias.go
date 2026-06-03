@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/api"
@@ -90,9 +91,10 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	serviceWrapper ServiceWrapper,
 	dashboardService dashboards.DashboardService,
+	libraryElements libraryelements.Service,
 	license licensing.Licensing,
 ) Service {
-	return service.ProvideService(cfg, features, store, qds, anno, ac, serviceWrapper, dashboardService, license)
+	return service.ProvideService(cfg, features, store, qds, anno, ac, serviceWrapper, dashboardService, libraryElements, license)
 }
 
 func ProvideServiceWrapper(store Store) ServiceWrapper {

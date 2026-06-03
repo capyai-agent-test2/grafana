@@ -48,6 +48,16 @@ func TestPublicDashboardQueryAPI(t *testing.T) {
 	createDatasourceResp := doRequest(t, adminClient, "POST", "/api/datasources", datasourceBytes, &datasourceResult)
 	require.Equal(t, 200, createDatasourceResp.StatusCode)
 
+	testdataDatasourcePayload := map[string]interface{}{
+		"name": "TestData",
+		"type": "testdata",
+		"uid":  "testdata",
+	}
+	testdataDatasourceBytes, err := json.Marshal(testdataDatasourcePayload)
+	require.NoError(t, err)
+	createTestdataDatasourceResp := doRequest(t, adminClient, "POST", "/api/datasources", testdataDatasourceBytes, &datasourceResult)
+	require.Equal(t, 200, createTestdataDatasourceResp.StatusCode)
+
 	t.Run("unauthenticated user can query public dashboard panel", func(t *testing.T) {
 		// create dashboard first
 		dashboardPayload := map[string]interface{}{
@@ -114,6 +124,118 @@ func TestPublicDashboardQueryAPI(t *testing.T) {
 		assert.NotNil(t, queryResult["results"])
 		results := queryResult["results"].(map[string]interface{})
 		assert.NotNil(t, results["A"])
+	})
+
+	t.Run("unauthenticated user can view and query a public dashboard library panel", func(t *testing.T) {
+		libraryElementPayload := map[string]interface{}{
+			"kind": 1,
+			"name": "Test Library Panel",
+			"model": map[string]interface{}{
+				"type":  "stat",
+				"title": "Test Library Panel",
+				"targets": []map[string]interface{}{
+					{
+						"refId":       "A",
+						"scenarioId":  "csv_metric_values",
+						"stringInput": "1,2,3",
+						"datasource": map[string]interface{}{
+							"type": "testdata",
+							"uid":  "testdata",
+						},
+					},
+				},
+			},
+		}
+		libraryElementBytes, err := json.Marshal(libraryElementPayload)
+		require.NoError(t, err)
+
+		var libraryElementResult map[string]interface{}
+		createLibraryElementResp := doRequest(t, adminClient, "POST", "/api/library-elements", libraryElementBytes, &libraryElementResult)
+		require.Equal(t, 200, createLibraryElementResp.StatusCode)
+
+		libraryElement := libraryElementResult["result"].(map[string]interface{})
+		libraryElementUID := libraryElement["uid"].(string)
+
+		dashboardPayload := map[string]interface{}{
+			"dashboard": map[string]interface{}{
+				"title": "Test Public Dashboard Library Panel",
+				"time": map[string]interface{}{
+					"from": "now-1h",
+					"to":   "now",
+				},
+				"panels": []map[string]interface{}{
+					{
+						"id":    1,
+						"type":  "library-panel-ref",
+						"title": "Loading library panel",
+						"gridPos": map[string]interface{}{
+							"h": 8,
+							"w": 12,
+							"x": 0,
+							"y": 0,
+						},
+						"libraryPanel": map[string]interface{}{
+							"uid":  libraryElementUID,
+							"name": "Test Library Panel",
+						},
+					},
+				},
+			},
+			"folderUid": "",
+			"overwrite": false,
+		}
+		payloadBytes, err := json.Marshal(dashboardPayload)
+		require.NoError(t, err)
+
+		var dashboardResult map[string]interface{}
+		createDashboardResp := doRequest(t, adminClient, "POST", "/api/dashboards/db", payloadBytes, &dashboardResult)
+		require.Equal(t, 200, createDashboardResp.StatusCode)
+
+		dashboardUID := dashboardResult["uid"].(string)
+		publicDashboardPayload := map[string]interface{}{
+			"isEnabled":            true,
+			"annotationsEnabled":   false,
+			"timeSelectionEnabled": false,
+			"share":                "public",
+		}
+		payloadBytes, err = json.Marshal(publicDashboardPayload)
+		require.NoError(t, err)
+
+		createURL := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards", dashboardUID)
+		var publicDashboard map[string]interface{}
+		createResp := doRequest(t, adminClient, "POST", createURL, payloadBytes, &publicDashboard)
+		require.Equal(t, 200, createResp.StatusCode)
+
+		accessToken := publicDashboard["accessToken"].(string)
+		unauthenticatedClient := createUnauthenticatedClient(grafanaListedAddr)
+
+		var publicDashboardViewResult map[string]interface{}
+		viewURL := fmt.Sprintf("/api/public/dashboards/%s", accessToken)
+		viewResp := doRequest(t, unauthenticatedClient, "GET", viewURL, nil, &publicDashboardViewResult)
+		require.Equal(t, 200, viewResp.StatusCode)
+
+		dashboard := publicDashboardViewResult["dashboard"].(map[string]interface{})
+		panels := dashboard["panels"].([]interface{})
+		panel := panels[0].(map[string]interface{})
+		require.Equal(t, "stat", panel["type"])
+
+		targets := panel["targets"].([]interface{})
+		require.Len(t, targets, 1)
+		target := targets[0].(map[string]interface{})
+		require.Equal(t, "A", target["refId"])
+		_, hasExpr := target["expr"]
+		require.False(t, hasExpr)
+
+		queryBytes, err := json.Marshal(map[string]interface{}{})
+		require.NoError(t, err)
+
+		queryURL := fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", accessToken)
+		var queryResult map[string]interface{}
+		queryResp := doRequest(t, unauthenticatedClient, "POST", queryURL, queryBytes, &queryResult)
+		require.Equal(t, 200, queryResp.StatusCode)
+
+		results := queryResult["results"].(map[string]interface{})
+		require.NotNil(t, results["A"])
 	})
 
 	t.Run("unauthenticated user cannot query disabled public dashboard", func(t *testing.T) {
