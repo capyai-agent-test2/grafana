@@ -84,6 +84,16 @@ describe('LokiQueryEditorSelector', () => {
     expect(screen.queryByTestId('query-with-assistant-button')).not.toBeInTheDocument();
   });
 
+  it('shows an error for log queries in UnifiedAlerting', async () => {
+    renderWithProps({ expr: '{job="grafana"}' }, { app: CoreApp.UnifiedAlerting });
+    expect(await screen.findByText('Alert queries must return metrics')).toBeInTheDocument();
+  });
+
+  it('does not show an error for metric queries in UnifiedAlerting', async () => {
+    renderWithProps({ expr: 'rate({job="grafana"}[5m])' }, { app: CoreApp.UnifiedAlerting });
+    expect(screen.queryByText('Alert queries must return metrics')).not.toBeInTheDocument();
+  });
+
   it('does not show the assistant button when feature toggle is disabled', async () => {
     config.featureToggles.queryWithAssistant = false;
     renderWithProps({}, { app: CoreApp.Explore });

@@ -14,15 +14,17 @@ import {
   QueryEditorMode,
 } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
 import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEditor';
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
+import { placeHolderScopedVars } from './monaco-query-field/monaco-completion-provider/validation';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
+import { isLogsQuery } from '../queryUtils';
 import { type LokiQuery, type QueryStats } from '../types';
 
 import { shouldUpdateStats } from './stats';
@@ -56,6 +58,8 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
   const showAssistant =
     config.featureToggles.queryWithAssistant &&
     (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
+  const interpolatedExpr = datasource.interpolateVariablesInQueries([query], placeHolderScopedVars)[0]?.expr ?? query.expr;
+  const showAlertingMetricQueryError = app === CoreApp.UnifiedAlerting && Boolean(interpolatedExpr) && isLogsQuery(interpolatedExpr);
 
   const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
     window.localStorage.setItem(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
@@ -204,6 +208,11 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
         <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
+      {showAlertingMetricQueryError && (
+        <Alert severity="error" title="Alert queries must return metrics">
+          Use a Loki metric query such as <code>rate(...)</code> or <code>count_over_time(...)</code>, not a log query.
+        </Alert>
+      )}
       <EditorRows>
         {editorMode === QueryEditorMode.Code && (
           <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} />
