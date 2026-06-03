@@ -27,6 +27,7 @@ describe('SnapshotListTableRow', () => {
     name: 'Test Snapshot',
     url: 'http://test.com',
     external: false,
+    created: '2025-08-04T17:47:48Z',
   };
 
   it('renders correctly', () => {
@@ -43,6 +44,20 @@ describe('SnapshotListTableRow', () => {
     expect(screen.getByRole('cell', { name: mockSnapshot.name })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: mockSnapshot.url })).toBeInTheDocument();
     expect(screen.queryByRole('cell', { name: 'External' })).not.toBeInTheDocument();
+  });
+
+  it('renders the created value when provided', () => {
+    const mockOnRemove = jest.fn();
+    grantAllPermissions();
+    render(
+      <table>
+        <tbody>
+          <SnapshotListTableRow snapshot={mockSnapshot} createdAt="2025-08-04 17:47:48" onRemove={mockOnRemove} />
+        </tbody>
+      </table>
+    );
+
+    expect(screen.getByRole('cell', { name: '2025-08-04 17:47:48' })).toBeInTheDocument();
   });
 
   it('adds the correct href to the name, url and view buttons', () => {

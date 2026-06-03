@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
+import { dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
@@ -76,6 +77,11 @@ export const SnapshotListTable = () => {
                 <Trans i18nKey="snapshot.url-column-header">Snapshot url</Trans>
               </strong>
             </th>
+            <th>
+              <strong>
+                <Trans i18nKey="snapshot.created-column-header">Created</Trans>
+              </strong>
+            </th>
             <th style={{ width: '70px' }}></th>
             <th style={{ width: '30px' }}></th>
             <th style={{ width: '25px' }}></th>
@@ -93,6 +99,7 @@ export const SnapshotListTable = () => {
               <SnapshotListTableRow
                 key={snapshot.key}
                 snapshot={snapshot}
+                createdAt={snapshot.created ? dateTimeFormat(snapshot.created) : undefined}
                 onRemove={() => setRemoveSnapshot(snapshot)}
               />
             ))
