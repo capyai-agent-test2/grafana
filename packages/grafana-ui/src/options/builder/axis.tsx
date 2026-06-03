@@ -118,6 +118,16 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       settings: {
         placeholder: t('grafana-ui.builder.axis.placeholder-soft-max', 'See: Standard options > Max'),
       },
+    })
+    .addNumberInput({
+      path: 'axisSoftSpan',
+      name: t('grafana-ui.builder.axis.name-soft-span', 'Soft span'),
+      defaultValue: defaultConfig.axisSoftSpan,
+      category,
+      settings: {
+        placeholder: t('grafana-ui.builder.axis.placeholder-soft-span', 'Auto'),
+      },
+      showIf: (c) => c.scaleDistribution?.type !== ScaleDistribution.Log,
     });
 }
 

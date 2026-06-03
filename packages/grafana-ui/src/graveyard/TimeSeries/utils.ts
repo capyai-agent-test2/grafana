@@ -502,6 +502,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       hardMax: field.config.max,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
+      softSpan: customConfig.axisSoftSpan,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
     });
@@ -519,6 +520,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           hardMax: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          softSpan: customConfig.axisSoftSpan,
         });
       }
     }

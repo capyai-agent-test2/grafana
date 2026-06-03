@@ -40,6 +40,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   hardMax?: number | null;
   softMin?: number | null;
   softMax?: number | null;
+  softSpan?: number | null;
 
   drawStyle?: GraphDrawStyle;
   pathBuilder?: Series.PathBuilder | null;
@@ -162,6 +163,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       hardMax,
       softMin,
       softMax,
+      softSpan,
       dynamicSeriesColor,
     } = this.props;
 
@@ -170,7 +172,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     }
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
-      return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
+      return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax, softSpan);
     }
 
     if (gradientMode === GraphGradientMode.Hue) {
@@ -193,6 +195,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       hardMax,
       softMin,
       softMax,
+      softSpan,
       dynamicSeriesColor,
     } = this.props;
 
@@ -218,7 +221,17 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
         if (colorMode?.id !== FieldColorModeId.Fixed) {
-          return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
+          return getScaleGradientFn(
+            opacityPercent,
+            theme,
+            colorMode,
+            thresholds,
+            hardMin,
+            hardMax,
+            softMin,
+            softMax,
+            softSpan
+          );
         }
       // intentional fall-through to handle Scheme with Fixed color
       default:

@@ -255,6 +255,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       max: xField.config.max,
       softMin: custom?.axisSoftMin,
       softMax: custom?.axisSoftMax,
+      softSpan: custom?.axisSoftSpan,
       centeredZero: custom?.axisCenteredZero,
       decimals: xField.config.decimals,
       padMinBy: 0,
@@ -327,6 +328,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          softSpan: customConfig.axisSoftSpan,
           centeredZero: customConfig.axisCenteredZero,
           stackingMode: customConfig.stacking?.mode,
           range:
@@ -604,6 +606,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       hardMax: field.config.max,
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
+      softSpan: customConfig.axisSoftSpan,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
       showValues: customConfig.showValues,
@@ -624,6 +627,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           hardMax: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          softSpan: customConfig.axisSoftSpan,
         });
       }
     }

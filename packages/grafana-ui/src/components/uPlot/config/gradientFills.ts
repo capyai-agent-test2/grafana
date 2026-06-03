@@ -13,6 +13,8 @@ import { ScaleOrientation } from '@grafana/schema';
 
 import { getCanvasContext } from '../../../utils/measureText';
 
+const LOG_DISTRIBUTION = 3;
+
 function makeDirectionalGradient(direction: GradientDirection, bbox: uPlot.BBox, ctx: CanvasRenderingContext2D) {
   let x0 = 0,
     y0 = 0,
@@ -214,8 +216,15 @@ export function getGradientRange(
   hardMin?: number | null,
   hardMax?: number | null,
   softMin?: number | null,
-  softMax?: number | null
+  softMax?: number | null,
+  softSpan?: number | null
 ) {
+  const scale = u.scales[scaleKey];
+
+  if (softSpan != null && softSpan > 0 && scale.distr !== LOG_DISTRIBUTION) {
+    return [scale.min ?? 0, scale.max ?? 100];
+  }
+
   let min = hardMin ?? softMin ?? null;
   let max = hardMax ?? softMax ?? null;
 
@@ -242,7 +251,8 @@ export function getScaleGradientFn(
   hardMin?: number | null,
   hardMax?: number | null,
   softMin?: number | null,
-  softMax?: number | null
+  softMax?: number | null,
+  softSpan?: number | null
 ): (self: uPlot, seriesIdx: number) => CanvasGradient | string {
   if (!colorMode) {
     throw Error('Missing colorMode required for color scheme gradients');
@@ -267,7 +277,7 @@ export function getScaleGradientFn(
         ]);
         gradient = scaleGradient(plot, scaleKey, valueStops, true);
       } else {
-        const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+        const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax, softSpan);
         const range = max - min;
         const valueStops: ValueStop[] = thresholds.steps.map((step) => [
           min + range * (step.value / 100),
@@ -277,7 +287,7 @@ export function getScaleGradientFn(
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
-      const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax);
+      const [min, max] = getGradientRange(plot, scaleKey, hardMin, hardMax, softMin, softMax, softSpan);
       const range = max - min;
       const valueStops: ValueStop[] = colors.map((color, i) => [
         min + range * (i / (colors.length - 1)),
