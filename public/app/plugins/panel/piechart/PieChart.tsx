@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { localPoint } from '@visx/event';
-import { RadialGradient } from '@visx/gradient';
 import { Group } from '@visx/group';
 import Pie, { type PieArcDatum, type ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
@@ -27,7 +26,7 @@ import {
   SeriesTable,
   usePanelContext,
 } from '@grafana/ui';
-import { getTooltipContainerStyles, useComponentInstanceId } from '@grafana/ui/internal';
+import { getTooltipContainerStyles } from '@grafana/ui/internal';
 
 import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
@@ -66,7 +65,6 @@ export const PieChart = ({
   gradientFills,
 }: PieChartProps) => {
   const theme = useTheme2();
-  const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles2(getStyles);
   const tooltip = useTooltip<SeriesTableRowProps[]>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
@@ -77,44 +75,16 @@ export const PieChart = ({
   const filteredFieldDisplayValues = fieldDisplayValues.filter(filterDisplayItems);
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
-  const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
-  const getGradientColor = (color: string) => {
-    return `url(#${getGradientId(color)})`;
-  };
 
   const showLabel = displayLabels.length > 0;
   const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
   const total = filteredFieldDisplayValues.reduce(sumDisplayItemsReducer, 0);
   const layout = getPieLayout(width, height, pieType);
-  const colors = [
-    ...new Set(
-      filteredFieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)
-    ),
-  ];
-
-  // gradientFills is pre-computed in PieChartPanel and shared with the legend
-  // to guarantee consistent colors between slices and legend items.
 
   return (
     <div className={styles.container}>
       <svg width={layout.size} height={layout.size} ref={containerRef} style={{ overflow: 'visible' }}>
         <Group top={layout.position} left={layout.position}>
-          {colors.map((color) => {
-            return (
-              <RadialGradient
-                key={color}
-                id={getGradientId(color)}
-                from={getGradientColorFrom(color, theme)}
-                to={getGradientColorTo(color, theme)}
-                fromOffset={layout.gradientFromOffset}
-                toOffset="1"
-                gradientUnits="userSpaceOnUse"
-                cx={0}
-                cy={0}
-                radius={layout.outerRadius}
-              />
-            );
-          })}
           <Pie
             data={filteredFieldDisplayValues}
             pieValue={getValue}
@@ -127,15 +97,8 @@ export const PieChart = ({
             {(pie) => (
               <>
                 {pie.arcs.map((arc) => {
-                  const color = arc.data.display.color ?? FALLBACK_COLOR;
                   const highlightState = getHighlightState(highlightedTitle, arc);
-                  // In gradient mode use the pre-computed interpolated fill; otherwise
-                  // fall back to the per-series radial gradient (existing behaviour).
-                  // Items with a field-level color override are not in gradientFills —
-                  // fall back to display.color (the override value) rather than FALLBACK_COLOR.
-                  const fill = gradientFills
-                    ? (gradientFills.get(arc.data) ?? arc.data.display.color ?? FALLBACK_COLOR)
-                    : getGradientColor(color);
+                  const fill = gradientFills?.get(arc.data) ?? arc.data.display.color ?? FALLBACK_COLOR;
 
                   if (arc.data.hasLinks && arc.data.getLinks) {
                     return (
@@ -427,26 +390,11 @@ export function computeGradientFills(
   return fills;
 }
 
-function getGradientColorFrom(color: string, theme: GrafanaTheme2) {
-  return tinycolor(color)
-    .darken(20 * (theme.isDark ? 1 : -0.7))
-    .spin(4)
-    .toRgbString();
-}
-
-function getGradientColorTo(color: string, theme: GrafanaTheme2) {
-  return tinycolor(color)
-    .darken(10 * (theme.isDark ? 1 : -0.7))
-    .spin(-4)
-    .toRgbString();
-}
-
 interface PieLayout {
   position: number;
   size: number;
   outerRadius: number;
   innerRadius: number;
-  gradientFromOffset: number;
 }
 
 function getPieLayout(height: number, width: number, pieType: PieChartType, margin = 16): PieLayout {
@@ -455,14 +403,11 @@ function getPieLayout(height: number, width: number, pieType: PieChartType, marg
   const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
   const innerRadius = outerRadius - donutThickness;
   const centerOffset = (size - margin * 2) / 2;
-  // for non donut pie charts shift gradient out a bit
-  const gradientFromOffset = 1 - (outerRadius - innerRadius) / outerRadius;
   return {
     position: centerOffset + margin,
     size: size,
     outerRadius: outerRadius,
     innerRadius: innerRadius,
-    gradientFromOffset: gradientFromOffset,
   };
 }
 
