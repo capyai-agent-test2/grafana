@@ -471,6 +471,8 @@ describe('DashboardEditPane', () => {
       const pastedPanel = row1Panels[row1Panels.length - 1];
       expect(pastedPanel.state.pluginId).toBe(row1Viz.state.pluginId);
       expect(pastedPanel.state.title).toBe(row1Viz.state.title);
+      expect(pastedPanel.state.options).toEqual(row1Viz.state.options);
+      expect(pastedPanel.state.fieldConfig).toEqual(row1Viz.state.fieldConfig);
     });
 
     it('preserves the source panel config when pasting with target undefined into a TabsLayout dashboard', () => {
@@ -486,6 +488,8 @@ describe('DashboardEditPane', () => {
       const pastedPanel = tab1Panels[tab1Panels.length - 1];
       expect(pastedPanel.state.pluginId).toBe(tab1Viz.state.pluginId);
       expect(pastedPanel.state.title).toBe(tab1Viz.state.title);
+      expect(pastedPanel.state.options).toEqual(tab1Viz.state.options);
+      expect(pastedPanel.state.fieldConfig).toEqual(tab1Viz.state.fieldConfig);
     });
 
     it('adds pasted panel to the dashboard when dashboard is empty', () => {
@@ -593,7 +597,13 @@ function setupWithTwoTabs(): {
   tab1Viz: VizPanel;
   editPane: DashboardEditPane;
 } {
-  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId: 'text',
+    title: 'P1',
+    options: { content: 'tab panel' },
+    fieldConfig: { defaults: { color: { mode: 'thresholds' } }, overrides: [] },
+  });
   const gridItem = new AutoGridItem({ body: panel });
   const layoutWithPanel = new AutoGridLayoutManager({
     layout: new AutoGridLayout({ children: [gridItem] }),
@@ -617,7 +627,13 @@ function setupWithTwoRows(): {
   row1Viz: VizPanel;
   editPane: DashboardEditPane;
 } {
-  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+  const panel = new VizPanel({
+    key: 'panel-1',
+    pluginId: 'text',
+    title: 'P1',
+    options: { content: 'row panel' },
+    fieldConfig: { defaults: { color: { mode: 'continuous-GrYlRd' } }, overrides: [] },
+  });
   const gridItem = new AutoGridItem({ body: panel });
   const layoutWithPanel = new AutoGridLayoutManager({
     layout: new AutoGridLayout({ children: [gridItem] }),
