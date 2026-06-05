@@ -171,4 +171,18 @@ describe('PlaylistSrv', () => {
     const hasStartPage = entries.some((entry: { pathname: string }) => entry.pathname === '/playlists/play/foo');
     expect(hasStartPage).toBe(false);
   });
+
+  it('preserves time range and variable query params while rotating dashboards', async () => {
+    locationService.push('/playlists/play/foo?var-host=web-01&from=now-6h&to=now&timezone=browser&refresh=30s');
+
+    await srv.start(mockPlaylist);
+
+    const currentLocation = locationService.getLocation();
+    expect(currentLocation.pathname).toBe('/url/to/aaa');
+    expect(currentLocation.search).toContain('var-host=web-01');
+    expect(currentLocation.search).toContain('from=now-6h');
+    expect(currentLocation.search).toContain('to=now');
+    expect(currentLocation.search).toContain('timezone=browser');
+    expect(currentLocation.search).toContain('refresh=30s');
+  });
 });
