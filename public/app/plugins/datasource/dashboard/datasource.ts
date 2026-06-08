@@ -21,7 +21,7 @@ import {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
 } from '@grafana/data';
-import { isSceneObject, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
+import { isSceneObject, sceneGraph, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -128,7 +128,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           if (!upstreamRange?.from || !upstreamRange?.to) {
             return true;
           }
-          return isSameRange(upstreamRange, options.range);
+          return isSameRange(upstreamRange, sceneGraph.getTimeRange(sourceDataProvider!).state.value);
         }),
         map((result) => {
           return {

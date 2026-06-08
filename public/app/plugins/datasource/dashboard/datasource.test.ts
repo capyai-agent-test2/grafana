@@ -23,6 +23,7 @@ import {
   SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
+  sceneGraph,
   type SceneObject,
   VizPanel,
 } from '@grafana/scenes';
@@ -122,6 +123,9 @@ describe('DashboardDatasource', () => {
     // when the real Done arrived seconds later.
     const oldRange = makeRange('2026-05-01T00:00:00Z', '2026-05-08T00:00:00Z');
     const newRange = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
+    const getTimeRangeSpy = jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({
+      state: { value: newRange },
+    } as ReturnType<typeof sceneGraph.getTimeRange>);
 
     const { observable, upstreamStream } = setupWithControllableUpstream(
       { refId: 'A', panelId: 1 },
@@ -147,11 +151,16 @@ describe('DashboardDatasource', () => {
     expect(emissions).toHaveLength(1);
     expect(emissions[0].state).toBe(LoadingState.Done);
     expect(emissions[0].data[0].fields[0].values).toEqual([2, 3]);
+
+    getTimeRangeSpy.mockRestore();
   });
 
   it('Should still emit the only Done when ranges match (Mixed editor-add path)', async () => {
     // The filter must not skip the editor-add case: same range, single Done emission.
     const range = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
+    const getTimeRangeSpy = jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({
+      state: { value: range },
+    } as ReturnType<typeof sceneGraph.getTimeRange>);
 
     const { observable, upstreamStream } = setupWithControllableUpstream(
       { refId: 'A', panelId: 1 },
@@ -168,6 +177,42 @@ describe('DashboardDatasource', () => {
     expect(emissions).toHaveLength(1);
     expect(emissions[0].state).toBe(LoadingState.Done);
     expect(emissions[0].data[0].fields[0].values).toEqual([7, 8, 9]);
+
+    getTimeRangeSpy.mockRestore();
+  });
+
+  it('Should use the source panel time range for MixedDS terminal emissions when a time override is active', async () => {
+    const chainRange = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
+    const staleRange = makeRange('2026-05-01T00:00:00Z', '2026-05-08T00:00:00Z');
+    const sourceRange = makeRange('2026-04-27T00:00:00Z', '2026-05-04T00:00:00Z');
+
+    const getTimeRangeSpy = jest.spyOn(sceneGraph, 'getTimeRange').mockReturnValue({
+      state: { value: sourceRange },
+    } as ReturnType<typeof sceneGraph.getTimeRange>);
+
+    const { observable, upstreamStream } = setupWithControllableUpstream(
+      { refId: 'A', panelId: 1 },
+      `${MIXED_REQUEST_PREFIX}1`,
+      chainRange
+    );
+
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([1]), staleRange));
+
+    const emissions: DataQueryResponse[] = [];
+    observable.subscribe({ next: (data) => emissions.push(data) });
+
+    await waitForDebounce();
+    expect(emissions).toEqual([]);
+
+    upstreamStream.next(makeResult(LoadingState.Loading, arrayToDataFrame([1]), sourceRange));
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([2, 3]), sourceRange));
+
+    await waitForDebounce();
+    expect(emissions).toHaveLength(1);
+    expect(emissions[0].state).toBe(LoadingState.Done);
+    expect(emissions[0].data[0].fields[0].values).toEqual([2, 3]);
+
+    getTimeRangeSpy.mockRestore();
   });
 
   it('Should not drop Done when the chain panel has a different range than the upstream (non-Mixed PanelTimeRange override)', async () => {
