@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { VizPanel } from '@grafana/scenes';
 
+import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from '../PanelEditor';
@@ -32,6 +33,14 @@ jest.mock('../PanelEditPanelWrapper', () => ({
   PanelEditPanelWrapper: () => <div data-testid="panel-viz" />,
 }));
 
+jest.mock('../SaveLibraryVizPanelModal', () => ({
+  SaveLibraryVizPanelModal: () => <div data-testid="save-library-modal" />,
+}));
+
+jest.mock('../../scene/UnlinkModal', () => ({
+  UnlinkModal: () => <div data-testid="unlink-library-modal" />,
+}));
+
 // Minimal mock so instanceof checks in VizAndDataPaneNext work without scene setup
 jest.mock('./PanelDataPaneNext', () => ({
   PanelDataPaneNext: class {
@@ -44,7 +53,7 @@ const MockPanelComponent = () => <div data-testid="panel-viz" />;
 function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext) {
   return {
     scene: {
-      panel: { Component: MockPanelComponent },
+      panel,
       tableView: { Component: MockPanelComponent },
       controls: null,
       dataPane,
@@ -66,6 +75,11 @@ new DashboardGridItem({ body: panel });
 const panelEditor = buildPanelEditScene(panel);
 
 describe('VizAndDataPaneNext', () => {
+  beforeEach(() => {
+    panel.setState({ $behaviors: [] });
+    panelEditor.setState({ showLibraryPanelSaveModal: false, showLibraryPanelUnlinkModal: false });
+  });
+
   describe('when panel has no data pane (non-viz panel e.g. text, news)', () => {
     beforeEach(() => {
       jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(undefined));
@@ -121,6 +135,32 @@ describe('VizAndDataPaneNext', () => {
       jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(undefined));
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.queryByTestId('panel-controls')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('library panel modals', () => {
+    beforeEach(() => {
+      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(undefined));
+    });
+
+    it('renders the save modal when saving a library panel in PanelEditNext', () => {
+      const libraryPanel = new LibraryPanelBehavior({ uid: 'uid', name: 'library panel', isLoaded: true });
+      panel.setState({ $behaviors: [libraryPanel] });
+      panelEditor.setState({ showLibraryPanelSaveModal: true });
+
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      expect(screen.getByTestId('save-library-modal')).toBeInTheDocument();
+    });
+
+    it('renders the unlink modal when unlinking a library panel in PanelEditNext', () => {
+      const libraryPanel = new LibraryPanelBehavior({ uid: 'uid', name: 'library panel', isLoaded: true });
+      panel.setState({ $behaviors: [libraryPanel] });
+      panelEditor.setState({ showLibraryPanelUnlinkModal: true });
+
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      expect(screen.getByTestId('unlink-library-modal')).toBeInTheDocument();
     });
   });
 });
