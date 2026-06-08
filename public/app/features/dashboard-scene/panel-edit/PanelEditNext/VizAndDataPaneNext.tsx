@@ -8,6 +8,9 @@ import { useStyles2 } from '@grafana/ui';
 import { PanelEditPanelWrapper } from '../PanelEditPanelWrapper';
 import { type PanelEditor } from '../PanelEditor';
 import { QueryEditorBanner } from '../QueryEditorBanner';
+import { SaveLibraryVizPanelModal } from '../SaveLibraryVizPanelModal';
+import { UnlinkModal } from '../../scene/UnlinkModal';
+import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
@@ -19,7 +22,9 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
   const containerRef = useRef<HTMLDivElement>(null);
   const { showBanner, dismissBanner } = useQueryEditorBanner();
   const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
+  const { showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
   const styles = useStyles2(getStyles, layout.sidebarSize);
+  const libraryPanel = getLibraryPanelBehavior(scene.panel);
 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
 
@@ -32,6 +37,21 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
       )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
+        {showLibraryPanelSaveModal && libraryPanel && (
+          <SaveLibraryVizPanelModal
+            libraryPanel={libraryPanel}
+            onDismiss={model.onDismissLibraryPanelSaveModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
+          />
+        )}
+        {showLibraryPanelUnlinkModal && libraryPanel && (
+          <UnlinkModal
+            onDismiss={model.onDismissUnlinkLibraryPanelModal}
+            onConfirm={model.onConfirmUnlinkLibraryPanel}
+            isOpen
+          />
+        )}
         {nextDataPane && (
           <div className={styles.vizResizeHandle}>
             <div
