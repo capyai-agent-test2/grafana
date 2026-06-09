@@ -29,7 +29,7 @@ export function representativeDelta(dataX: ArrayLike<number>, dataY: ArrayLike<n
     return null;
   }
 
-  let core = gaps.length >= 3 ? gaps.slice(1, -1) : gaps;
+  let core = gaps.length >= 4 ? gaps.slice(1, -1) : gaps;
   core.sort((a, b) => a - b);
 
   let mid = Math.floor(core.length / 2);

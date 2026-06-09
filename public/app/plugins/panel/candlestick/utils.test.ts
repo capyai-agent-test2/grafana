@@ -17,6 +17,10 @@ describe('representativeDelta', () => {
     expect(representativeDelta([0, 1000, 2000, 3000, 5000, 6000, 7000], [1, 1, 1, 1, 1, 1, 1])).toBe(1000);
   });
 
+  it('keeps the full-gap median for short series with an interior outlier', () => {
+    expect(representativeDelta([0, 1000, 3000, 4000], [1, 1, 1, 1])).toBe(1000);
+  });
+
   it('stays stable under timestamp jitter', () => {
     expect(representativeDelta([0, 1000, 2001, 2999, 4000], [1, 1, 1, 1, 1])).toBe(999.5);
   });
