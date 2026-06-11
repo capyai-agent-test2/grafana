@@ -24,6 +24,7 @@ import {
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { getAbsoluteMaxDataPoints } from 'app/features/query/utils/relativeMaxDataPoints';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
@@ -849,7 +850,7 @@ export const panelToRuleFormValues = async (
     relativeTimeRange,
     panel.scopedVars || {},
     panel.datasource ?? undefined,
-    panel.maxDataPoints ?? undefined,
+    getAbsoluteMaxDataPoints(panel.maxDataPoints),
     interpolatedInterval
   );
   // if no alerting capable queries are found, can't create a rule
@@ -918,7 +919,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
     scopedVars,
     datasource,
-    maxDataPoints,
+    getAbsoluteMaxDataPoints(maxDataPoints),
     interpolatedMinInterval
   );
 

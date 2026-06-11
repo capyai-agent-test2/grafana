@@ -77,6 +77,20 @@ describe('QueryEditorDetailsSidebar', () => {
       );
     });
 
+    it('should call onQueryOptionsChange with relative maxDataPoints on blur', () => {
+      renderSidebar();
+
+      const input = screen.getByLabelText('Max data points');
+      fireEvent.change(input, { target: { value: '50%' } });
+      fireEvent.blur(input);
+
+      expect(mockActions.onQueryOptionsChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxDataPoints: '50%',
+        })
+      );
+    });
+
     it('should set maxDataPoints to null for invalid input', () => {
       renderSidebar();
 

@@ -21,6 +21,7 @@ import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
+import { setMaxDataPoints } from 'app/features/query/utils/relativeMaxDataPoints';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type QueryGroupOptions } from 'app/types/query';
 
@@ -666,7 +667,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const panelStateUpdate: Partial<VizPanel['state']> = {};
 
     if (options.maxDataPoints !== queryRunner.state.maxDataPoints) {
-      dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
+      setMaxDataPoints(dataObjStateUpdate, options.maxDataPoints);
     }
 
     if (options.minInterval !== queryRunner.state.minInterval) {

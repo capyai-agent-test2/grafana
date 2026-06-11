@@ -535,7 +535,7 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   const queryRunner = getQueryRunnerFor(vizPanel);
 
   if (queryRunner) {
-    queryOptions.maxDataPoints = queryRunner.state.maxDataPoints;
+    Reflect.set(queryOptions, 'maxDataPoints', queryRunner.state.maxDataPoints);
 
     if (queryRunner.state.cacheTimeout) {
       queryOptions.cacheTimeout = queryRunner.state.cacheTimeout;

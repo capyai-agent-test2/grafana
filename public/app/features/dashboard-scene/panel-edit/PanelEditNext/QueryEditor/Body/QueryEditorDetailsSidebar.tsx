@@ -4,6 +4,7 @@ import { type FocusEvent, useCallback, useRef } from 'react';
 import { type GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { parseMaxDataPoints } from 'app/features/query/utils/relativeMaxDataPoints';
 
 import {
   useActionsContext,
@@ -53,8 +54,16 @@ export function QueryEditorDetailsSidebar() {
     (event: FocusEvent<HTMLInputElement>, field: QueryOptionField) => {
       const value = event.currentTarget.value;
 
+      if (field === QueryOptionField.maxDataPoints) {
+        const maxDataPoints = parseMaxDataPoints(value);
+        if (maxDataPoints !== options[field]) {
+          onQueryOptionsChange({ ...options, [field]: maxDataPoints });
+        }
+        return;
+      }
+
       // Handle number fields
-      if (field === QueryOptionField.maxDataPoints || field === QueryOptionField.queryCachingTTL) {
+      if (field === QueryOptionField.queryCachingTTL) {
         let numValue: number | null = parseInt(value, 10);
         if (isNaN(numValue) || numValue === 0) {
           numValue = null;

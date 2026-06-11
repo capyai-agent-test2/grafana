@@ -129,10 +129,9 @@ export const QUERY_OPTION_FIELD_CONFIG: Record<QueryOptionField, QueryOptionFiel
     getTooltip: () =>
       t(
         'query-editor-next.details-sidebar.max-data-points-tooltip',
-        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval.'
+        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. Use a percentage, for example 50%, to keep density relative to panel width.'
       ),
     getLabel: () => t('query-editor-next.details-sidebar.max-data-points', 'Max data points'),
-    inputType: 'number',
   },
   [QueryOptionField.minInterval]: {
     getTooltip: () =>

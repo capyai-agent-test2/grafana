@@ -7,6 +7,8 @@ import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { type QueryGroupOptions } from 'app/types/query';
 
+import { parseMaxDataPoints } from '../utils/relativeMaxDataPoints';
+
 interface Props {
   options: QueryGroupOptions;
   dataSource: DataSourceApi;
@@ -112,11 +114,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
   const onMaxDataPointsBlur = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      let maxDataPoints: number | null = parseInt(event.currentTarget.value, 10);
-
-      if (isNaN(maxDataPoints) || maxDataPoints === 0) {
-        maxDataPoints = null;
-      }
+      const maxDataPoints = parseMaxDataPoints(event.currentTarget.value);
 
       if (maxDataPoints !== options.maxDataPoints) {
         onChange({
@@ -213,7 +211,8 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           tooltip={
             <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.max-data-points-tooltip">
               The maximum data points per series. Used directly by some data sources and used in calculation of auto
-              interval. With streaming data this value is used for the rolling buffer.
+              interval. Use a percentage, for example 50%, to keep density relative to panel width. With streaming data
+              this value is used for the rolling buffer.
             </Trans>
           }
         >
@@ -223,7 +222,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         </InlineLabel>
         <Input
           id="max-data-points-input"
-          type="number"
+          type="text"
           // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
           placeholder={`${realMd}`}
           spellCheck={false}
