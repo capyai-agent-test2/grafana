@@ -4,6 +4,7 @@ import { OverlayContainer } from '@react-aria/overlays';
 import { type PropsWithChildren } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { useLockBodyScroll } from '../../utils/useLockBodyScroll';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { getModalStyles } from './getModalStyles';
@@ -33,6 +34,7 @@ export function ModalBase({
   'aria-labelledby': ariaLabelledBy,
 }: PropsWithChildren<ModalBaseProps>) {
   const styles = useStyles2(getModalStyles);
+  useLockBodyScroll(isOpen);
 
   const { context, refs } = useFloating({
     open: isOpen,

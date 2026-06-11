@@ -9,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { useLockBodyScroll } from '../../utils/useLockBodyScroll';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
@@ -93,6 +94,7 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
+  useLockBodyScroll();
 
   const content = <div className={styles.content}>{children}</div>;
   const overrideWidth = drawerWidth ?? width ?? drawerSizes[size].width;
