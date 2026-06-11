@@ -223,6 +223,11 @@ export function SelectBase<T, Rest = {}>({
   );
 
   let ReactSelectComponent = ReactSelect;
+  const menuIsOpen = isOpen ?? open;
+  const shouldDisableMenuPortalForExpandedMultiValueSelect =
+    isMulti && menuIsOpen && maxVisibleValues !== undefined && showAllSelectedWhenOpen;
+  const shouldPortalMenu = menuShouldPortal && !shouldDisableMenuPortalForExpandedMultiValueSelect;
+  const resolvedMenuPosition = shouldDisableMenuPortalForExpandedMultiValueSelect ? 'absolute' : menuPosition;
 
   const creatableProps: ComponentProps<typeof Creatable<SelectableValue<T>>> = {};
   let asyncSelectProps: any = {};
@@ -286,9 +291,9 @@ export function SelectBase<T, Rest = {}>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement: menuPlacement === 'auto' && closeToBottom ? 'top' : menuPlacement,
-    menuPosition: menuShouldPortal ? 'fixed' : menuPosition,
+    menuPosition: shouldPortalMenu ? 'fixed' : resolvedMenuPosition,
     menuShouldBlockScroll: true,
-    menuPortalTarget: menuShouldPortal && getPortalContainer(),
+    menuPortalTarget: shouldPortalMenu ? getPortalContainer() : undefined,
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
