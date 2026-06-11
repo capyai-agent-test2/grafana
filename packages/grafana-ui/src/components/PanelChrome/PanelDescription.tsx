@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import type { JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -30,7 +31,11 @@ export function PanelDescription({ description, className }: Props) {
 
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>
-      <TitleItem className={cx(className, styles.description)}>
+      <TitleItem
+        aria-label={t('grafana-ui.panel-description.aria-label', 'More information about panel')}
+        className={cx(className, styles.description)}
+        role="button"
+      >
         <Icon name="info-circle" size="md" />
       </TitleItem>
     </Tooltip>

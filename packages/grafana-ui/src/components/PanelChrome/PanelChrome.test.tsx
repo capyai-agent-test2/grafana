@@ -113,6 +113,18 @@ it('renders panel with a header with icons in place if prop titleItems', () => {
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
 });
 
+it('renders the panel description trigger with an accessible button name', async () => {
+  const { user } = setup({ description: 'Panel details' });
+
+  const button = screen.getByRole('button', { name: 'More information about panel' });
+  expect(button).toBeInTheDocument();
+
+  await user.hover(button);
+
+  expect(await screen.findByRole('tooltip')).toHaveTextContent('Panel details');
+  expect(button).toHaveAttribute('aria-describedby');
+});
+
 it('renders panel with a show-on-hover menu icon if prop menu', () => {
   setup({ menu: <div> Menu </div> });
 
