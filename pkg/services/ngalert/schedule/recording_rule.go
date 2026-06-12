@@ -3,11 +3,14 @@ package schedule
 import (
 	context "context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	promValue "github.com/prometheus/prometheus/model/value"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -18,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngwriter "github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -46,6 +50,7 @@ type recordingRule struct {
 	evalFactory eval.EvaluatorFactory
 	cfg         setting.RecordingRuleSettings
 	writer      RecordingWriter
+	lastSeries  map[data.Fingerprint]data.Labels
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -287,17 +292,26 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		attribute.Int64("results", int64(len(result.Responses))),
 	))
 
+	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
 	frames, err := r.frameRef(ev.rule.Record.From, result)
+	currentSeries := make(map[data.Fingerprint]data.Labels)
 	if err != nil {
 		span.AddEvent("query returned no data, nothing to write", trace.WithAttributes(
 			attribute.String("reason", err.Error()),
 		))
 		logger.Debug("Query returned no data", "reason", err)
-		r.health.Store("nodata")
-		return nil
+		frames = r.staleFramesForMissingSeries(currentSeries)
+		if len(frames) == 0 {
+			r.health.Store("nodata")
+			return nil
+		}
+	} else {
+		frames, currentSeries, err = r.framesWithStaleMarkers(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
+		if err != nil {
+			return fmt.Errorf("failed to build remote write payload: %w", err)
+		}
 	}
 
-	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
 	writeStart := r.clock.Now()
 	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
 	writeDur := r.clock.Now().Sub(writeStart)
@@ -312,8 +326,65 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	span.AddEvent("metrics written", trace.WithAttributes(
 		attribute.Int64("frames", int64(len(frames))),
 	))
+	r.lastSeries = currentSeries
 
 	return nil
+}
+
+func (r *recordingRule) framesWithStaleMarkers(name string, t time.Time, frames data.Frames, extraLabels map[string]string) (data.Frames, map[data.Fingerprint]data.Labels, error) {
+	currentSeries, err := seriesForWrite(name, t, frames, extraLabels)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	staleFrames := r.staleFramesForMissingSeries(currentSeries)
+	if len(staleFrames) == 0 {
+		return frames, currentSeries, nil
+	}
+
+	return append(frames, staleFrames...), currentSeries, nil
+}
+
+func (r *recordingRule) staleFramesForMissingSeries(currentSeries map[data.Fingerprint]data.Labels) data.Frames {
+	if len(r.lastSeries) == 0 {
+		return nil
+	}
+
+	fields := make([]*data.Field, 0, len(r.lastSeries))
+	for fp, labels := range r.lastSeries {
+		if _, ok := currentSeries[fp]; ok {
+			continue
+		}
+
+		fields = append(fields, data.NewField("", labels.Copy(), []float64{math.Float64frombits(promValue.StaleNaN)}))
+	}
+
+	if len(fields) == 0 {
+		return nil
+	}
+
+	frame := data.NewFrame("", fields...)
+	frame.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeNumericMulti,
+		TypeVersion: numeric.MultiFrameVersionLatest,
+	})
+
+	return data.Frames{frame}
+}
+
+func seriesForWrite(name string, t time.Time, frames data.Frames, extraLabels map[string]string) (map[data.Fingerprint]data.Labels, error) {
+	points, err := ngwriter.PointsFromFrames(name, t, frames, extraLabels)
+	if err != nil {
+		return nil, err
+	}
+
+	series := make(map[data.Fingerprint]data.Labels, len(points))
+	for _, point := range points {
+		labels := data.Labels(point.Labels).Copy()
+		series[labels.Fingerprint()] = labels
+	}
+
+	return series, nil
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
