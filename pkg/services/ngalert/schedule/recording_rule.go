@@ -295,25 +295,32 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	filteredLabels := ngmodels.WithoutPrivateLabels(ev.rule.Labels)
 	frames, err := r.frameRef(ev.rule.Record.From, result)
 	currentSeries := make(map[data.Fingerprint]data.Labels)
+	staleFrames := data.Frames(nil)
 	if err != nil {
 		span.AddEvent("query returned no data, nothing to write", trace.WithAttributes(
 			attribute.String("reason", err.Error()),
 		))
 		logger.Debug("Query returned no data", "reason", err)
-		frames = r.staleFramesForMissingSeries(currentSeries)
-		if len(frames) == 0 {
+		staleFrames = r.staleFramesForMissingSeries(currentSeries)
+		if len(staleFrames) == 0 {
 			r.health.Store("nodata")
 			return nil
 		}
+		err = nil
 	} else {
-		frames, currentSeries, err = r.framesWithStaleMarkers(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
+		staleFrames, currentSeries, err = r.staleFramesForWrite(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
 		if err != nil {
 			return fmt.Errorf("failed to build remote write payload: %w", err)
 		}
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
+	if len(frames) > 0 {
+		err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, filteredLabels)
+	}
+	if err == nil && len(staleFrames) > 0 {
+		err = r.writer.WriteDatasource(ctx, ev.rule.Record.TargetDatasourceUID, ev.rule.Record.Metric, ev.scheduledAt, staleFrames, ev.rule.OrgID, nil)
+	}
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
@@ -324,25 +331,20 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 
 	logger.Debug("Metrics written", "duration", writeDur)
 	span.AddEvent("metrics written", trace.WithAttributes(
-		attribute.Int64("frames", int64(len(frames))),
+		attribute.Int64("frames", int64(len(frames)+len(staleFrames))),
 	))
 	r.lastSeries = currentSeries
 
 	return nil
 }
 
-func (r *recordingRule) framesWithStaleMarkers(name string, t time.Time, frames data.Frames, extraLabels map[string]string) (data.Frames, map[data.Fingerprint]data.Labels, error) {
+func (r *recordingRule) staleFramesForWrite(name string, t time.Time, frames data.Frames, extraLabels map[string]string) (data.Frames, map[data.Fingerprint]data.Labels, error) {
 	currentSeries, err := seriesForWrite(name, t, frames, extraLabels)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	staleFrames := r.staleFramesForMissingSeries(currentSeries)
-	if len(staleFrames) == 0 {
-		return frames, currentSeries, nil
-	}
-
-	return append(frames, staleFrames...), currentSeries, nil
+	return r.staleFramesForMissingSeries(currentSeries), currentSeries, nil
 }
 
 func (r *recordingRule) staleFramesForMissingSeries(currentSeries map[data.Fingerprint]data.Labels) data.Frames {

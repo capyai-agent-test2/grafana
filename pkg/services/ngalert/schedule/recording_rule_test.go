@@ -281,6 +281,82 @@ func TestRecordingRuleWritesStaleMarkersForMissingSeries(t *testing.T) {
 	require.Equal(t, "server-1", writes[1][0].Labels["instance"])
 }
 
+func TestRecordingRuleWritesStaleMarkersWithPreviousRuleLabels(t *testing.T) {
+	now := time.Now()
+	frame := data.NewFrame("", data.NewField("", data.Labels{"instance": "server-1"}, []float64{3}))
+	frame.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeNumericMulti,
+		TypeVersion: numeric.MultiFrameVersionLatest,
+	})
+
+	evaluator := eval_mocks.NewConditionEvaluatorMock(t)
+	evaluator.EXPECT().EvaluateRaw(mock.Anything, now).Return(&backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{frame}},
+		},
+	}, nil).Once()
+	evaluator.EXPECT().EvaluateRaw(mock.Anything, now.Add(time.Minute)).Return(&backend.QueryDataResponse{
+		Responses: map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{}},
+		},
+	}, nil).Once()
+
+	var writes [][]writer.Point
+	recordingWriter := writer.FakeWriter{
+		WriteFunc: func(_ context.Context, name string, ts time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+			points, err := writer.PointsFromFrames(name, ts, frames, extraLabels)
+			require.NoError(t, err)
+			writes = append(writes, points)
+			return nil
+		},
+	}
+
+	rule := models.RuleGen.With(models.RuleGen.WithAllRecordingRules()).With(withQueryForHealth("ok")).GenerateRef()
+	rule.Record.TargetDatasourceUID = ""
+	rule.Labels = map[string]string{"team": "old"}
+	process := newRecordingRule(
+		context.Background(),
+		models.AlertRuleKeyWithGroup{AlertRuleKey: rule.GetKey()},
+		RetryConfig{MaxAttempts: 1},
+		clock.NewMock(),
+		eval_mocks.NewEvaluatorFactory(evaluator),
+		setting.RecordingRuleSettings{Enabled: true},
+		log.NewNopLogger(),
+		metrics.NewSchedulerMetrics(prometheus.NewRegistry()),
+		tracing.InitializeTracerForTest(),
+		recordingWriter,
+		nil,
+		nil,
+	)
+	defer process.Stop(nil)
+
+	done := make(chan struct{})
+	process.evalAppliedHook = func(_ models.AlertRuleKey, _ time.Time) {
+		done <- struct{}{}
+	}
+
+	go func() {
+		_ = process.Run()
+	}()
+
+	process.Eval(&Evaluation{
+		scheduledAt: now,
+		rule:        rule,
+	})
+	<-done
+
+	rule.Labels = map[string]string{"team": "new"}
+	process.Eval(&Evaluation{
+		scheduledAt: now.Add(time.Minute),
+		rule:        rule,
+	})
+	<-done
+
+	require.Len(t, writes, 2)
+	require.Equal(t, "old", writes[0][0].Labels["team"])
+	require.Equal(t, "old", writes[1][0].Labels["team"])
+}
+
 func TestRecordingRuleAfterEval(t *testing.T) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 
