@@ -201,6 +201,7 @@ describe('Highlighting', () => {
         `{ true } /* && { false } && */ && { true } // && { false }
       && { true }`,
       ],
+      ['{ resource.service.name = "frontend" } >> { resource.service.name = "paymentservice" } | count_over_time() with (exemplars=true)'],
       ['{span.s"t\\"at"us}'],
       ['{span.s"t\\\\at"us}'],
       ['{ span.s"tat"us" = "GET123 }'], // weird query, but technically valid

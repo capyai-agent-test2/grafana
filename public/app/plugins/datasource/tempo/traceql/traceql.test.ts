@@ -25,6 +25,7 @@ describe('TraceQL grammar', () => {
       const { withClauseKeywords, withParameters } = languageDefinition.def.language;
       expect(withClauseKeywords).toContain('with');
       expect(withParameters).toContain('most_recent');
+      expect(withParameters).toContain('exemplars');
     });
 
     it('should configure line comment for Ctrl+/ toggle support', () => {
@@ -103,6 +104,7 @@ describe('TraceQL grammar', () => {
       expect(withClausePattern.test('with (most_recent=false)')).toBe(true);
       expect(withClausePattern.test('with(most_recent=true)')).toBe(true);
       expect(withClausePattern.test('with (most_recent = true)')).toBe(true);
+      expect(withClausePattern.test('with (exemplars=true)')).toBe(true);
     });
 
     it('should match comment patterns', () => {
@@ -352,6 +354,11 @@ describe('TraceQL grammar', () => {
         query: '{span.service.name="frontend"} | avg(duration) with (most_recent=false)',
         shouldMatch: true,
       },
+      {
+        name: 'metrics query with exemplars with clause',
+        query: '{span.service.name="frontend"} | count_over_time() with (exemplars=true)',
+        shouldMatch: true,
+      },
     ];
 
     testCases.forEach(({ name, query, shouldMatch }) => {
@@ -388,6 +395,7 @@ describe('TraceQL grammar', () => {
       const parameterNamePattern = parameterNameRule.pattern as RegExp;
 
       expect(parameterNamePattern.test('most_recent=')).toBe(true);
+      expect(parameterNamePattern.test('exemplars=')).toBe(true);
       expect(parameterNamePattern.test('invalid_param=')).toBe(true);
       expect(parameterNamePattern.test('123invalid=')).toBe(false);
     });

@@ -81,7 +81,7 @@ const functions = aggregatorFunctions.concat([
 
 // Add with clause keywords and parameters
 const withClauseKeywords = ['with'];
-const withParameters = ['most_recent'];
+const withParameters = ['most_recent', 'exemplars'];
 
 const keywords = intrinsics.concat(scopes).concat(withClauseKeywords);
 
