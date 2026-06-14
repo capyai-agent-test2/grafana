@@ -7,9 +7,19 @@ if (window.public_cdn_path) {
   __webpack_public_path__ = window.public_cdn_path;
 }
 
+function getGrafanaPublicPath(webpackPublicPath: string): string {
+  for (const buildDir of ['build-swagger/', 'build/']) {
+    const buildDirIndex = webpackPublicPath.lastIndexOf(buildDir);
+    if (buildDirIndex >= 0) {
+      return webpackPublicPath.substring(0, buildDirIndex);
+    }
+  }
+
+  return webpackPublicPath;
+}
+
 // This is a path to the public folder without '/build'
-window.__grafana_public_path__ =
-  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
+window.__grafana_public_path__ = getGrafanaPublicPath(__webpack_public_path__);
 
 if (window.nonce) {
   __webpack_nonce__ = window.nonce;

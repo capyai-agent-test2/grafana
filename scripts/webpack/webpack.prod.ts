@@ -8,8 +8,10 @@ import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
 import { merge } from 'webpack-merge';
 
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
+import { manifestTransform } from './plugins/assetsManifest.ts';
 import { esbuildOptions } from './rules.ts';
 import common, { type Env } from './webpack.common.ts';
+import swaggerConfig from './webpack.swagger.ts';
 
 // SRI plugin has broken esm builds so we use require.
 // https://github.com/waysact/webpack-subresource-integrity/issues/236
@@ -18,6 +20,7 @@ const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
 
 export default (env: Env = {}) => {
   const prodConfig: Configuration = {
+    name: 'grafana',
     mode: 'production',
     devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
 
@@ -89,22 +92,7 @@ export default (env: Env = {}) => {
             return assets;
           }
 
-          const entrypointsValue = assets[entrypointsKey];
-          const entrypointAssets = isEntrypointsMap(entrypointsValue)
-            ? Object.values(entrypointsValue).flatMap((entry) => [
-                ...(entry.assets.js || []),
-                ...(entry.assets.css || []),
-              ])
-            : [];
-
-          const filteredAssets = Object.entries(assets).filter(([assetFileName]) => {
-            const asset = assets[assetFileName];
-            return isAssetEntry(asset) && entrypointAssets.includes(asset.src);
-          });
-          const result = Object.fromEntries(filteredAssets);
-          result[entrypointsKey] = entrypointsValue;
-
-          return result;
+          return manifestTransform(assets, entrypointsKey);
         },
         output: env.react19 ? 'assets-manifest-react19.json' : 'assets-manifest.json',
       }),
@@ -123,17 +111,9 @@ export default (env: Env = {}) => {
     ],
   };
 
-  return merge(common(env), prodConfig);
+  const configs = Object.assign([merge(common(env), prodConfig)], { parallelism: 2 });
+  if (!env.react19) {
+    configs.push(swaggerConfig(env));
+  }
+  return configs;
 };
-
-interface EntrypointAssets {
-  assets: { js?: string[]; css?: string[] };
-}
-
-function isEntrypointsMap(value: unknown): value is Record<string, EntrypointAssets> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isAssetEntry(value: unknown): value is { src: string } {
-  return typeof value === 'object' && value !== null && 'src' in value;
-}
