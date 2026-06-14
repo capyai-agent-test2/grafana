@@ -11,6 +11,7 @@ import { type PanelProps, store, systemDateFormats, type SystemDateFormatsState 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import {
+  config,
   LocationServiceProvider,
   locationSearchToObject,
   locationService,
@@ -183,6 +184,7 @@ describe('DashboardScenePage', () => {
     getObservablePluginLinks.mockRestore();
     getObservablePluginLinks.mockReturnValue(of([]));
     store.delete(DASHBOARD_FROM_LS_KEY);
+    config.defaultKioskMode = false;
   });
 
   it('Can render dashboard', async () => {
@@ -231,6 +233,36 @@ describe('DashboardScenePage', () => {
 
   it('does not show Powered by footer when kiosk=false', async () => {
     setup({ routeProps: { queryParams: { kiosk: 'false' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
+  it('shows Powered by footer when default kiosk mode is enabled', async () => {
+    config.defaultKioskMode = true;
+
+    setup();
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('does not show Powered by footer when kiosk=false and default kiosk mode is enabled', async () => {
+    config.defaultKioskMode = true;
+
+    setup({ routeProps: { queryParams: { kiosk: 'false' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
+  it('does not show Powered by footer for invalid explicit kiosk values when default kiosk mode is enabled', async () => {
+    config.defaultKioskMode = true;
+
+    setup({ routeProps: { queryParams: { kiosk: 'foo' } } });
 
     await waitForDashboardToRender();
 

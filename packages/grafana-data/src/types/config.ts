@@ -223,6 +223,7 @@ export interface GrafanaConfig {
   apps: Record<string, AppPluginConfig>;
   auth: AuthSettings;
   minRefreshInterval: string;
+  defaultKioskMode: boolean;
   appUrl: string;
   appSubUrl: string;
   azure: AzureSettings;

@@ -171,22 +171,27 @@ export class AppChromeService {
 
   public exitKioskMode() {
     this.update({ kioskMode: undefined });
-    locationService.partial({ kiosk: null });
+    locationService.partial({ kiosk: this.getKioskUrlValue(null) });
     reportInteraction('grafana_kiosk_mode', {
       action: 'exit',
     });
   }
 
   public setKioskModeFromUrl(kiosk: UrlQueryValue) {
-    let newKioskMode: KioskMode | undefined;
+    let newKioskMode: KioskMode | null = null;
 
     switch (kiosk) {
       case '1':
+      case '':
       case true:
         newKioskMode = KioskMode.Full;
     }
 
-    if (newKioskMode && newKioskMode !== this.state.getValue().kioskMode) {
+    if (newKioskMode === null && kiosk == null && config.defaultKioskMode) {
+      newKioskMode = KioskMode.Full;
+    }
+
+    if (newKioskMode !== this.state.getValue().kioskMode) {
       this.update({ kioskMode: newKioskMode });
     }
   }
@@ -196,7 +201,7 @@ export class AppChromeService {
       case KioskMode.Full:
         return true;
       default:
-        return null;
+        return config.defaultKioskMode ? false : null;
     }
   }
 
