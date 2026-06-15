@@ -331,6 +331,20 @@ describe('Combobox', () => {
 
       expect(screen.getByText('No options found.')).toBeInTheDocument();
     });
+
+    it('should keep the selected value width as the minimum width when typing', async () => {
+      render(<Combobox options={options} value={options[0].value} onChange={onChangeHandler} width="auto" minWidth={2} />);
+
+      const input = screen.getByRole('combobox');
+      const inputWrapper = screen.getByTestId('input-wrapper');
+      await user.click(input);
+      const selectedValueWidth = parseFloat(getComputedStyle(inputWrapper).width);
+      await user.type(input, 'x');
+
+      const newWidth = parseFloat(getComputedStyle(inputWrapper).width);
+
+      expect(newWidth).toBeGreaterThanOrEqual(selectedValueWidth - 1);
+    });
   });
 
   describe('with a value already selected', () => {
