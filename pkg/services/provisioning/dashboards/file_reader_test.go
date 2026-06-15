@@ -607,6 +607,64 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		})
 	})
 
+	t.Run("Symlink target changes keep provisioned dashboards by configured path", func(t *testing.T) {
+		setup()
+		root := t.TempDir()
+		require.NoError(t, os.Mkdir(filepath.Join(root, "foo"), 0750))
+		require.NoError(t, os.Mkdir(filepath.Join(root, "bar"), 0750))
+		dashboardJSON := []byte(`{"uid": "foo", "title": "Foo bar", "version": 1}`)
+		require.NoError(t, os.WriteFile(filepath.Join(root, "foo", "foo.json"), dashboardJSON, 0600))
+		require.NoError(t, os.WriteFile(filepath.Join(root, "bar", "foo.json"), dashboardJSON, 0600))
+		symlinkPath := filepath.Join(root, "grafana")
+		if err := os.Symlink("foo", symlinkPath); err != nil {
+			t.Skipf("skipping symlink test: %v", err)
+		}
+		cfg.Options["path"] = symlinkPath
+
+		fakeForSymlink := &dashboards.FakeDashboardProvisioning{}
+		defer fakeForSymlink.AssertExpectations(t)
+
+		var savedProvisioning *dashboards.DashboardProvisioning
+		fakeForSymlink.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
+		fakeForSymlink.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				saved := args.Get(2).(*dashboards.DashboardProvisioning)
+				copied := *saved
+				copied.DashboardID = 1
+				savedProvisioning = &copied
+			}).
+			Return(&dashboards.Dashboard{ID: 1}, nil).
+			Once()
+
+		reader, err := NewDashboardFileReader(cfg, logger, fakeForSymlink, fakeStore, folderSvc, cfgT)
+		require.NoError(t, err)
+
+		err = reader.walkDisk(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, savedProvisioning)
+		require.Equal(t, filepath.Join(symlinkPath, "foo.json"), savedProvisioning.ExternalID)
+
+		legacyProvisioning := *savedProvisioning
+		legacyProvisioning.ExternalID = filepath.Join(root, "foo", "foo.json")
+		fakeForSymlink.On("GetProvisionedDashboardData", mock.Anything, configName).
+			Return([]*dashboards.DashboardProvisioning{&legacyProvisioning}, nil).
+			Once()
+		provisionedByPath, err := reader.getProvisionedDashboardsByPath(context.Background(), fakeForSymlink, configName)
+		require.NoError(t, err)
+		require.Contains(t, provisionedByPath, filepath.Join(symlinkPath, "foo.json"))
+
+		require.NoError(t, os.Remove(symlinkPath))
+		if err := os.Symlink("bar", symlinkPath); err != nil {
+			t.Skipf("skipping symlink retarget test: %v", err)
+		}
+		fakeForSymlink.On("GetProvisionedDashboardData", mock.Anything, configName).
+			Return([]*dashboards.DashboardProvisioning{savedProvisioning}, nil).
+			Once()
+
+		err = reader.walkDisk(context.Background())
+		require.NoError(t, err)
+	})
+
 	t.Run("Should resolve relative ExternalID paths to absolute paths", func(t *testing.T) {
 		setup()
 		cfg.Options["path"] = defaultDashboards

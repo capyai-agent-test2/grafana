@@ -178,7 +178,7 @@ func (fr *FileReader) walkDisk(ctx context.Context) error {
 
 	// Find relevant files
 	filesFoundOnDisk := map[string]os.FileInfo{}
-	if err := filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk)); err != nil {
+	if err := filepath.Walk(resolvedPath, createWalkFn(filesFoundOnDisk, resolvedPath, fr.absPath())); err != nil {
 		return err
 	}
 
@@ -186,7 +186,7 @@ func (fr *FileReader) walkDisk(ctx context.Context) error {
 
 	usageTracker := newUsageTracker()
 	if fr.FoldersFromFilesStructure {
-		err = fr.storeDashboardsInFoldersFromFileStructure(ctx, filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, usageTracker)
+		err = fr.storeDashboardsInFoldersFromFileStructure(ctx, filesFoundOnDisk, provisionedDashboardRefs, fr.absPath(), usageTracker)
 	} else {
 		err = fr.storeDashboardsInFolder(ctx, filesFoundOnDisk, provisionedDashboardRefs, usageTracker)
 	}
@@ -399,10 +399,11 @@ func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, servic
 	for _, pd := range arr {
 		// as a part of the migration of dashboards to unified storage, the dashboard provisiong data will be stored as
 		// an annotation on the dashboard. in modes 0-2, that will only return the relative path. however, we will be comparing
-		// that to the data stored in the dashboard_provisioning table, so we need to change it into the resolved path
-		if !strings.HasPrefix(pd.ExternalID, fr.resolvedPath()) {
-			pd.ExternalID = fr.resolvedPath() + "/" + pd.ExternalID
+		// that to the data stored in the dashboard_provisioning table, so we need to change it into the absolute path
+		if !filepath.IsAbs(pd.ExternalID) {
+			pd.ExternalID = filepath.Join(fr.absPath(), pd.ExternalID)
 		}
+		pd.ExternalID = toExternalIDPath(pd.ExternalID, fr.resolvedPath(), fr.absPath())
 
 		byPath[pd.ExternalID] = pd
 	}
@@ -556,7 +557,7 @@ func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	return fileinfo, err
 }
 
-func createWalkFn(filesOnDisk map[string]os.FileInfo) filepath.WalkFunc {
+func createWalkFn(filesOnDisk map[string]os.FileInfo, roots ...string) filepath.WalkFunc {
 	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -567,9 +568,22 @@ func createWalkFn(filesOnDisk map[string]os.FileInfo) filepath.WalkFunc {
 			return err
 		}
 
-		filesOnDisk[path] = fileInfo
+		filesOnDisk[toExternalIDPath(path, roots...)] = fileInfo
 		return nil
 	}
+}
+
+func toExternalIDPath(path string, roots ...string) string {
+	if len(roots) < 2 || roots[0] == roots[1] {
+		return path
+	}
+
+	relPath, err := filepath.Rel(roots[0], path)
+	if err != nil || relPath == "." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) || filepath.IsAbs(relPath) {
+		return path
+	}
+
+	return filepath.Join(roots[1], relPath)
 }
 
 func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
@@ -634,6 +648,20 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 }
 
 func (fr *FileReader) resolvedPath() string {
+	path := fr.absPath()
+	path, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		fr.log.Error("Failed to read content of symlinked path", "path", fr.Path, "error", err)
+	}
+
+	if path == "" {
+		path = fr.Path
+		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
+	}
+	return path
+}
+
+func (fr *FileReader) absPath() string {
 	if _, err := os.Stat(fr.Path); os.IsNotExist(err) {
 		fr.log.Error("Cannot read directory", "error", err)
 	}
@@ -643,14 +671,9 @@ func (fr *FileReader) resolvedPath() string {
 		fr.log.Error("Could not create absolute path", "path", fr.Path, "error", err)
 	}
 
-	path, err = filepath.EvalSymlinks(path)
-	if err != nil {
-		fr.log.Error("Failed to read content of symlinked path", "path", fr.Path, "error", err)
-	}
-
 	if path == "" {
 		path = fr.Path
-		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
+		fr.log.Info("falling back to original path due to Abs failure")
 	}
 	return path
 }
