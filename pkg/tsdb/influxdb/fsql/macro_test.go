@@ -41,6 +41,26 @@ func TestMacros(t *testing.T) {
 			out: `select date_bin(interval '10 second', time, timestamp '1970-01-01T00:00:00Z') as time_binned`,
 		},
 		{
+			in:  `select $__timeGroup(time)`,
+			out: `select date_bin(interval '10 second', time, timestamp '1970-01-01T00:00:00Z')`,
+		},
+		{
+			in:  `select $__timeGroup(time, $__interval)`,
+			out: `select date_bin(interval '10 second', time, timestamp '1970-01-01T00:00:00Z')`,
+		},
+		{
+			in:  `select $__timeGroup(time, interval '1 minute')`,
+			out: `select date_bin(interval '1 minute', time, timestamp '1970-01-01T00:00:00Z')`,
+		},
+		{
+			in:  `select $__timeGroupAlias(time)`,
+			out: `select date_bin(interval '10 second', time, timestamp '1970-01-01T00:00:00Z') as time_binned`,
+		},
+		{
+			in:  `select $__timeGroupAlias(time, $__interval)`,
+			out: `select date_bin(interval '10 second', time, timestamp '1970-01-01T00:00:00Z') as time_binned`,
+		},
+		{
 			in:  `select * from x where $__timeFilter(time)`,
 			out: `select * from x where time >= '2023-01-01T00:00:00Z' AND time <= '2023-01-01T00:10:00Z'`,
 		},
