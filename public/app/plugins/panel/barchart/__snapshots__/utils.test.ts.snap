@@ -32,7 +32,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
@@ -188,7 +188,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
@@ -316,7 +316,7 @@ exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
 {
   "axes": [
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 15,
       "grid": {
@@ -500,7 +500,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
@@ -656,7 +656,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
@@ -812,7 +812,7 @@ exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
@@ -968,7 +968,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
@@ -1124,7 +1124,7 @@ exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
       "values": [Function],
     },
     {
-      "filter": undefined,
+      "filter": [Function],
       "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
