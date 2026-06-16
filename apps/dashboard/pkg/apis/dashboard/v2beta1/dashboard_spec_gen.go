@@ -754,7 +754,7 @@ func (DashboardThresholdsMode) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type DashboardThreshold struct {
 	// Value null means -Infinity
-	Value *float64 `json:"value"`
+	Value *float64 `json:"value,omitempty"`
 	Color string   `json:"color"`
 }
 

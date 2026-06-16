@@ -494,7 +494,7 @@ export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 
 export interface Threshold {
 	// Value null means -Infinity
-	value: number | null;
+	value?: number | null;
 	color: string;
 }
 
