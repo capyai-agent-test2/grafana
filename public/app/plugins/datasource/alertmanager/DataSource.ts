@@ -45,6 +45,21 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
     return lastValueFrom(getBackendSrv().fetch(options));
   }
 
+  private getAlertmanagerApiPrefix() {
+    const prefix = this.instanceSettings.jsonData.alertmanagerPrefix?.trim();
+
+    if (!prefix) {
+      return '/alertmanager';
+    }
+
+    const normalizedPrefix = prefix.replace(/^\/+|\/+$/g, '');
+    return normalizedPrefix ? `/${normalizedPrefix}` : '';
+  }
+
+  private getAlertmanagerApiUrl(path: string) {
+    return `${this.getAlertmanagerApiPrefix()}${path}`;
+  }
+
   async testDatasource() {
     let alertmanagerResponse;
     const amUrl = this.instanceSettings.url;
@@ -55,7 +70,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
 
     if (this.instanceSettings.jsonData.implementation === AlertManagerImplementation.prometheus) {
       try {
-        alertmanagerResponse = await this._request('/alertmanager/api/v2/status');
+        alertmanagerResponse = await this._request(this.getAlertmanagerApiUrl('/api/v2/status'));
         if (alertmanagerResponse && alertmanagerResponse?.status === 200) {
           return {
             status: 'error',
@@ -79,7 +94,7 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery, Ale
         }
       } catch (e) {}
       try {
-        alertmanagerResponse = await this._request('/alertmanager/api/v2/status');
+        alertmanagerResponse = await this._request(this.getAlertmanagerApiUrl('/api/v2/status'));
       } catch (e) {
         if (
           isFetchError(e) &&

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { type DataSourcePluginOptionsEditorProps, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Select, Text } from '@grafana/ui';
+import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Input, Select, Text } from '@grafana/ui';
 
 import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
@@ -78,6 +78,26 @@ export const ConfigEditor = (props: Props) => {
                 })
               );
             }}
+          />
+        </InlineField>
+        <InlineField
+          label="Alertmanager API prefix"
+          tooltip="Optional custom HTTP prefix for Mimir or Cortex Alertmanager APIs. Leave empty for the default /alertmanager path."
+          labelWidth={26}
+        >
+          <Input
+            width={40}
+            placeholder="/alertmanager"
+            value={options.jsonData.alertmanagerPrefix ?? ''}
+            onChange={(event) =>
+              onOptionsChange({
+                ...options,
+                jsonData: {
+                  ...options.jsonData,
+                  alertmanagerPrefix: event.currentTarget.value,
+                },
+              })
+            }
           />
         </InlineField>
         {options.jsonData.handleGrafanaManagedAlerts && (
