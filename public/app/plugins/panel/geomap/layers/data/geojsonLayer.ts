@@ -30,6 +30,8 @@ import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesSty
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';
 
+import { getZoomScaledPointValues } from './geojsonStyle';
+
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -75,6 +77,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    */
   create: async (map: OpenLayersMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
+    const baseResolution = map.getView().getResolution() ?? 1;
 
     // Interpolate variables in the URL
     const interpolatedUrl = getTemplateSrv().replace(config.src || '');
@@ -119,7 +122,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
     const lineStyleStrings: string[] = Object.values(GeoJSONLineStyles);
     const vectorLayer = new VectorImage({
       source,
-      style: (feature: FeatureLike) => {
+      style: (feature: FeatureLike, resolution?: number) => {
         const featureType = feature.getGeometry()?.getType();
         const isPoint = featureType === 'Point' || featureType === 'MultiPoint';
         const isPolygon = featureType === 'Polygon' || featureType === 'MultiPolygon';
@@ -132,13 +135,14 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
           // Support dynamic values
           if (check.state.fields) {
-            const values = { ...check.state.base };
+            let values = { ...check.state.base };
             const { text } = check.state.fields;
 
             if (text) {
               values.text = `${feature.get(text)}`;
             }
             if (isPoint) {
+              values = getZoomScaledPointValues(values, resolution, baseResolution);
               return check.state.maker(values);
             }
             return polyStyle(values);
@@ -160,19 +164,20 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             };
             return check.state.maker(values);
           } else if (isPoint && Object.keys(featureProps).some((property) => pointStyleStrings.includes(property))) {
-            const values: StyleConfigValues = {
-              color: featureProps[GeoJSONPointStyles.color] ?? check.state.base.color,
-              size: featureProps[GeoJSONPointStyles.size] ?? check.state.base.size,
-            };
+            const values = getZoomScaledPointValues(
+              {
+                color: featureProps[GeoJSONPointStyles.color] ?? check.state.base.color,
+                size: featureProps[GeoJSONPointStyles.size] ?? check.state.base.size,
+              },
+              resolution,
+              baseResolution
+            );
             return check.state.maker(values);
           }
 
           // Lazy create the style object
           if (isPoint) {
-            if (!check.point) {
-              check.point = check.state.maker(check.state.base);
-            }
-            return check.point;
+            return check.state.maker(getZoomScaledPointValues(check.state.base, resolution, baseResolution));
           }
 
           if (!check.poly) {

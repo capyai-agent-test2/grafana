@@ -28,6 +28,8 @@ import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesSty
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
 
+import { getZoomScaledPointValues } from './geojsonStyle';
+
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
@@ -71,6 +73,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
    */
   create: async (map: OpenLayersMap, options: MapLayerOptions<DynamicGeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
+    const baseResolution = map.getView().getResolution() ?? 1;
 
     const source = new VectorSource({
       url: config.src,
@@ -114,14 +117,13 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
       state: s,
     });
 
-
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();
     let currentFrame: DataFrame | undefined = undefined;
 
     const vectorLayer = new VectorImage({
       source,
-      style: (feature: FeatureLike) => {
+      style: (feature: FeatureLike, resolution?: number) => {
         const featureId = feature.getId();
         const idx = featureId != null ? idToIdx.get(String(featureId)) : undefined;
         const dims = style.dims;
@@ -142,13 +144,14 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
 
           // Support dynamic values
           if (check.state.fields) {
-            const values = { ...check.state.base };
+            let values = { ...check.state.base };
             const { text } = check.state.fields;
 
             if (text) {
               values.text = `${feature.get(text)}`;
             }
             if (isPoint) {
+              values = getZoomScaledPointValues(values, resolution, baseResolution);
               return check.state.maker(values);
             }
             return polyStyle(values);
@@ -156,10 +159,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
 
           // Lazy create the style object
           if (isPoint) {
-            if (!check.point) {
-              check.point = check.state.maker(check.state.base);
-            }
-            return check.point;
+            return check.state.maker(getZoomScaledPointValues(check.state.base, resolution, baseResolution));
           }
 
           if (!check.poly) {
