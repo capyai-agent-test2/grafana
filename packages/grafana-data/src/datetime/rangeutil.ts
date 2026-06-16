@@ -560,6 +560,24 @@ export function secondsToHms(seconds: number): string {
   return 'less than a millisecond'; //'just now' //or other string you like;
 }
 
+function millisecondsToExactInterval(milliseconds: number): string {
+  const intervals = [
+    { unit: 'y', value: 31536000000 },
+    { unit: 'd', value: 86400000 },
+    { unit: 'h', value: 3600000 },
+    { unit: 'm', value: 60000 },
+    { unit: 's', value: 1000 },
+  ];
+
+  for (const interval of intervals) {
+    if (milliseconds >= interval.value && milliseconds % interval.value === 0) {
+      return `${milliseconds / interval.value}${interval.unit}`;
+    }
+  }
+
+  return `${milliseconds}ms`;
+}
+
 // Format timeSpan (in sec) to string used in log's meta info
 export function msRangeToTimeString(rangeMs: number): string {
   const rangeSec = Number((rangeMs / 1000).toFixed());
@@ -583,13 +601,14 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
     lowLimitMs = intervalToMs(lowLimitInterval);
   }
 
-  let intervalMs = roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
+  const rangeMs = range.to.valueOf() - range.from.valueOf();
+  let intervalMs = resolution === 1 ? rangeMs : roundInterval(rangeMs / resolution);
   if (lowLimitMs > intervalMs) {
     intervalMs = lowLimitMs;
   }
   return {
     intervalMs: intervalMs,
-    interval: secondsToHms(intervalMs / 1000),
+    interval: resolution === 1 ? millisecondsToExactInterval(intervalMs) : secondsToHms(intervalMs / 1000),
   };
 }
 
