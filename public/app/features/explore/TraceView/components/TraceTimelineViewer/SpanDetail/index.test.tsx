@@ -64,6 +64,7 @@ describe('<SpanDetail>', () => {
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
+    instrumentationScopeToggle: jest.fn(),
     tagsToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
@@ -228,6 +229,26 @@ describe('<SpanDetail>', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Resource attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
+  });
+
+  it('renders instrumentation scope attributes separately', async () => {
+    render(
+      <SpanDetail
+        {...({
+          ...props,
+          detailState: new DetailState().toggleInstrumentationScope(),
+          span: {
+            ...span,
+            instrumentationLibraryTags: [{ key: 'tailsampling.policy', value: 'sample-errors' }],
+          },
+        } as unknown as SpanDetailProps)}
+      />
+    );
+
+    expect(screen.getByText('tailsampling.policy')).toBeInTheDocument();
+    expect(screen.getByText('"sample-errors"')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('switch', { name: /Instrumentation scope attributes/i }));
+    expect(props.instrumentationScopeToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the logs', async () => {

@@ -129,7 +129,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       name: 'logs',
       type: FieldType.other,
       config: {},
-      values: [[{ name: 'DNSDone', fields: [{ key: 'addr', value: '172.18.0.6' }] }]],
+      values: [[{ name: 'DNSDone', timestamp: 1627471657255.809, fields: [{ key: 'addr', value: '172.18.0.6' }] }]],
     },
     {
       name: 'references',
@@ -177,6 +177,12 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
           },
         ],
       ],
+    },
+    {
+      name: 'instrumentationLibraryTags',
+      type: FieldType.other,
+      config: {},
+      values: [[]],
     },
   ],
   length: 1,

@@ -48,6 +48,7 @@ export type TraceSpanData = {
   statusMessage?: string;
   instrumentationLibraryName?: string;
   instrumentationLibraryVersion?: string;
+  instrumentationLibraryTags?: TraceKeyValuePair[];
   traceState?: string;
   references?: TraceSpanReference[];
   warnings?: string[] | null;
