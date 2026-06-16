@@ -354,8 +354,17 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (this.isAllValue(value)) {
       value = this.getAllValue(variable);
       text = ALL_VARIABLE_TEXT;
-      // skip formatting of custom all values unless format set to text or percentencode
-      if (variable.allValue && format !== VariableFormatID.Text && format !== VariableFormatID.PercentEncode) {
+      const shouldFormatCustomAllValue =
+        format === VariableFormatID.DoubleQuote ||
+        format === VariableFormatID.SingleQuote ||
+        format === VariableFormatID.SQLString;
+
+      if (
+        variable.allValue &&
+        !shouldFormatCustomAllValue &&
+        format !== VariableFormatID.Text &&
+        format !== VariableFormatID.PercentEncode
+      ) {
         return this.replace(value);
       }
     }
