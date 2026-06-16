@@ -111,6 +111,10 @@ class OptionsPaneOptionsTestScenario {
 }
 
 describe('OptionsPaneOptions', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('should render panel frame options', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
@@ -132,6 +136,7 @@ describe('OptionsPaneOptions', () => {
   it('should render custom  options', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
+    expandCategory(/TestPanel/);
 
     expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('TestPanel CustomBool'))).toBeInTheDocument();
   });
@@ -139,6 +144,7 @@ describe('OptionsPaneOptions', () => {
   it('should not render options that are marked as hidden from defaults', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
+    expandCategory(/TestPanel/);
 
     expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
   });
@@ -163,6 +169,7 @@ describe('OptionsPaneOptions', () => {
     });
 
     scenario.setup();
+    expandCategory(/TestPanel/);
     expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
   });
 
@@ -208,6 +215,7 @@ describe('OptionsPaneOptions', () => {
   it('should call onFieldConfigsChange when updating field config', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.setup();
+    expandCategory(/Axis/);
 
     const input = screen.getByPlaceholderText('CustomTextPropPlaceholder');
     fireEvent.change(input, { target: { value: 'New' } });
@@ -261,6 +269,7 @@ describe('OptionsPaneOptions', () => {
 
     scenario.setup();
 
+    expandCategory(/Thresholds/);
     const thresholdsSection = screen.getByTestId(selectors.components.OptionsGroup.group('Thresholds'));
     expect(
       within(thresholdsSection).getByTestId(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
@@ -287,6 +296,7 @@ describe('OptionsPaneOptions', () => {
 
     scenario.setup();
 
+    expandCategory(/Standard options/);
     expect(screen.getByText(dataOverrideTooltipDescription)).toBeInTheDocument();
     expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
   });
@@ -306,6 +316,11 @@ describe('OptionsPaneOptions', () => {
     ];
 
     scenario.setup();
+    expandCategory(/Standard options/);
     expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });
+
+function expandCategory(name: RegExp) {
+  fireEvent.click(screen.getByRole('heading', { name }));
+}

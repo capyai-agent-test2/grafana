@@ -108,6 +108,10 @@ function setup(options: SetupOptions = {}) {
 }
 
 describe('PanelOptions', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   describe('Can render and edit panel frame options', () => {
     it('Can edit title', async () => {
       const { panel } = setup();
@@ -140,12 +144,15 @@ describe('PanelOptions', () => {
     it('Should be rendered', async () => {
       const {} = setup();
 
+      await userEvent.click(screen.getByText('Standard options'));
+
       expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
     });
 
     it('Can update', async () => {
       const {} = setup();
 
+      await userEvent.click(screen.getByText('Override 1'));
       await userEvent.click(screen.getByLabelText('Remove property'));
 
       expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
@@ -158,6 +165,13 @@ describe('PanelOptions', () => {
 
       expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
+  });
+
+  it('opens only the first options category by default', () => {
+    setup();
+
+    expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
+    expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('Standard options Unit'))).not.toBeInTheDocument();
   });
 
   it('gets library panel options when the editing a library panel', async () => {

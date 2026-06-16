@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { type PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
+import { collapseOptionsPaneCategoriesAfterFirst } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import {
@@ -91,27 +92,25 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   } else {
     switch (listMode) {
       case OptionFilter.All:
-        if (libraryPanelOptions) {
-          // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.renderElement());
-        }
-        mainBoxElements.push(panelFrameOptions.renderElement());
-        if (panelStylesOptions) {
-          mainBoxElements.push(panelStylesOptions.renderElement());
-        }
+        const allOptionCategories = [
+          ...(libraryPanelOptions ? [libraryPanelOptions] : []),
+          panelFrameOptions,
+          ...(panelStylesOptions ? [panelStylesOptions] : []),
+          ...(visualizationOptions ?? []),
+          ...justOverrides,
+        ];
+        collapseOptionsPaneCategoriesAfterFirst(allOptionCategories);
 
-        for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.renderElement());
-        }
-
-        for (const item of justOverrides) {
+        for (const item of allOptionCategories) {
           mainBoxElements.push(item.renderElement());
         }
         break;
       case OptionFilter.Overrides:
+        collapseOptionsPaneCategoriesAfterFirst(justOverrides);
         for (const item of justOverrides) {
           mainBoxElements.push(item.renderElement());
         }
+        break;
       default:
         break;
     }
