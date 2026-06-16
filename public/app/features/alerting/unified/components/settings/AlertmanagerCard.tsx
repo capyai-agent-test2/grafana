@@ -40,7 +40,8 @@ export function AlertmanagerCard({
   onEnable,
   onDisable,
 }: Props) {
-  const showActions = !provisioned && Boolean(onEnable) && Boolean(onDisable);
+  const showEnable = !receiving && Boolean(onEnable);
+  const showDisable = receiving && Boolean(onDisable);
 
   return (
     <Card noMargin data-testid={`alertmanager-card-${name}`}>
@@ -128,18 +129,15 @@ export function AlertmanagerCard({
               <Trans i18nKey="alerting.alertmanager-card.edit-configuration">Edit configuration</Trans>
             )}
           </Button>
-          {showActions ? (
-            <>
-              {receiving ? (
-                <Button icon="times" variant="destructive" fill="outline" onClick={onDisable}>
-                  <Trans i18nKey="alerting.alertmanager-card.disable">Disable</Trans>
-                </Button>
-              ) : (
-                <Button icon="check" variant="secondary" fill="outline" onClick={onEnable}>
-                  <Trans i18nKey="alerting.alertmanager-card.enable">Enable</Trans>
-                </Button>
-              )}
-            </>
+          {showEnable ? (
+            <Button icon="check" variant="secondary" fill="outline" onClick={onEnable}>
+              <Trans i18nKey="alerting.alertmanager-card.enable">Enable</Trans>
+            </Button>
+          ) : null}
+          {showDisable ? (
+            <Button icon="times" variant="destructive" fill="outline" onClick={onDisable}>
+              <Trans i18nKey="alerting.alertmanager-card.disable">Disable</Trans>
+            </Button>
           ) : null}
         </Stack>
       </Card.Tags>
