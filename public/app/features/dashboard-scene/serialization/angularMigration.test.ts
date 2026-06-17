@@ -49,16 +49,16 @@ describe('getAngularPanelMigrationHandler', () => {
 
   describe('Given a react panel with old angular properties', () => {
     it('Should pass panel model with old angular properties', () => {
-      const reactPlugin = getPanelPlugin({ id: 'dashlist' });
+      const reactPlugin = getPanelPlugin({ id: 'text' });
 
       const oldModel = new PanelModel({
         angularProp: 'old name',
-        type: 'dashlist',
+        type: 'text',
       });
 
       const mutatedModel: TestPanelModel = {
         id: 1,
-        type: 'dashlist',
+        type: 'text',
         options: {},
         fieldConfig: { defaults: {}, overrides: [] },
       };

@@ -59,8 +59,7 @@ jest.mock('@grafana/runtime/internal', () => ({
     value: [
       { id: 'timeseries', name: 'Time series', sort: 0, hideFromList: false },
       { id: 'text', name: 'Text', sort: 1, hideFromList: false },
-      { id: 'dashlist', name: 'Dashboard list', sort: 2, hideFromList: false },
-      { id: 'alertlist', name: 'Alert list', sort: 3, hideFromList: false },
+      { id: 'alertlist', name: 'Alert list', sort: 2, hideFromList: false },
     ],
   }),
 }));
@@ -686,7 +685,6 @@ describe('VisualizationSuggestions', () => {
       expect(screen.getByText('OR')).toBeInTheDocument();
       expect(screen.getByText('Start without data')).toBeInTheDocument();
       expect(screen.getByText('Text')).toBeInTheDocument();
-      expect(screen.getByText('Dashboard list')).toBeInTheDocument();
       expect(screen.getByText('Alert list')).toBeInTheDocument();
     });
 
@@ -741,7 +739,6 @@ describe('VisualizationSuggestions', () => {
         expect(screen.getByText('Text')).toBeInTheDocument();
       });
 
-      expect(screen.queryByText('Dashboard list')).not.toBeInTheDocument();
       expect(screen.queryByText('Alert list')).not.toBeInTheDocument();
     });
   });

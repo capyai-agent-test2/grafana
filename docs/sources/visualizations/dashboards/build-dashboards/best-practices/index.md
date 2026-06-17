@@ -271,5 +271,4 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
 - When you must copy a dashboard, clearly rename it and _do not_ copy the dashboard tags. Tags are important metadata for dashboards that are used during search. Copying tags can result in false matches.
 - Maintain a dashboard of dashboards or cross-reference dashboards. This can be done in several ways:
   - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Manage dashboard links](ref:manage-dashboard-links).
-  - Add a [Dashboard list panel](ref:dashboard-list-panel). You can then customize what you see by doing tag or folder searches.
   - Add a [Text panel](ref:text-panel) and use markdown to customize the display.

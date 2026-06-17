@@ -30,7 +30,6 @@ const idToSortMap: Record<string, number> = {
   graph: 13,
   text: 14,
   alertlist: 15,
-  dashlist: 16,
   news: 17,
 };
 

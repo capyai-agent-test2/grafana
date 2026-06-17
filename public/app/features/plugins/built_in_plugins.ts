@@ -24,8 +24,6 @@ const barGaugePanel = async () =>
   await import(/* webpackChunkName: "barGaugePanel" */ 'app/plugins/panel/bargauge/module');
 const candlestickPanel = async () =>
   await import(/* webpackChunkName: "candlestickPanel" */ 'app/plugins/panel/candlestick/module');
-const dashListPanel = async () =>
-  await import(/* webpackChunkName: "dashListPanel" */ 'app/plugins/panel/dashlist/module');
 const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */ 'app/plugins/panel/debug/module');
 const flamegraphPanel = async () =>
   await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
@@ -83,7 +81,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/xychart': xychartPanel,
   'core:plugin/geomap': geomapPanel,
   'core:plugin/canvas': canvasPanel,
-  'core:plugin/dashlist': dashListPanel,
   'core:plugin/alertlist': alertListPanel,
   'core:plugin/annolist': annoListPanel,
   'core:plugin/heatmap': heatmapPanel,

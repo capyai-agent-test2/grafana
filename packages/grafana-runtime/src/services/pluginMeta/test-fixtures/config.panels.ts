@@ -442,45 +442,6 @@ export const panels: PanelPluginMetas = structuredClone({
     loadingStrategy: PluginLoadingStrategy.script,
     type: PluginType.panel,
   },
-  dashlist: {
-    id: 'dashlist',
-    name: 'Dashboard list',
-    info: {
-      author: {
-        name: 'Grafana Labs',
-        url: 'https://grafana.com',
-      },
-      description: 'List of dynamic links to other dashboards',
-      links: [
-        {
-          name: 'Raise issue',
-          url: 'https://github.com/grafana/grafana/issues/new',
-        },
-        {
-          name: 'Documentation',
-          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/dashboard-list/',
-        },
-      ],
-      logos: {
-        small: 'app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
-        large: 'app/plugins/panel/dashlist/img/icn-dashlist-panel.svg',
-      },
-      build: {},
-      screenshots: [],
-      version: '',
-      updated: '',
-      keywords: [],
-    },
-    hideFromList: false,
-    sort: 16,
-    skipDataQuery: true,
-    baseUrl: 'app/plugins/panel/dashlist',
-    signature: PluginSignatureStatus.internal,
-    module: 'core:plugin/dashlist',
-    angular: { detected: false } as AngularMeta,
-    loadingStrategy: PluginLoadingStrategy.script,
-    type: PluginType.panel,
-  },
   debug: {
     id: 'debug',
     name: 'Debug',
