@@ -78,6 +78,10 @@ export function getFieldConfigFromFrame(
     config.mappings = combineValueMappings(context);
   }
 
+  if (context.threshold1Value !== undefined) {
+    config.thresholds = combineThreshold(context, config);
+  }
+
   return config;
 }
 
@@ -85,6 +89,9 @@ interface FieldToConfigContext {
   mappingValues?: any[];
   mappingColors?: string[];
   mappingTexts?: string[];
+  threshold1Value?: number;
+  threshold1Color?: string;
+  threshold1FallbackColor?: string;
 }
 
 type FieldToConfigMapHandlerProcessor = (
@@ -159,26 +166,29 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
     key: 'threshold1',
     name: 'Threshold',
     targetProperty: 'thresholds',
-    processor: (value, config, _, handlerArguments) => {
+    processor: (value, _config, context, handlerArguments) => {
       const numeric = anyToNumber(value);
 
       if (isNaN(numeric)) {
         return;
       }
 
-      if (!config.thresholds) {
-        config.thresholds = {
-          mode: ThresholdsMode.Absolute,
-          steps: [],
-        };
+      context.threshold1Value = numeric;
+      context.threshold1FallbackColor = handlerArguments.threshold?.color;
+      return;
+    },
+  },
+  {
+    key: 'threshold1.color',
+    name: 'Threshold / Color',
+    targetProperty: 'thresholds',
+    processor: (value, _config, context) => {
+      if (value == null) {
+        return;
       }
 
-      config.thresholds.steps.push({
-        value: numeric,
-        color: handlerArguments.threshold?.color ?? 'red',
-      });
-
-      return config.thresholds;
+      context.threshold1Color = value.toString();
+      return;
     },
   },
   {
@@ -247,6 +257,20 @@ function combineValueMappings(context: FieldToConfigContext): ValueMapping[] {
   }
 
   return [valueMap];
+}
+
+function combineThreshold(context: FieldToConfigContext, config: FieldConfig) {
+  const thresholds = config.thresholds ?? {
+    mode: ThresholdsMode.Absolute,
+    steps: [],
+  };
+
+  thresholds.steps.push({
+    value: context.threshold1Value!,
+    color: context.threshold1Color ?? context.threshold1FallbackColor ?? 'red',
+  });
+
+  return thresholds;
 }
 
 let configMapHandlersIndex: Record<string, FieldToConfigMapHandler> | null = null;
