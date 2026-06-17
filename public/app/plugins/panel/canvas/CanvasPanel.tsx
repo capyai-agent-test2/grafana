@@ -187,7 +187,11 @@ export class CanvasPanel extends Component<Props, State> {
     this.subs.unsubscribe();
     isInlineEditOpen = false;
     isSetBackgroundOpen = false;
-    canvasInstances = canvasInstances.filter((ci) => ci.props.id !== activeCanvasPanel?.props.id);
+    if (activeCanvasPanel === this) {
+      activeCanvasPanel = undefined;
+    }
+
+    canvasInstances = canvasInstances.filter((ci) => ci !== this);
   }
 
   // NOTE, all changes to the scene flow through this function
