@@ -66,6 +66,9 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
 	}
+	store.Decorator = func(obj runtime.Object) {
+		normalizeObjectVersion(obj, resourceInfo.GroupVersion())
+	}
 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: attrFunc}
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err

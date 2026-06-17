@@ -10,6 +10,30 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 )
 
+func normalizeObjectVersion(obj runtime.Object, targetGV schema.GroupVersion) {
+	if obj == nil {
+		return
+	}
+
+	normalizeSingleObjectVersion(obj, targetGV)
+
+	items, err := meta.ExtractList(obj)
+	if err != nil {
+		return
+	}
+
+	for _, item := range items {
+		normalizeSingleObjectVersion(item, targetGV)
+	}
+}
+
+func normalizeSingleObjectVersion(obj runtime.Object, targetGV schema.GroupVersion) {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	if gvk.Group == targetGV.Group && gvk.Version != targetGV.Version {
+		obj.GetObjectKind().SetGroupVersionKind(targetGV.WithKind(gvk.Kind))
+	}
+}
+
 // VersionedStore wraps a registry.Store and overrides List to re-stamp each
 // item's GroupVersionKind so it matches the API version being served. This is
 // needed when the same Go types are registered under multiple API versions.
@@ -32,17 +56,6 @@ func (v *VersionedStore) List(ctx context.Context, options *metainternalversion.
 		return nil, err
 	}
 
-	items, err := meta.ExtractList(obj)
-	if err != nil {
-		return obj, nil
-	}
-
-	for _, item := range items {
-		gvk := item.GetObjectKind().GroupVersionKind()
-		if gvk.Group == v.targetGV.Group && gvk.Version != v.targetGV.Version {
-			item.GetObjectKind().SetGroupVersionKind(v.targetGV.WithKind(gvk.Kind))
-		}
-	}
-
+	normalizeObjectVersion(obj, v.targetGV)
 	return obj, nil
 }
