@@ -16,6 +16,7 @@ interface Props {
   value?: TimeOption;
   onChange: (option: TimeOption) => void;
   placeholderEmpty?: ReactNode;
+  renderOptionAction?: (option: TimeOption) => ReactNode;
 }
 
 export const TimeRangeList = (props: Props) => {
@@ -42,7 +43,7 @@ export const TimeRangeList = (props: Props) => {
   );
 };
 
-const Options = ({ options, value, onChange, title }: Props) => {
+const Options = ({ options, value, onChange, title, renderOptionAction }: Props) => {
   const styles = useStyles2(getOptionsStyles);
 
   const localRef = useRef<HTMLUListElement>(null);
@@ -64,6 +65,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
             selected={isEqual(option, value)}
             onSelect={onChange}
             name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
+            action={renderOptionAction?.(option)}
           />
         ))}
       </ul>

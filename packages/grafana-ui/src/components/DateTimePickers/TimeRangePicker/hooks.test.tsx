@@ -109,4 +109,23 @@ describe('useListFocus', () => {
 
     expect(onClick).toHaveBeenCalled();
   });
+
+  it('does not prevent tab navigation', () => {
+    const ref = createRef<HTMLUListElement>();
+    render(getListElement(ref));
+
+    const { result } = renderHook(() => useListFocus({ localRef: ref, options }));
+    const [handleKeys] = result.current;
+    const preventDefault = jest.fn();
+    const stopPropagation = jest.fn();
+
+    handleKeys({
+      key: 'Tab',
+      preventDefault,
+      stopPropagation,
+    } as unknown as KeyboardEvent);
+
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(stopPropagation).not.toHaveBeenCalled();
+  });
 });

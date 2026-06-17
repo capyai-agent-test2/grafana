@@ -61,6 +61,9 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  historyOptions?: TimeOption[];
+  historyTitle?: string;
+  onSaveHistoryOption?: (timeOption: TimeOption) => void;
   quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
@@ -87,6 +90,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     timeZone,
     fiscalYearStartMonth,
     history,
+    historyOptions,
+    historyTitle,
+    onSaveHistoryOption,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
     quickRanges,
@@ -199,12 +205,15 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChange={onChange}
                 quickOptions={quickRanges || getQuickOptions()}
                 history={history}
+                historyOptions={historyOptions}
+                historyTitle={historyTitle}
                 showHistory
                 widthOverride={widthOverride}
                 onChangeTimeZone={onChangeTimeZone}
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
                 onError={onError}
+                onSaveHistoryOption={onSaveHistoryOption}
                 weekStart={weekStart}
               />
             </section>
