@@ -939,7 +939,7 @@ function transformSpanToTraceData(span: Span, spanSet: Spanset, trace: TraceSear
     traceName: trace.rootTraceName || '',
     spanID: span.spanID,
     time: spanStartTimeUnixMs,
-    duration: parseInt(span.durationNanos, 10),
+    duration: span.durationNanos ? parseInt(span.durationNanos, 10) : undefined,
     name: span.name,
   };
 
