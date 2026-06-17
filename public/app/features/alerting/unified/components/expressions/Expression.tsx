@@ -143,7 +143,7 @@ export const Expression: FC<ExpressionProps> = ({
                 query={query}
                 refIds={availableRefIds}
                 alerting
-                queries={[]}
+                queries={queries.map((query) => query.model)}
               />
             </Suspense>
           );
