@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
@@ -9,7 +9,7 @@ import { appEvents } from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
-import { useDispatch } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin, isMarketplacePlugin } from '../../helpers';
 import { type EntitlementState } from '../../hooks/usePluginEntitlement';
@@ -21,6 +21,7 @@ import {
   useUnsetInstall,
   useFetchDetailsLazy,
 } from '../../state/hooks';
+import { selectAll } from '../../state/selectors';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { type CatalogPlugin, PluginStatus, PluginTabIds, type Version } from '../../types';
 
@@ -44,6 +45,7 @@ export function InstallControlsButton({
   entitlement,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
+  const allPlugins = useSelector(selectAll);
   const [queryParams] = useQueryParams();
   const location = useLocation();
   const { isInstalling, error: errorInstalling } = useInstallStatus();
@@ -56,6 +58,7 @@ export function InstallControlsButton({
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
+  const uninstallWarnings = useMemo(() => getUninstallWarnings(plugin, allPlugins), [plugin, allPlugins]);
   const trackingProps = {
     plugin_id: plugin.id,
     plugin_type: plugin.type,
@@ -142,10 +145,40 @@ export function InstallControlsButton({
         title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
           plugin: plugin.name,
         })}
-        body={t(
-          'plugins.install-controls-button.uninstall-controls.body-uninstall-plugin',
-          'Are you sure you want to uninstall this plugin?'
-        )}
+        body={
+          <Stack direction="column" gap={1}>
+            <div>
+              {t(
+                'plugins.install-controls-button.uninstall-controls.body-uninstall-plugin',
+                'Are you sure you want to uninstall this plugin?'
+              )}
+            </div>
+            {uninstallWarnings.dependentPlugins.length > 0 && (
+              <div>
+                <div>
+                  {t(
+                    'plugins.install-controls-button.uninstall-controls.body-dependent-plugins',
+                    'The following installed plugins depend on it and may be affected:'
+                  )}
+                </div>
+                <ul>
+                  {uninstallWarnings.dependentPlugins.map((dependentPlugin) => (
+                    <li key={dependentPlugin.id}>{dependentPlugin.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {uninstallWarnings.parentPluginName && (
+              <div>
+                {t(
+                  'plugins.install-controls-button.uninstall-controls.body-nested-plugin',
+                  'This plugin is bundled inside {{plugin}}. Uninstalling it may affect that app.',
+                  { plugin: uninstallWarnings.parentPluginName }
+                )}
+              </div>
+            )}
+          </Stack>
+        }
         confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
@@ -251,4 +284,19 @@ function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) 
   }
 
   return isUninstalling;
+}
+
+function getUninstallWarnings(plugin: CatalogPlugin, allPlugins: CatalogPlugin[]) {
+  const dependentPlugins = allPlugins.filter(
+    (candidate) =>
+      candidate.isInstalled &&
+      candidate.id !== plugin.id &&
+      candidate.pluginDependencies?.some((dep) => dep.id === plugin.id)
+  );
+
+  const parentPluginName = plugin.includedInAppId
+    ? (allPlugins.find((candidate) => candidate.id === plugin.includedInAppId)?.name ?? plugin.includedInAppId)
+    : undefined;
+
+  return { dependentPlugins, parentPluginName };
 }

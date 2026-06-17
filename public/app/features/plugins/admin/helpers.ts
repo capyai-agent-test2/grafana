@@ -185,6 +185,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     description,
     downloads: 0,
     id,
+    includedInAppId: plugin.includedInAppId,
     info: { logos, keywords },
     name,
     orgName: author.name,
@@ -209,6 +210,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     accessControl: accessControl,
     angularDetected,
     isFullyInstalled: true,
+    pluginDependencies: plugin.dependencies.plugins,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
     managed: {
@@ -247,6 +249,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     downloads: remote?.downloads || 0,
     hasUpdate: local?.hasUpdate || false,
     id,
+    includedInAppId: local?.includedInAppId,
     info: {
       logos,
       keywords,
@@ -272,6 +275,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     // TODO<check if we would like to keep preferring the remote version>
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     installedVersion,
+    pluginDependencies: local?.dependencies.plugins ?? remote?.json?.dependencies.plugins,
     error: error?.errorCode,
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,

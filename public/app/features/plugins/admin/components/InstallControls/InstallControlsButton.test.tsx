@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
@@ -169,6 +169,47 @@ describe('InstallControlsButton', () => {
       );
       const button = screen.getByText('Uninstall').closest('button');
       expect(button).toBeEnabled();
+    });
+
+    it('shows uninstall warnings for dependent and nested plugins', () => {
+      const store = configureStore({
+        plugins: getPluginsStateMock([
+          { ...plugin, isInstalled: true, isPublished: false, includedInAppId: 'parent-app' },
+          {
+            ...plugin,
+            id: 'parent-app',
+            name: 'Parent App',
+            isInstalled: true,
+            isPublished: false,
+            pluginDependencies: [],
+          },
+          {
+            ...plugin,
+            id: 'dependent-plugin',
+            name: 'Dependent Plugin',
+            isInstalled: true,
+            isPublished: false,
+            pluginDependencies: [{ id: 'test-plugin', type: 'datasource', name: 'Testing Plugin', version: '1.0.0' }],
+          },
+        ]),
+      });
+
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isInstalled: true, isPublished: false, includedInAppId: 'parent-app' }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /uninstall/i }));
+
+      expect(screen.getByText('The following installed plugins depend on it and may be affected:')).toBeInTheDocument();
+      expect(screen.getByText('Dependent Plugin')).toBeInTheDocument();
+      expect(
+        screen.getByText('This plugin is bundled inside Parent App. Uninstalling it may affect that app.')
+      ).toBeInTheDocument();
     });
   });
 

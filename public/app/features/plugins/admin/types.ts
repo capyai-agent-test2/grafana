@@ -29,6 +29,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   downloads: number;
   hasUpdate: boolean;
   id: string;
+  includedInAppId?: string;
   info: CatalogPluginInfo;
   isDev: boolean;
   isCore: boolean;
@@ -50,6 +51,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   type?: PluginType;
   updatedAt: string;
   installedVersion?: string;
+  pluginDependencies?: PluginDependencies['plugins'];
   details?: CatalogPluginDetails;
   insights?: CatalogPluginInsights;
   error?: PluginErrorCode;
@@ -207,6 +209,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   hasUpdate: boolean;
   latestVersion: string;
   id: string;
+  includedInAppId?: string;
   info: {
     author: Rel;
     description: string;
