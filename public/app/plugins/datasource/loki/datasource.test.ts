@@ -1265,6 +1265,17 @@ describe('LokiDatasource', () => {
           assertAdHocFilters('{bar="baz"}', '{bar="baz", job="grafana"}', ds, defaultAdHocFilters);
         });
 
+        it('then non-indexed labels are added as label filters', () => {
+          ds.languageProvider.labelKeys = ['bar', 'job'];
+
+          assertAdHocFilters(
+            '{bar="baz"}',
+            '{bar="baz"} | structured=`grafana`',
+            ds,
+            [{ condition: '', key: 'structured', operator: '=', value: 'grafana' }]
+          );
+        });
+
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"}[5m])', 'rate({bar="baz", job="grafana"}[5m])', ds, defaultAdHocFilters);
         });
@@ -1303,6 +1314,17 @@ describe('LokiDatasource', () => {
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
           assertAdHocFilters('{bar="baz"} | logfmt', '{bar="baz"} | logfmt | job=`grafana`', ds, defaultAdHocFilters);
+        });
+
+        it('then indexed labels stay in the stream selector', () => {
+          ds.languageProvider.labelKeys = ['bar', 'job'];
+
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt',
+            '{bar="baz", job="grafana"} | logfmt',
+            ds,
+            defaultAdHocFilters
+          );
         });
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters(
