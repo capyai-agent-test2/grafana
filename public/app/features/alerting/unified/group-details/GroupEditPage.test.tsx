@@ -1,6 +1,6 @@
 import { HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
@@ -267,6 +267,43 @@ describe('GroupEditPage', () => {
       expect(confirmDialog).toBeInTheDocument();
       expect(ui.confirmDeleteModal.header.get(confirmDialog)).toBeInTheDocument();
       expect(ui.confirmDeleteModal.confirmButton.get(confirmDialog)).toBeInTheDocument();
+    });
+  });
+
+  describe('rules API v2 migration guidance', () => {
+    testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
+
+    beforeEach(() => {
+      setGrafanaRulerRuleGroupResolver(async ({ params: { groupName, folderUid } }) => {
+        if (groupName === group.name && folderUid === 'test-folder-uid') {
+          return HttpResponse.json(group);
+        }
+
+        return HttpResponse.json(null, { status: 404 });
+      });
+      setFolderResponse({ uid: 'test-folder-uid', canSave: true });
+
+      setRulerRuleGroupResolver(async ({ params: { groupName } }) => {
+        if (groupName === group.name) {
+          return HttpResponse.json(group);
+        }
+
+        return HttpResponse.json(null, { status: 404 });
+      });
+    });
+
+    it('shows migration guidance for Grafana-managed groups', async () => {
+      renderGroupEditPage('grafana', 'test-folder-uid', group.name);
+
+      expect(await screen.findByText('Move this group to the new evaluation model')).toBeInTheDocument();
+      expect(screen.getByText(/edit each rule and switch Evaluation behavior to Set interval/i)).toBeInTheDocument();
+    });
+
+    it('does not show migration guidance for data source-managed groups', async () => {
+      renderGroupEditPage(mimirDs.uid, 'test-mimir-namespace', group.name);
+
+      expect(await ui.namespaceInput.find()).toBeInTheDocument();
+      expect(screen.queryByText('Move this group to the new evaluation model')).not.toBeInTheDocument();
     });
   });
 

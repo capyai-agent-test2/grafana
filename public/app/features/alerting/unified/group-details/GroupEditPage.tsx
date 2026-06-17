@@ -42,6 +42,7 @@ import { useReturnTo } from '../hooks/useReturnTo';
 import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { type SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
+import { shouldUseRulesAPIV2 } from '../featureToggles';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
 import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
@@ -319,6 +320,19 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
+        {shouldUseRulesAPIV2() && groupIdentifier.groupOrigin === 'grafana' && (
+          <Alert
+            title={t('alerting.group-edit.migrate-to-groupless-title', 'Move this group to the new evaluation model')}
+            severity="info"
+            className={styles.migrationInfo}
+          >
+            <Trans i18nKey="alerting.group-edit.migrate-to-groupless-description">
+              If this group is only used to organize rules, edit each rule and switch Evaluation behavior to Set
+              interval. The rules will stay in this folder without an evaluation group. If the order of rules in this
+              group matters, keep using this group until rule sequences are available.
+            </Trans>
+          </Alert>
+        )}
         {groupIdentifier.groupOrigin === 'datasource' && (
           <Field
             label={t('alerting.group-edit.form.namespace-label', 'Namespace')}
@@ -415,6 +429,9 @@ function GroupEditForm({ rulerGroup, groupIdentifier }: GroupEditFormProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  migrationInfo: css({
+    marginBottom: theme.spacing(3),
+  }),
   intervalInput: css({
     marginBottom: theme.spacing(0.5),
   }),
