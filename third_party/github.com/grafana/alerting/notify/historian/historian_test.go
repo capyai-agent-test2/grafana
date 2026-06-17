@@ -1,0 +1,208 @@
+package historian
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"net/url"
+	"testing"
+
+	"time"
+
+	"github.com/go-kit/log"
+	"github.com/grafana/dskit/instrument"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
+	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
+	"github.com/grafana/alerting/notify/nfstatus"
+)
+
+const (
+	testReceiverName = "testReceiverName"
+	testUUID         = "00000000-0000-0000-0000-000000000001"
+)
+
+var (
+	testGroupLabels  = model.LabelSet{"foo": "bar"}
+	testGroupKey     = "testGroupKey"
+	testPipelineTime = time.Date(2025, time.July, 15, 16, 55, 0, 0, time.UTC)
+	testNow          = time.Now()
+	testAlerts       = []nfstatus.NotificationHistoryAlert{{
+		Alert: &types.Alert{
+			Alert: model.Alert{
+				Labels:       model.LabelSet{"alertname": "Alert1", alertingModels.RuleUIDLabel: "testRuleUID"},
+				Annotations:  model.LabelSet{"foo": "bar", "__private__": "baz", alertingModels.NamespaceUIDLabel: "testFolderUID"},
+				StartsAt:     testPipelineTime,
+				EndsAt:       testPipelineTime,
+				GeneratorURL: "http://localhost/test",
+			},
+		},
+		ExtraData: json.RawMessage([]byte(`{"things":["foo","bar"]}`)),
+	}}
+)
+
+func TestRecord(t *testing.T) {
+	t.Run("write notification history to Loki", func(t *testing.T) {
+		testCases := []struct {
+			name            string
+			retry           bool
+			notificationErr error
+			expected        []lokiclient.Stream
+		}{
+			{
+				name:            "successful notification",
+				retry:           false,
+				notificationErr: nil,
+				expected: []lokiclient.Stream{
+					{
+						Stream: map[string]string{
+							"externalLabelKey": "externalLabelValue",
+							"from":             "notify-history-events",
+						},
+						Values: []lokiclient.Sample{
+							{
+								T:        testNow,
+								V:        `{"schemaVersion":2,"uuid":"00000000-0000-0000-0000-000000000001","ruleUIDs":["testRuleUID"],"folderUIDs":["testFolderUID"],"receiver":"testReceiverName","integration":"testIntegrationName","integrationIdx":42,"groupKey":"testGroupKey","status":"resolved","groupLabels":{"foo":"bar"},"alertCount":1,"retry":false,"duration":1000000000,"pipelineTime":"2025-07-15T16:55:00Z"}`,
+								Metadata: map[string]string{"uuid": testUUID, "receiver": testReceiverName, "rule_uids": "testRuleUID", "folder_uids": "testFolderUID"},
+							},
+						},
+					},
+					{
+						Stream: map[string]string{
+							"externalLabelKey": "externalLabelValue",
+							"from":             "notify-history-alerts",
+						},
+						Values: []lokiclient.Sample{
+							{
+								T:        testNow,
+								V:        `{"schemaVersion":2,"uuid":"00000000-0000-0000-0000-000000000001","alertIndex":0,"status":"resolved","labels":{"__alert_rule_uid__":"testRuleUID","alertname":"Alert1"},"annotations":{"__alert_rule_namespace_uid__":"testFolderUID","__private__":"baz","foo":"bar"},"startsAt":"2025-07-15T16:55:00Z","endsAt":"2025-07-15T16:55:00Z","enrichments":{"things":["foo","bar"]}}`,
+								Metadata: map[string]string{"uuid": testUUID, "rule_uid": "testRuleUID", "folder_uid": "testFolderUID"},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:            "failed notification",
+				retry:           true,
+				notificationErr: errors.New("test notification error"),
+				expected: []lokiclient.Stream{
+					{
+						Stream: map[string]string{
+							"externalLabelKey": "externalLabelValue",
+							"from":             "notify-history-events",
+						},
+						Values: []lokiclient.Sample{
+							{
+								T:        testNow,
+								V:        `{"schemaVersion":2,"uuid":"00000000-0000-0000-0000-000000000001","ruleUIDs":["testRuleUID"],"folderUIDs":["testFolderUID"],"receiver":"testReceiverName","integration":"testIntegrationName","integrationIdx":42,"groupKey":"testGroupKey","status":"resolved","groupLabels":{"foo":"bar"},"alertCount":1,"retry":true,"error":"test notification error","duration":1000000000,"pipelineTime":"2025-07-15T16:55:00Z"}`,
+								Metadata: map[string]string{"uuid": testUUID, "receiver": testReceiverName, "rule_uids": "testRuleUID", "folder_uids": "testFolderUID"},
+							},
+						},
+					},
+					{
+						Stream: map[string]string{
+							"externalLabelKey": "externalLabelValue",
+							"from":             "notify-history-alerts",
+						},
+						Values: []lokiclient.Sample{
+							{
+								T:        testNow,
+								V:        `{"schemaVersion":2,"uuid":"00000000-0000-0000-0000-000000000001","alertIndex":0,"status":"resolved","labels":{"__alert_rule_uid__":"testRuleUID","alertname":"Alert1"},"annotations":{"__alert_rule_namespace_uid__":"testFolderUID","__private__":"baz","foo":"bar"},"startsAt":"2025-07-15T16:55:00Z","endsAt":"2025-07-15T16:55:00Z","enrichments":{"things":["foo","bar"]}}`,
+								Metadata: map[string]string{"uuid": testUUID, "rule_uid": "testRuleUID", "folder_uid": "testFolderUID"},
+							},
+						},
+					},
+				},
+			},
+		}
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := instrumenttest.NewFakeRequester()
+				writesTotal := prometheus.NewCounter(prometheus.CounterOpts{})
+				writesFailed := prometheus.NewCounter(prometheus.CounterOpts{})
+
+				h := createTestNotificationHistorian(req, writesTotal, writesFailed)
+				h.Record(context.Background(), nfstatus.NotificationHistoryEntry{
+					UUID:            testUUID,
+					Alerts:          testAlerts,
+					GroupKey:        testGroupKey,
+					Retry:           tc.retry,
+					NotificationErr: tc.notificationErr,
+					Duration:        time.Second,
+					ReceiverName:    testReceiverName,
+					IntegrationName: "testIntegrationName",
+					IntegrationIdx:  42,
+					GroupLabels:     testGroupLabels,
+					PipelineTime:    testPipelineTime,
+				})
+
+				reqBody, err := io.ReadAll(req.LastRequest.Body)
+				require.NoError(t, err)
+
+				type LokiRequestBody struct {
+					Streams []lokiclient.Stream `json:"streams"`
+				}
+				var lrb LokiRequestBody
+				err = json.Unmarshal(reqBody, &lrb)
+				require.NoError(t, err)
+
+				for i := range lrb.Streams {
+					for j := range lrb.Streams[i].Values {
+						// Overwrite the timestamp to make the test deterministic.
+						lrb.Streams[i].Values[j].T = testNow
+					}
+				}
+				require.Equal(t, tc.expected, lrb.Streams)
+			})
+		}
+	})
+
+	t.Run("emits expected write metrics", func(t *testing.T) {
+		writesTotal := prometheus.NewCounter(prometheus.CounterOpts{})
+		writesFailed := prometheus.NewCounter(prometheus.CounterOpts{})
+
+		goodHistorian := createTestNotificationHistorian(instrumenttest.NewFakeRequester(), writesTotal, writesFailed)
+		badHistorian := createTestNotificationHistorian(instrumenttest.NewFakeRequester().WithResponse(instrumenttest.BadResponse()), writesTotal, writesFailed)
+
+		nhe := nfstatus.NotificationHistoryEntry{
+			UUID:            testUUID,
+			Alerts:          testAlerts,
+			GroupKey:        testGroupKey,
+			Retry:           false,
+			NotificationErr: nil,
+			Duration:        time.Second,
+			ReceiverName:    testReceiverName,
+			GroupLabels:     testGroupLabels,
+			PipelineTime:    testPipelineTime,
+		}
+		goodHistorian.Record(context.Background(), nhe)
+		badHistorian.Record(context.Background(), nhe)
+
+		require.Equal(t, 2, int(testutil.ToFloat64(writesTotal)))
+		require.Equal(t, 1, int(testutil.ToFloat64(writesFailed)))
+	})
+}
+
+func createTestNotificationHistorian(req alertingInstrument.Requester, writesTotal prometheus.Counter, writesFailed prometheus.Counter) *NotificationHistorian {
+	writePathURL, _ := url.Parse("http://some.url")
+	cfg := lokiclient.LokiConfig{
+		WritePathURL:   writePathURL,
+		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
+		Encoder:        lokiclient.JSONEncoder{},
+	}
+
+	bytesWritten := prometheus.NewCounter(prometheus.CounterOpts{})
+	writeDuration := instrument.NewHistogramCollector(prometheus.NewHistogramVec(prometheus.HistogramOpts{}, instrument.HistogramCollectorBuckets))
+
+	return NewNotificationHistorian(log.NewNopLogger(), cfg, req, bytesWritten, writeDuration, writesTotal, writesFailed, noop.NewTracerProvider().Tracer("test"))
+}
