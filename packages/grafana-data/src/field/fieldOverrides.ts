@@ -41,6 +41,7 @@ import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { sortThresholds } from './thresholds';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -471,6 +472,10 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
  */
 export function validateFieldConfig(config: FieldConfig) {
   const { thresholds } = config;
+
+  if (thresholds?.steps.length) {
+    sortThresholds(thresholds.steps);
+  }
 
   if (!config.color) {
     if (thresholds) {

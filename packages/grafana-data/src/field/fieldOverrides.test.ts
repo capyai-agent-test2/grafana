@@ -25,6 +25,7 @@ import {
   getLinksSupplier,
   setDynamicConfigValue,
   setFieldConfigDefaults,
+  validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 
@@ -923,6 +924,54 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(config, defaultConfig, context);
 
     expect(config.thresholds).toMatchSnapshot();
+  });
+
+  it('sorts thresholds after applying the base threshold', () => {
+    const defaultConfig: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'red' }],
+      },
+    };
+
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: 1, color: 'green' },
+          { value: -3, color: 'blue' },
+        ],
+      },
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    setFieldConfigDefaults(config, defaultConfig, context);
+
+    expect(config.thresholds?.steps.map((step) => step.value)).toEqual([-Infinity, -3, 1]);
+  });
+});
+
+describe('validateFieldConfig', () => {
+  it('sorts threshold steps', () => {
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: 1, color: 'green' },
+          { value: -3, color: 'blue' },
+        ],
+      },
+    };
+
+    validateFieldConfig(config);
+
+    expect(config.thresholds?.steps.map((step) => step.value)).toEqual([-3, 1]);
   });
 });
 
