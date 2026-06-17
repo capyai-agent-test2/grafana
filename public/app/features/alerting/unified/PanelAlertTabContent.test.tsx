@@ -240,7 +240,7 @@ describe('PanelAlertTabContent', () => {
         type: 'prometheus',
         uid: 'mock-ds-2',
       },
-      interval: '',
+      interval: '10s',
       intervalMs: 300000,
       maxDataPoints: 100,
     });
@@ -270,7 +270,7 @@ describe('PanelAlertTabContent', () => {
         type: 'prometheus',
         uid: 'mock-ds-3',
       },
-      interval: '',
+      interval: '10s',
       intervalMs: 300000,
       maxDataPoints: 100,
     });

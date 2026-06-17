@@ -22,6 +22,8 @@ import {
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
+  updateMaxDataPoints,
+  updateMinInterval,
 } from './reducer';
 
 const reduceExpression: AlertQuery<ExpressionQuery> = {
@@ -141,6 +143,48 @@ describe('Query and expressions reducer', () => {
     const newState = queriesAndExpressionsReducer(initialState, addNewDataQuery());
     expect(newState.queries).toHaveLength(2);
     expect(newState).toMatchSnapshot();
+  });
+
+  it('should store min interval separately from calculated interval', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [
+        {
+          ...alertQuery,
+          relativeTimeRange: { from: 600, to: 0 },
+          model: { ...alertQuery.model, maxDataPoints: 10 },
+        },
+      ],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, updateMinInterval({ refId: 'A', minInterval: '5s' }));
+
+    expect(newState.queries[0].model).toMatchObject({
+      refId: 'A',
+      maxDataPoints: 10,
+      interval: '5s',
+      intervalMs: 60000,
+    });
+  });
+
+  it('should recalculate intervalMs when max data points change', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [
+        {
+          ...alertQuery,
+          relativeTimeRange: { from: 600, to: 0 },
+          model: { ...alertQuery.model, interval: '5s', intervalMs: 60000, maxDataPoints: 10 },
+        },
+      ],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, updateMaxDataPoints({ refId: 'A', maxDataPoints: 100 }));
+
+    expect(newState.queries[0].model).toMatchObject({
+      refId: 'A',
+      maxDataPoints: 100,
+      interval: '5s',
+      intervalMs: 5000,
+    });
   });
 
   it('should set data queries', () => {

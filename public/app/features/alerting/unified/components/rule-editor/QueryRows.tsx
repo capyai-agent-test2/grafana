@@ -8,6 +8,7 @@ import {
   type PanelData,
   type RelativeTimeRange,
   getDataSourceRef,
+  getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -19,7 +20,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getInstantFromDataQuery } from '../../utils/rule-form';
+import { getInstantFromDataQuery, getIntervals } from '../../utils/rule-form';
 
 import { type AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
@@ -58,6 +59,10 @@ export class QueryRows extends PureComponent<Props> {
         return {
           ...item,
           relativeTimeRange: timeRange,
+          model: {
+            ...item.model,
+            intervalMs: getQueryIntervalMs(item, item.model.maxDataPoints, item.model.interval, timeRange),
+          },
         };
       })
     );
@@ -75,7 +80,8 @@ export class QueryRows extends PureComponent<Props> {
           model: {
             ...item.model,
             maxDataPoints: options.maxDataPoints,
-            intervalMs: options.minInterval ? rangeUtil.intervalToMs(options.minInterval) : undefined,
+            interval: options.minInterval,
+            intervalMs: getQueryIntervalMs(item, options.maxDataPoints, options.minInterval),
           },
         };
       })
@@ -224,6 +230,16 @@ export class QueryRows extends PureComponent<Props> {
       </DragDropContext>
     );
   }
+}
+
+function getQueryIntervalMs(
+  query: AlertQuery,
+  maxDataPoints?: number,
+  minInterval?: string,
+  relativeTimeRange: RelativeTimeRange = query.relativeTimeRange ?? getDefaultRelativeTimeRange()
+) {
+  const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
+  return getIntervals(range, minInterval, maxDataPoints).intervalMs;
 }
 
 function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {

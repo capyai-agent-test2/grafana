@@ -149,7 +149,7 @@ export const QueryWrapper = ({
   }) {
     const queryOptions: AlertQueryOptions = {
       maxDataPoints: query.model.maxDataPoints,
-      minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
+      minInterval: query.model.interval ?? (query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined),
     };
     const alertQueryOptions: AlertQueryOptions = {
       maxDataPoints: queryOptions.maxDataPoints,
