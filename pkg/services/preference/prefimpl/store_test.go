@@ -53,6 +53,42 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 		require.Equal(t, "test-uid4", prefs.HomeDashboardUID)
 	})
 
+	t.Run("Get with duplicate rows should return the most recently updated row", func(t *testing.T) {
+		ss := db.InitTestDB(t)
+		prefStore := fn(ss)
+		older := time.Now().Add(-time.Minute)
+		newer := older.Add(30 * time.Second)
+
+		_, err := prefStore.Insert(context.Background(), &pref.Preference{
+			OrgID:   1,
+			UserID:  99,
+			Theme:   "light",
+			Created: older,
+			Updated: older,
+		})
+		require.NoError(t, err)
+
+		_, err = prefStore.Insert(context.Background(), &pref.Preference{
+			OrgID:   1,
+			UserID:  99,
+			Theme:   "dark",
+			Created: newer,
+			Updated: newer,
+		})
+		require.NoError(t, err)
+
+		query := &pref.Preference{OrgID: 1, UserID: 99}
+		preference, err := prefStore.Get(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, "dark", preference.Theme)
+
+		preferences, err := prefStore.List(context.Background(), query)
+		require.NoError(t, err)
+		require.Len(t, preferences, 2)
+		require.Equal(t, "light", preferences[0].Theme)
+		require.Equal(t, "dark", preferences[1].Theme)
+	})
+
 	t.Run("List with saved org and user home dashboard should return user home dashboard", func(t *testing.T) {
 		_, err := prefStore.Insert(context.Background(),
 			&pref.Preference{
