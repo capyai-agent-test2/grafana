@@ -799,6 +799,15 @@ export const dataQueriesToGrafanaQueries = async (
   return result;
 };
 
+function getAlertTimeRangeFromTimeRange(timeRange: TimeRange): RelativeTimeRange {
+  const durationInSeconds = Math.max(0, Math.round((timeRange.to.valueOf() - timeRange.from.valueOf()) / 1000));
+
+  return {
+    from: durationInSeconds,
+    to: 0,
+  };
+}
+
 /**
  * Folder that contains the dashboard, used to pre-fill the alert rule folder.
  */
@@ -824,7 +833,7 @@ export const panelToRuleFormValues = async (
   // Interpolate interval to replace dashboard variables
   const interpolatedInterval = panel.interval ? panel.replaceVariables(panel.interval, undefined) : undefined;
 
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
+  const relativeTimeRange = getAlertTimeRangeFromTimeRange(rangeUtil.convertRawToRange(dashboard.time));
   const queries = await dataQueriesToGrafanaQueries(
     targets,
     relativeTimeRange,
@@ -896,7 +905,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const grafanaQueries = await dataQueriesToGrafanaQueries(
     queries,
-    rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
+    getAlertTimeRangeFromTimeRange(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
     scopedVars,
     datasource,
     maxDataPoints,
