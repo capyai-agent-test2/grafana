@@ -43,6 +43,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerLabel: css({
       width: '120px',
       display: 'inline-block',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
     headerEmpty: css({
       label: 'headerEmpty',

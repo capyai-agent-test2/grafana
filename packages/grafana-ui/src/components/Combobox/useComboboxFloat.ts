@@ -34,7 +34,6 @@ const MESSAGE_ROW_PADDING = 32;
 export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number }>({
     width: 0,
     height: 0,
@@ -115,7 +114,7 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
     maxHeight: popoverMaxSize.height,
   };
 
-  return { inputRef, floatingRef, scrollRef, floatStyles };
+  return { inputRef, floatingRef, floatStyles };
 };
 
 // Creates a temporary div with a scrolling inner div to calculate the width of the scrollbar

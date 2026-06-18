@@ -13,6 +13,7 @@ import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
+import { estimateComboboxItemHeight, getAdjustedVirtualRowOffset, useComboboxVirtualMetrics } from './virtualization';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
 
@@ -20,7 +21,8 @@ interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
   highlightedIndex: number | null;
   selectedItems?: Array<ComboboxOption<T>>;
-  scrollRef: React.RefObject<HTMLDivElement | null>;
+  scrollElement: HTMLDivElement | null;
+  setScrollElement: (element: HTMLDivElement | null) => void;
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
   enableAllOption?: boolean;
   isMultiSelect?: boolean;
@@ -33,7 +35,8 @@ export const ComboboxList = <T extends string | number>({
   options,
   highlightedIndex,
   selectedItems = [],
-  scrollRef,
+  scrollElement,
+  setScrollElement,
   getItemProps,
   enableAllOption,
   isMultiSelect = false,
@@ -42,28 +45,30 @@ export const ComboboxList = <T extends string | number>({
   noOptionsMessage,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
+  const { physicalTotalSize, physicalToLogicalScale } = useComboboxVirtualMetrics(
+    options,
+    scrollElement,
+    MENU_OPTION_HEIGHT,
+    MENU_OPTION_HEIGHT_DESCRIPTION
+  );
 
   const estimateSize = useCallback(
     (index: number) => {
-      const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
-      const hasDescription = 'description' in options[index];
-      const hasGroup = 'group' in options[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
+      return (
+        estimateComboboxItemHeight(
+          options[index],
+          index > 0 ? options[index - 1] : undefined,
+          MENU_OPTION_HEIGHT,
+          MENU_OPTION_HEIGHT_DESCRIPTION
+        ) * physicalToLogicalScale
+      );
     },
-    [options]
+    [options, physicalToLogicalScale]
   );
 
   const rowVirtualizer = useVirtualizer({
     count: options.length,
-    getScrollElement: () => scrollRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize,
     getItemKey: (index: number) => options[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
@@ -77,8 +82,8 @@ export const ComboboxList = <T extends string | number>({
   const allItemsSelected = enableAllOption && options.length > 1 && selectedItems.length === options.length - 1;
 
   return (
-    <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
-      <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+    <ScrollContainer showScrollIndicators maxHeight="inherit" ref={setScrollElement} padding={0.5}>
+      <div style={{ height: physicalTotalSize }} className={styles.menuUlContainer}>
         {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
           const item = options[virtualRow.index];
           const startingNewGroup = isNewGroup(item, options[virtualRow.index - 1]);
@@ -102,8 +107,12 @@ export const ComboboxList = <T extends string | number>({
               key={item.value}
               className={styles.listItem}
               style={{
-                height: virtualRow.size,
-                transform: `translateY(${virtualRow.start}px)`,
+                height: virtualRow.size / physicalToLogicalScale,
+                transform: `translateY(${getAdjustedVirtualRowOffset(
+                  virtualRow.start,
+                  rowVirtualizer.scrollOffset,
+                  physicalToLogicalScale
+                )}px)`,
               }}
             >
               {/* Group header */}
