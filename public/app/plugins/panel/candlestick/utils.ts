@@ -8,6 +8,34 @@ const { alpha } = colorManipulator;
 
 export type FieldIndices = Record<string, number>;
 
+export function representativeDelta(dataX: ArrayLike<number>, dataY: ArrayLike<number | null | undefined>) {
+  let gaps: number[] = [];
+  let prevIdx: number | null = null;
+
+  for (let i = 0; i < dataX.length; i++) {
+    if (dataY[i] != null) {
+      if (prevIdx != null) {
+        let delta = dataX[i] - dataX[prevIdx];
+        if (Number.isFinite(delta) && delta > 0) {
+          gaps.push(delta);
+        }
+      }
+
+      prevIdx = i;
+    }
+  }
+
+  if (gaps.length === 0) {
+    return null;
+  }
+
+  let core = gaps.length >= 4 ? gaps.slice(1, -1) : gaps;
+  core.sort((a, b) => a - b);
+
+  let mid = Math.floor(core.length / 2);
+  return core.length % 2 !== 0 ? core[mid] : (core[mid - 1] + core[mid]) / 2;
+}
+
 interface RendererOpts {
   mode: VizDisplayMode;
   candleStyle: CandleStyle;
@@ -78,26 +106,18 @@ export function drawMarkers(opts: RendererOpts) {
 
     let colWidth = u.bbox.width;
 
-    if (dataX.length > 1) {
-      // prior index with non-undefined y data
-      let prevIdx = null;
+    let repDelta = representativeDelta(dataX, dataY);
+    if (repDelta != null) {
+      let anchorX = dataX[0];
 
-      // scan full dataset for smallest adjacent delta
-      // will not work properly for non-linear x scales, since does not do expensive valToPosX calcs till end
-      for (let i = 0, minDelta = Infinity; i < dataX.length; i++) {
-        if (dataY[i] !== undefined) {
-          if (prevIdx != null) {
-            let delta = Math.abs(dataX[i] - dataX[prevIdx]);
-
-            if (delta < minDelta) {
-              minDelta = delta;
-              colWidth = Math.abs(u.valToPos(dataX[i], 'x', true) - u.valToPos(dataX[prevIdx], 'x', true));
-            }
-          }
-
-          prevIdx = i;
+      for (let i = 0; i < dataX.length; i++) {
+        if (dataY[i] != null && Number.isFinite(dataX[i])) {
+          anchorX = dataX[i];
+          break;
         }
       }
+
+      colWidth = Math.abs(u.valToPos(anchorX + repDelta, 'x', true) - u.valToPos(anchorX, 'x', true));
     }
 
     let barWidth = Math.round(0.6 * colWidth);
