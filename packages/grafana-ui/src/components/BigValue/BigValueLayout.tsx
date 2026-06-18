@@ -204,6 +204,7 @@ export abstract class BigValueLayout {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${textMode === BigValueTextMode.None ? 2 : this.panelPadding}px`,
+      boxSizing: 'border-box',
       position: 'relative',
       display: 'flex',
     };
