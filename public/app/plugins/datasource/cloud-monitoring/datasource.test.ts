@@ -427,5 +427,39 @@ describe('Cloud Monitoring Datasource', () => {
         })
       );
     });
+
+    it('should forward the requested cross series reducer for grouped label queries', async () => {
+      replace = (target?: string) => target || '';
+      const mockInstanceSettings = createMockInstanceSetttings();
+      const ds = new Datasource(mockInstanceSettings);
+      ds.backendSrv = {
+        ...ds.backendSrv,
+        fetch: jest.fn().mockReturnValue(lastValueFrom(of({ results: [] }))),
+      };
+
+      await ds.getLabels('gce_instance', 'A', 'my-project', {
+        groupBys: ['metadata.system_labels.name'],
+        crossSeriesReducer: 'REDUCE_MEAN',
+      });
+
+      expect(ds.backendSrv.fetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            queries: expect.arrayContaining([
+              expect.objectContaining({
+                queryType: 'timeSeriesList',
+                timeSeriesList: {
+                  crossSeriesReducer: 'REDUCE_MEAN',
+                  filters: ['metric.type', '=', 'gce_instance'],
+                  groupBys: ['metadata.system_labels.name'],
+                  projectName: 'my-project',
+                  view: 'HEADERS',
+                },
+              }),
+            ]),
+          }),
+        })
+      );
+    });
   });
 });

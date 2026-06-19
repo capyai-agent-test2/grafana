@@ -107,8 +107,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             {
               projectName: this.templateSrv.replace(projectName),
               groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
-              // Use REDUCE_NONE to retrieve all available labels for the metric
-              crossSeriesReducer: 'REDUCE_NONE',
+              // Use the requested reducer when grouping by a label value query needs it,
+              // otherwise default to REDUCE_NONE to retrieve all available labels.
+              crossSeriesReducer: aggregation?.crossSeriesReducer || 'REDUCE_NONE',
               view: 'HEADERS',
             },
             this.templateSrv.replace(metricType)
