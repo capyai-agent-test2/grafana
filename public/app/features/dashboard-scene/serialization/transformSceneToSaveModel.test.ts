@@ -943,6 +943,23 @@ describe('transformSceneToSaveModel', () => {
         expect(result[1].title).toEqual('Panel $server');
       });
 
+      it('preserves horizontal repeat x offset in snapshot panels', async () => {
+        const { scene, repeater } = buildPanelRepeaterScene({
+          variableQueryTime: 0,
+          numberOfOptions: 2,
+          x: 6,
+          y: 3,
+        });
+
+        activateFullSceneTree(scene);
+
+        const result = panelRepeaterToPanels(repeater, true);
+
+        expect(result).toHaveLength(2);
+        expect(result[0].gridPos).toEqual({ x: 6, y: 3, w: 12, h: 10 });
+        expect(result[1].gridPos).toEqual({ x: 18, y: 3, w: 12, h: 10 });
+      });
+
       it('handles repeated library panels', () => {
         const { scene, repeater } = buildPanelRepeaterScene(
           { variableQueryTime: 0, numberOfOptions: 2 },
