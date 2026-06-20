@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
@@ -32,6 +32,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     AccordianLogs: css({
       label: 'AccordianLogs',
       position: 'relative',
+    }),
+    AccordianLogsPopover: css({
+      label: 'AccordianLogsPopover',
+      background: autoColor(theme, '#f0f0f0'),
     }),
     AccordianLogsHeader: css({
       label: 'AccordianLogsHeader',
@@ -95,7 +99,7 @@ export default function AccordianLogs({
 
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.AccordianLogs}>
+    <div className={cx(styles.AccordianLogs, !interactive && styles.AccordianLogsPopover)}>
       <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
         {arrow}{' '}
         <strong>
