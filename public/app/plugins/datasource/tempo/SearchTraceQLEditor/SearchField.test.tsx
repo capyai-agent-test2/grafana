@@ -321,6 +321,70 @@ describe('SearchField', () => {
       });
     }
   });
+
+  it('should treat custom value as string when there are no existing options', async () => {
+    const updateFilter = jest.fn((val) => val);
+    const filter: TraceqlFilter = {
+      id: 'test1',
+      tag: 'test-tag',
+      value: 'existing-value',
+    };
+    const lp = {
+      getOptionsV2: jest.fn().mockReturnValue([]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
+    } as unknown as TempoLanguageProvider;
+
+    const { container } = renderSearchField(updateFilter, filter, [], false, lp, false);
+
+    const select = container.querySelector(`input[aria-label="select test1 value"]`);
+    expect(select).not.toBeNull();
+    expect(select).toBeInTheDocument();
+
+    if (select) {
+      await user.type(select, 'custom-value');
+      await user.keyboard('{Enter}');
+
+      expect(updateFilter).toHaveBeenCalledWith({
+        ...filter,
+        value: 'custom-value',
+        valueType: 'string',
+        isCustomValue: true,
+      });
+    }
+  });
+
+  it('should infer numeric type for custom numeric values when there are no existing options', async () => {
+    const updateFilter = jest.fn((val) => val);
+    const filter: TraceqlFilter = {
+      id: 'test1',
+      tag: 'test-tag',
+      value: 'existing-value',
+    };
+    const lp = {
+      getOptionsV2: jest.fn().mockReturnValue([]),
+      getIntrinsics: jest.fn().mockReturnValue(['duration']),
+      getTags: jest.fn().mockReturnValue(['cluster']),
+    } as unknown as TempoLanguageProvider;
+
+    const { container } = renderSearchField(updateFilter, filter, [], false, lp, false);
+
+    const select = container.querySelector(`input[aria-label="select test1 value"]`);
+    expect(select).not.toBeNull();
+    expect(select).toBeInTheDocument();
+
+    if (select) {
+      await user.type(select, '200');
+      await user.keyboard('{Enter}');
+
+      expect(updateFilter).toHaveBeenCalledWith({
+        ...filter,
+        value: '200',
+        valueType: 'int',
+        isCustomValue: true,
+      });
+    }
+  });
 });
 
 const renderSearchField = (

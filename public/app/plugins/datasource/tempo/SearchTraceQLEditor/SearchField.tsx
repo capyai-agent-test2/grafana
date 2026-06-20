@@ -125,6 +125,22 @@ const SearchField = ({
     return (filterTag !== undefined ? uniq([filterTag, ...tags]) : tags).map((t) => ({ label: t, value: t }));
   };
 
+  const getCustomValueType = (value: string) => {
+    if (uniqueOptionType) {
+      return uniqueOptionType;
+    }
+
+    if (/^-?\d+$/.test(value)) {
+      return 'int';
+    }
+
+    if (/^-?(?:\d+\.\d*|\.\d+)$/.test(value)) {
+      return 'float';
+    }
+
+    return 'string';
+  };
+
   const tagOptions = useMemo(() => {
     if (tagQuery.length === 0) {
       return formatTagOptions(tags.slice(0, OPTIONS_LIMIT), filter.tag);
@@ -261,7 +277,7 @@ const SearchField = ({
               updateFilter({
                 ...filter,
                 value: Array.isArray(filter.value) ? filter.value?.concat(val) : val,
-                valueType: uniqueOptionType,
+                valueType: getCustomValueType(val),
                 isCustomValue: true,
               });
             }}
