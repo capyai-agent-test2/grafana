@@ -688,7 +688,7 @@ export function createTableFrameFromTraceQlQueryAsSpans(
         name: 'traceIdHidden',
         type: FieldType.string,
         config: {
-          custom: { hidden: true },
+          custom: { hideFrom: { viz: true } },
         },
       },
       {
@@ -838,7 +838,7 @@ const traceSubFrame = (
         name: 'traceIdHidden',
         type: FieldType.string,
         config: {
-          custom: { hidden: true },
+          custom: { hideFrom: { viz: true } },
         },
         values: [],
       },

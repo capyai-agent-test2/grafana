@@ -286,6 +286,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceIdHidden');
     expect(frame.fields[0].type).toBe('string');
+    expect(frame.fields[0].config.custom?.hideFrom?.viz).toBe(true);
     expect(frame.fields[0].values[0]).toBe('1');
     // Trace service field
     expect(frame.fields[1].name).toBe('traceService');
@@ -375,6 +376,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceIdHidden');
     expect(frame.fields[0].type).toBe('string');
+    expect(frame.fields[0].config.custom?.hideFrom?.viz).toBe(true);
     expect(frame.fields[0].values[0]).toBe('1');
     // Trace service field
     expect(frame.fields[1].name).toBe('traceService');
@@ -422,6 +424,7 @@ describe('createTableFrameFromTraceQlQueryAsSpans()', () => {
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceIdHidden');
     expect(frame.fields[0].type).toBe('string');
+    expect(frame.fields[0].config.custom?.hideFrom?.viz).toBe(true);
     expect(frame.fields[0].values).toMatchObject([]);
     // Trace service field
     expect(frame.fields[1].name).toBe('traceService');
