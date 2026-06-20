@@ -8285,6 +8285,8 @@
     },
     "accordian-references": {
       "references": "References",
+      "span-id-label": "SpanID:",
+      "trace-id-label": "TraceID:",
       "view-linked-span": "View Linked Span"
     },
     "add-to-dashboard": "Add to dashboard",
@@ -8723,7 +8725,8 @@
           "start-time": "Start Time:"
         }
       },
-      "share-span": "Share"
+      "share-span": "Share",
+      "span-id-label": "SpanID:"
     },
     "span-flame-graph": {
       "flame-graph": "Flame graph"
@@ -8800,6 +8803,9 @@
     },
     "trace-view": {
       "aria-label-copy": "Copy to clipboard",
+      "key-values-table": {
+        "copy-tooltip": "Copy"
+      },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },

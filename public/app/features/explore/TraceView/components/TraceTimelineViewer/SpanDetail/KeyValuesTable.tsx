@@ -18,6 +18,7 @@ import DOMPurify from 'dompurify';
 import { type PropsWithChildren } from 'react';
 
 import { type GrafanaTheme2, type PluginExtensionLink, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -122,6 +123,7 @@ export type KeyValuesTableProps = {
 export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter, onlyValues } = props;
   const styles = useStyles2(getStyles);
+  const copyTooltip = t('explore.trace-view.key-values-table.copy-tooltip', 'Copy');
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
       <table className={styles.table}>
@@ -164,7 +166,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                   <CopyIcon
                     className={copyIconClassName}
                     copyText={row.type === 'code' || row.type === 'text' ? row.value : JSON.stringify(row, null, 2)}
-                    tooltipTitle="Copy"
+                    tooltipTitle={copyTooltip}
                   />
                 </td>
               </tr>
