@@ -366,10 +366,8 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 	for rows.Next() {
 		t := UserTeam{}
 
-		// regression: team_member.permission and team_member.external have been nulled in some instances
-		// Team memberships created before the permission/external columns were added will have NULL values
 		var nullablePermission *int64
-		var nullableExternal stdsql.NullBool
+		var nullableExternal nullableBool
 		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission, &nullableExternal)
 		if err != nil {
 			return nil, err
