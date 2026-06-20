@@ -4,7 +4,7 @@
 
 import { of } from 'rxjs';
 
-import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import { dateMath, dateTime, type DateTime, type TimeRange } from '@grafana/data';
 import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
 import type { PanelTimeRangeState } from './PanelTimeRange';
@@ -59,16 +59,34 @@ export function getCompareTimeRange(timeRange: TimeRange, compareWith: string | 
       compareFrom = dateTime(timeRange.from!).subtract(diffMs);
       compareTo = dateTime(timeRange.to!).subtract(diffMs);
     } else {
-      compareFrom = dateTime(timeRange.from!).subtract(rangeUtil.intervalToMs(compareWith));
-      compareTo = dateTime(timeRange.to!).subtract(rangeUtil.intervalToMs(compareWith));
+      const shift = `-${compareWith}`;
+      const shiftedFrom = dateMath.parseDateMath(shift, timeRange.from, false);
+      const shiftedTo = dateMath.parseDateMath(shift, timeRange.to, true);
+
+      if (!shiftedFrom || !shiftedTo) {
+        return undefined;
+      }
+
+      compareFrom = shiftedFrom;
+      compareTo = shiftedTo;
     }
 
     return {
       from: compareFrom,
       to: compareTo,
       raw: {
-        from: compareFrom,
-        to: compareTo,
+        from:
+          compareWith !== PREVIOUS_PERIOD_VALUE &&
+          typeof timeRange.raw.from === 'string' &&
+          dateMath.isMathString(timeRange.raw.from)
+            ? `${timeRange.raw.from}-${compareWith}`
+            : compareFrom,
+        to:
+          compareWith !== PREVIOUS_PERIOD_VALUE &&
+          typeof timeRange.raw.to === 'string' &&
+          dateMath.isMathString(timeRange.raw.to)
+            ? `${timeRange.raw.to}-${compareWith}`
+            : compareTo,
       },
     };
   }
