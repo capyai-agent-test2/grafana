@@ -251,7 +251,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		response := `{ invalid }`
 
 		tsdbVersion := float32(4)
-		result, err := ParseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &http.Response{Body: io.NopCloser(strings.NewReader(response))}, "A", tsdbVersion, 1)
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
@@ -288,7 +288,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion, 1)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -330,7 +330,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion, 1)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -403,7 +403,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion, 1)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -448,7 +448,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := ParseResponse(logger, &resp, myRefid, tsdbVersion)
+		result, err := ParseResponse(logger, &resp, myRefid, tsdbVersion, 1)
 		require.NoError(t, err)
 
 		if diff := cmp.Diff(testFrame, result.Responses[myRefid].Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -477,7 +477,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := ParseResponse(logger, &resp, "A", tsdbVersion)
+		result, err := ParseResponse(logger, &resp, "A", tsdbVersion, 1)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"].Frames[0]
@@ -723,5 +723,84 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Contains(t, bodies[0], `"end":2000`)
 		require.Contains(t, bodies[1], `"start":3000`)
 		require.Contains(t, bodies[1], `"end":4000`)
+	})
+
+	t.Run("createRequest includes millisecond resolution when configured", func(t *testing.T) {
+		query := backend.DataQuery{
+			RefID:     "A",
+			JSON:      []byte(`{"metric":"mA","aggregator":"avg"}`),
+			TimeRange: backend.TimeRange{From: time.Unix(1000, 0), To: time.Unix(2000, 0)},
+		}
+
+		var body string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			b, _ := io.ReadAll(r.Body)
+			_ = r.Body.Close()
+			body = string(b)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[]`))
+		}))
+		t.Cleanup(srv.Close)
+
+		service := &Service{
+			im: datasource.NewInstanceManager(newInstanceSettings(httpclient.NewProvider())),
+		}
+
+		settings := &backend.DataSourceInstanceSettings{
+			UID:      "opentsdb-test",
+			URL:      srv.URL,
+			JSONData: []byte(`{"tsdbVersion":4,"tsdbResolution":2,"httpMethod":"post"}`),
+		}
+
+		req := backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: settings,
+			},
+			Queries: []backend.DataQuery{query},
+		}
+		_, err := service.QueryData(context.Background(), &req)
+		require.NoError(t, err)
+
+		require.Contains(t, body, `"msResolution":true`)
+	})
+}
+
+func TestParseResponseRespectsResolution(t *testing.T) {
+	t.Run("ParseResponse24 keeps millisecond timestamps", func(t *testing.T) {
+		res := &http.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Body: io.NopCloser(strings.NewReader(`[
+				{"metric":"m","tags":{},"aggregateTags":[],"dps":[[1775636790123,2.43],[1775636820456,2.5]]}
+			]`)),
+		}
+
+		parsed, err := ParseResponse(logger, res, "A", 4, 2)
+		require.NoError(t, err)
+
+		frames := parsed.Responses["A"].Frames
+		require.Len(t, frames, 1)
+		require.Equal(t, time.UnixMilli(1775636790123).UTC(), frames[0].Fields[0].At(0))
+		require.Equal(t, time.UnixMilli(1775636820456).UTC(), frames[0].Fields[0].At(1))
+	})
+
+	t.Run("ParseResponseLT24 keeps millisecond timestamps", func(t *testing.T) {
+		res := &http.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Body: io.NopCloser(strings.NewReader(`[
+				{"metric":"m","tags":{},"aggregateTags":[],"dps":{"1775636820456":2.5,"1775636790123":2.43}}
+			]`)),
+		}
+
+		parsed, err := ParseResponse(logger, res, "A", 1, 2)
+		require.NoError(t, err)
+
+		frames := parsed.Responses["A"].Frames
+		require.Len(t, frames, 1)
+		require.Equal(t, time.UnixMilli(1775636790123).UTC(), frames[0].Fields[0].At(0))
+		require.Equal(t, time.UnixMilli(1775636820456).UTC(), frames[0].Fields[0].At(1))
 	})
 }

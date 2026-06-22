@@ -1,9 +1,10 @@
 package opentsdb
 
 type OpenTsdbQuery struct {
-	Start   int64            `json:"start"`
-	End     int64            `json:"end"`
-	Queries []map[string]any `json:"queries"`
+	Start        int64            `json:"start"`
+	End          int64            `json:"end"`
+	Queries      []map[string]any `json:"queries"`
+	MSResolution bool             `json:"msResolution,omitempty"`
 }
 
 type OpenTsdbCommon struct {
