@@ -74,7 +74,7 @@ export const defaultOptions: Partial<Options> = {
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,
   xTickLabelRotation: 0,
-  xTickLabelSpacing: 0,
+  xTickLabelSpacing: 100,
 };
 
 export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {

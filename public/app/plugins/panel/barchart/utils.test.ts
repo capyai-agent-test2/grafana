@@ -37,6 +37,21 @@ jest.mock('@grafana/data', () => ({
 
 describe('BarChart utils', () => {
   describe('preparePlotConfigBuilder', () => {
+    it('uses filtered x-axis spacing by default', () => {
+      const captured: { xSpacing?: BarsOptions['xSpacing'] } = {};
+
+      withGetConfigSpy(
+        (opts) => {
+          captured.xSpacing = opts.xSpacing;
+        },
+        () => {
+          prepConfig(createPrepConfigOpts()).builder.getConfig();
+        }
+      );
+
+      expect(captured.xSpacing).toBe(100);
+    });
+
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
       const result = prepConfig(
         createPrepConfigOpts({
@@ -893,6 +908,7 @@ function createPrepConfigOpts(overrides?: CreatePrepConfigOptsOverrides): PrepCo
       calcs: [],
     },
     xTickLabelRotation: 0,
+    xTickLabelSpacing: 100,
     xTickLabelMaxLength: 20,
     stacking: StackingMode.None,
     tooltip: {
