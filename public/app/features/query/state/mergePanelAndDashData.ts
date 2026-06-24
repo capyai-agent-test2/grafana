@@ -14,6 +14,18 @@ function addAnnoDataTopic(annotations: DataFrame[] = []) {
   });
 }
 
+function getAnnotationFieldNames(annotations: DashboardQueryRunnerResult['annotations']) {
+  const names = new Set<string>();
+
+  for (const annotation of annotations ?? []) {
+    for (const name of Object.keys(annotation)) {
+      names.add(name);
+    }
+  }
+
+  return names.size ? Array.from(names) : undefined;
+}
+
 export function mergePanelAndDashData(
   panelObservable: Observable<PanelData>,
   dashObservable: Observable<DashboardQueryRunnerResult>
@@ -27,7 +39,9 @@ export function mergePanelAndDashData(
           panelData.annotations = [];
         }
 
-        const annotations = panelData.annotations.concat(arrayToDataFrame(dashData.annotations));
+        const annotations = panelData.annotations.concat(
+          arrayToDataFrame(dashData.annotations, getAnnotationFieldNames(dashData.annotations))
+        );
 
         addAnnoDataTopic(annotations);
 
