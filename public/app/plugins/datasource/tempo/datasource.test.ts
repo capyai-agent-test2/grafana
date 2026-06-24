@@ -21,6 +21,7 @@ import {
 import {
   type BackendDataSourceResponse,
   config,
+  DataSourceWithBackend,
   type FetchResponse,
   setBackendSrv,
   setDataSourceSrv,
@@ -130,6 +131,35 @@ describe('Tempo data source', () => {
       { defaultValue: 'empty' }
     );
     expect(response).toBe('empty');
+  });
+
+  it('maps raw HTML trace ID errors to a user-friendly message', async () => {
+    const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(
+      of({
+        error: {
+          message: '<!doctype html><html><body>502 Bad Gateway</body></html>',
+        },
+        data: [],
+      })
+    );
+
+    const ds = createTempoDatasource();
+    const response = await lastValueFrom(
+      ds.handleTraceIdQuery(
+        {
+          targets: [{ refId: 'A', queryType: 'traceId', query: 'abc123' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest<TempoQuery>,
+        [{ refId: 'A', queryType: 'traceId', query: 'abc123', filters: [] }],
+        'abc123'
+      )
+    );
+
+    expect(response.error?.message).toBe(
+      'Tempo returned an HTML error page instead of an API response. Check that the Tempo URL is correct and the service is reachable.'
+    );
+
+    querySpy.mockRestore();
   });
 
   describe('Variables should be interpolated correctly', () => {

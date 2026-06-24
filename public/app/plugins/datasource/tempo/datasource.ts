@@ -585,6 +585,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return super.query(request).pipe(
       map((response) => {
         if (response.error) {
+          response.error.message = mapErrorMessage(response.error.message);
           reportTempoQueryMetrics('grafana_traces_traceID_response', options, {
             success: false,
             streaming: false,
@@ -637,6 +638,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     return super.query({ ...options, targets: queries }).pipe(
       map((response: DataQueryResponse) => {
+        if (response.error) {
+          response.error.message = mapErrorMessage(response.error.message);
+        }
         if (queries[0].tableType === SearchTableType.Traces && response.data && response.data.length > 0) {
           response.data.forEach((frame) => {
             reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
@@ -717,6 +721,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const request = { ...options, targets: validTargets };
     return super.query(request).pipe(
       map((response) => {
+        if (response.error) {
+          response.error.message = mapErrorMessage(response.error.message);
+        }
         reportTempoQueryMetrics('grafana_traces_traceql_metrics_response', options, {
           success: true,
           streaming: false,
