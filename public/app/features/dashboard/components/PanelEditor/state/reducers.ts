@@ -83,6 +83,11 @@ const pluginsSlice = createSlice({
       state.initDone = true;
       state.isOpen = true;
       state.shouldDiscardChanges = false;
+      state.isVizPickerOpen = Boolean(action.payload.sourcePanel.isNew);
+
+      if (state.isVizPickerOpen) {
+        state.ui.isPanelOptionsVisible = true;
+      }
     },
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
