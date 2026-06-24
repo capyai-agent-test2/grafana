@@ -85,6 +85,7 @@ interface FieldToConfigContext {
   mappingValues?: any[];
   mappingColors?: string[];
   mappingTexts?: string[];
+  thresholdColors?: string[];
 }
 
 type FieldToConfigMapHandlerProcessor = (
@@ -153,19 +154,27 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'color',
-    processor: (value) => ({ fixedColor: value, mode: FieldColorModeId.Fixed }),
+    processor: (value, config, context) => {
+      if (isArray(value)) {
+        context.thresholdColors = value.map((color) => color?.toString());
+
+        if (config.thresholds) {
+          for (let i = 0; i < config.thresholds.steps.length; i++) {
+            config.thresholds.steps[i].color = context.thresholdColors[i] ?? config.thresholds.steps[i].color;
+          }
+        }
+
+        return;
+      }
+
+      return { fixedColor: value, mode: FieldColorModeId.Fixed };
+    },
   },
   {
     key: 'threshold1',
     name: 'Threshold',
     targetProperty: 'thresholds',
-    processor: (value, config, _, handlerArguments) => {
-      const numeric = anyToNumber(value);
-
-      if (isNaN(numeric)) {
-        return;
-      }
-
+    processor: (value, config, context, handlerArguments) => {
       if (!config.thresholds) {
         config.thresholds = {
           mode: ThresholdsMode.Absolute,
@@ -173,10 +182,24 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
         };
       }
 
-      config.thresholds.steps.push({
-        value: numeric,
-        color: handlerArguments.threshold?.color ?? 'red',
-      });
+      const values = isArray(value) ? value : [value];
+
+      for (let i = 0; i < values.length; i++) {
+        const numeric = anyToNumber(values[i]);
+
+        if (isNaN(numeric)) {
+          continue;
+        }
+
+        config.thresholds.steps.push({
+          value: numeric,
+          color: context.thresholdColors?.[i] ?? handlerArguments.threshold?.color ?? 'red',
+        });
+      }
+
+      if (!config.thresholds.steps.length) {
+        return;
+      }
 
       return config.thresholds;
     },
