@@ -59,6 +59,28 @@ describe('SelectBase', () => {
     expect(screen.getByLabelText('My select')).toBeInTheDocument();
   });
 
+  it('merges react-select and consumer aria-describedby values on the input', () => {
+    render(
+      <>
+        <div id="react-select-description">React Select description</div>
+        <div id="consumer-description">Consumer description</div>
+        <SelectBase
+          onChange={onChangeHandler}
+          options={options}
+          aria-label="My select"
+          aria-describedby="consumer-description"
+          inputId="my-select"
+        />
+      </>
+    );
+
+    const selectEl = screen.getByLabelText('My select');
+    const describedBy = selectEl.getAttribute('aria-describedby');
+
+    expect(describedBy).toContain('consumer-description');
+    expect(describedBy).toContain('react-select');
+  });
+
   it('allows the value to be unset', async () => {
     const Test = () => {
       const option = { value: 'test-value', label: 'Test label' };
