@@ -53,6 +53,14 @@ export { TimePickerTooltip } from './components/DateTimePickers/TimeRangePicker'
 export { TimeRangeLabel } from './components/DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './components/DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './components/DateTimePickers/TimeZonePicker';
+export { quickOptions, getQuickOptions } from './components/DateTimePickers/options';
+export {
+  mapOptionToRelativeTimeRange,
+  mapRelativeTimeRangeToOption,
+  isRangeValid,
+  isRelativeFormat,
+  type RangeValidation,
+} from './components/DateTimePickers/RelativeTimeRangePicker/utils';
 export {
   WeekStartPicker,
   getWeekStart,
