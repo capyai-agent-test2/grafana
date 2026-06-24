@@ -249,51 +249,6 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 7,
-        "x": 17,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "counters": {
-          "dataChanged": true,
-          "render": true,
-          "schemaChanged": true
-        },
-        "mode": "cursor"
-      },
-      "pluginVersion": "7.5.0-pre",
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Cursor info",
-      "type": "debug"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -759,7 +714,11 @@
   ],
   "refresh": false,
   "schemaVersion": 28,
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },

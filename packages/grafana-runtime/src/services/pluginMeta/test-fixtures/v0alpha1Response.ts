@@ -1172,57 +1172,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'debug',
-        namespace: 'default',
-      },
-      spec: {
-        aliasIds: ['debugX'],
-        pluginJson: {
-          id: 'debug',
-          type: 'panel',
-          name: 'Debug',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/panel/debug/img/icn-debug.svg',
-              large: 'app/plugins/panel/debug/img/icn-debug.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Debug Panel for Grafana',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          state: 'alpha',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/debug',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/panel/debug',
-        signature: {
-          status: 'internal',
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'elasticsearch',
         namespace: 'default',
       },

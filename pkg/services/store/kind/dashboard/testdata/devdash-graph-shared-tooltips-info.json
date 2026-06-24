@@ -41,18 +41,6 @@
       ]
     },
     {
-      "id": 2,
-      "title": "Cursor info",
-      "type": "debug",
-      "pluginVersion": "7.5.0-pre",
-      "datasource": [
-        {
-          "uid": "default.uid",
-          "type": "default.type"
-        }
-      ]
-    },
-    {
       "id": 5,
       "title": "Only temperature",
       "type": "timeseries",

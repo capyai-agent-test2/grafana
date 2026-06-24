@@ -479,7 +479,6 @@ describe('useListedPanelPluginIds', () => {
       'candlestick',
       'canvas',
       'dashlist',
-      'debug',
       'flamegraph',
       'gauge',
       'geomap',
