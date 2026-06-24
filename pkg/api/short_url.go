@@ -45,6 +45,8 @@ func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, hs.getShortURL)
 		apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 	}
+
+	apiRoute.Get("/goto/*", reqSignedIn, hs.redirectMalformedShortURLPath)
 }
 
 // createShortURL handles requests to create short URLs.
@@ -101,6 +103,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
 	c.Redirect(setting.ToAbsUrl(shortURL.Path), http.StatusFound)
+}
+
+func (hs *HTTPServer) redirectMalformedShortURLPath(c *contextmodel.ReqContext) {
+	c.Logger.Warn("Malformed short URL path", "path", c.Req.URL.Path)
+	c.Redirect(hs.Cfg.AppURL, http.StatusPermanentRedirect)
 }
 
 // getShortURL handles requests to get short URLs.

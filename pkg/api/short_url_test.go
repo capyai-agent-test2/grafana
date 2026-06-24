@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -93,6 +94,31 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 				require.Equal(t, 400, sc.resp.Code)
 			})
 	})
+}
+
+func TestMalformedShortURLPathRedirect(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AppURL = "http://localhost:3000/"
+
+	hs := HTTPServer{
+		Cfg: cfg,
+		log: log.New("test"),
+	}
+
+	sc := setupScenarioContext(t, "/goto//abc")
+	sc.defaultHandler = func(c *contextmodel.ReqContext) {
+		hs.redirectMalformedShortURLPath(c)
+	}
+
+	sc.m.Get("/goto/:uid", func(c *contextmodel.ReqContext) {
+		t.Fatalf("expected malformed path to bypass the :uid route")
+	})
+	sc.m.Get("/goto/*", sc.defaultHandler)
+
+	sc.fakeReq("GET", sc.url).exec()
+
+	require.Equal(t, http.StatusPermanentRedirect, sc.resp.Code)
+	require.Equal(t, hs.Cfg.AppURL, sc.resp.Header().Get("Location"))
 }
 
 func callCreateShortURL(sc *scenarioContext) {
