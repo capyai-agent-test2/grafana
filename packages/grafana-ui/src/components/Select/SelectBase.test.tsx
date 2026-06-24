@@ -236,6 +236,38 @@ describe('SelectBase', () => {
       const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
+
+    it('passes the wrapped react-select option shape to filterOption', async () => {
+      const filterOption = jest.fn().mockReturnValue(true);
+      const optionsWithDescription: Array<SelectableValue<number>> = [
+        { label: 'Option 1', value: 1, description: 'First option' },
+        { label: 'Option 2', value: 2, description: 'Second option' },
+      ];
+
+      render(
+        <SelectBase
+          onChange={jest.fn()}
+          options={optionsWithDescription}
+          aria-label="My select"
+          filterOption={filterOption}
+        />
+      );
+
+      await userEvent.type(screen.getByLabelText('My select'), 'Option');
+
+      expect(filterOption).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'Option 1',
+          data: expect.objectContaining({
+            label: 'Option 1',
+            value: 1,
+            description: 'First option',
+          }),
+        }),
+        'Option'
+      );
+      expect(filterOption.mock.calls[0][0].description).toBeUndefined();
+    });
   });
 
   describe('Multi select', () => {
