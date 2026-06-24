@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -159,7 +161,7 @@ func TestAlertRuleExportFromAlertRule(t *testing.T) {
 		PanelID:                     alertingRule.PanelID,
 		NoDataState:                 &noDataState,
 		ExecErrState:                &execErrState,
-		For:                         prommodel.Duration(alertingRule.For),
+		For:                         ptr(prommodel.Duration(alertingRule.For)),
 		KeepFiringFor:               prommodel.Duration(alertingRule.KeepFiringFor),
 		ForString:                   new(prommodel.Duration(alertingRule.For).String()),
 		KeepFiringForString:         new(prommodel.Duration(alertingRule.KeepFiringFor).String()),
@@ -193,6 +195,28 @@ func TestAlertRuleExportFromAlertRule(t *testing.T) {
 			require.Equal(t, tc.expected, exported)
 		})
 	}
+
+	t.Run("includes zero pending period in exported config", func(t *testing.T) {
+		rule := models.RuleGen.Generate()
+		rule.For = 0
+
+		exported, err := AlertRuleExportFromAlertRule(rule)
+		require.NoError(t, err)
+		require.Equal(t, ptr(prommodel.Duration(0)), exported.For)
+		require.Equal(t, new(prommodel.Duration(0).String()), exported.ForString)
+
+		jsonBody, err := json.Marshal(exported)
+		require.NoError(t, err)
+		require.Contains(t, string(jsonBody), `"for":"0s"`)
+
+		yamlBody, err := yaml.Marshal(exported)
+		require.NoError(t, err)
+		require.Contains(t, string(yamlBody), "for: 0s\n")
+	})
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
 
 func TestAlertQueryExportFromAlertQuery(t *testing.T) {
