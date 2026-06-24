@@ -50,6 +50,7 @@ import {
   getRowHeight,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
+  isSafari26,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
@@ -101,6 +102,18 @@ describe('TableNG utils', () => {
       ] as const)(`should map align "$align" to justifyContent "$expected"`, ({ align, expected }) => {
         expect(getJustifyContent(align)).toBe(expected);
       });
+    });
+  });
+
+  describe('isSafari26', () => {
+    it.each([
+      ['Mozilla/5.0 Version/26.0 Safari/605.1.15', true],
+      ['Mozilla/5.0 Version/26.1 Safari/605.1.15', true],
+      ['Mozilla/5.0 Version/26.2 Safari/605.1.15', true],
+      ['Mozilla/5.0 Version/27.0 Safari/605.1.15', false],
+      ['Mozilla/5.0 Chrome/136.0.0.0 Safari/537.36', false],
+    ])('returns %s => %s', (userAgent, expected) => {
+      expect(isSafari26(userAgent)).toBe(expected);
     });
   });
 
