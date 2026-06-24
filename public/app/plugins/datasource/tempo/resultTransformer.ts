@@ -29,6 +29,21 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { SearchTableType } from './dataquery.gen';
 import { type Span, type SpanAttributes, type Spanset, type TempoJsonData, type TraceSearchMetadata } from './types';
 
+function parseIntegerAttributeValue(value: string | number): number | string {
+  const stringValue = String(value);
+
+  try {
+    const bigintValue = BigInt(stringValue);
+    if (bigintValue > BigInt(Number.MAX_SAFE_INTEGER) || bigintValue < BigInt(Number.MIN_SAFE_INTEGER)) {
+      return stringValue;
+    }
+  } catch {
+    return stringValue;
+  }
+
+  return Number.parseInt(stringValue, 10);
+}
+
 function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.AnyValue): any {
   if (value.stringValue) {
     return value.stringValue;
@@ -39,7 +54,7 @@ function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.An
   }
 
   if (value.intValue !== undefined) {
-    return Number.parseInt(String(value.intValue), 10);
+    return parseIntegerAttributeValue(value.intValue);
   }
 
   if (value.doubleValue) {

@@ -134,6 +134,30 @@ describe('transformFromOTLP()', () => {
     expect(serviceNameField!.values[0]).toBe('cart-service');
   });
 
+  test('keeps large integer attributes as strings to preserve precision', () => {
+    const batchesWithLargeInteger = [
+      {
+        ...otlpResponse.batches[0],
+        resource: {
+          attributes: [
+            { key: 'service.name', value: { stringValue: 'cart-service' } },
+            { key: 'large.int', value: { intValue: '9223372036854775807' } },
+          ],
+        },
+      },
+    ];
+
+    const res = transformFromOTLP(
+      batchesWithLargeInteger as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
+      false
+    );
+
+    expect(res.data).toHaveLength(1);
+    const serviceTagsField = res.data[0].fields.find((f: Field) => f.name === 'serviceTags');
+    expect(serviceTagsField).toBeDefined();
+    expect(serviceTagsField!.values[0]).toContainEqual({ key: 'large.int', value: '9223372036854775807' });
+  });
+
   test('coalesces service.namespace.name when service.namespace is not present', () => {
     const batchesWithAltNamespace = [
       {
