@@ -237,12 +237,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     rowError: css({
       label: 'rowError',
 
-      [`&:hover .${nameWrapperClassName}`]: {
+      [`& .${nameWrapperClassName}, &:hover .${nameWrapperClassName}`]: {
         background: theme.colors.error.borderTransparent,
       },
 
       [`& .${nameWrapperClassName} > *`]: {
         background: theme.colors.error.transparent,
+      },
+
+      [`& .${viewClassName}, &:hover .${viewClassName}`]: {
+        background: theme.colors.error.transparent,
+        outline: `1px solid ${theme.colors.error.borderTransparent}`,
       },
     }),
 
@@ -300,10 +305,24 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     errorIcon: css({
       label: 'errorIcon',
       borderRadius: theme.shape.radius.md,
-      color: autoColor(theme, '#fff'),
+      color: theme.colors.error.contrastText,
       fontSize: '0.6em',
       marginRight: '0.25rem',
       padding: '1px',
+    }),
+    errorBadge: css({
+      label: 'errorBadge',
+      alignItems: 'center',
+      backgroundColor: theme.colors.error.main,
+      borderRadius: theme.shape.radius.md,
+      color: theme.colors.error.contrastText,
+      display: 'inline-flex',
+      fontSize: '0.75em',
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: 1,
+      marginRight: '0.375rem',
+      padding: '0.25rem 0.375rem',
+      textTransform: 'uppercase',
     }),
     adaptiveTracesRestoredIconWrap: css({
       label: 'adaptiveTracesRestoredIconWrap',
@@ -519,15 +538,16 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
             tabIndex={0}
           >
             {showErrorIcon && (
-              <Icon
-                name={'exclamation-circle'}
-                style={{
-                  backgroundColor: span.errorIconColor
-                    ? autoColor(theme, span.errorIconColor)
-                    : autoColor(theme, '#db2828'),
-                }}
-                className={styles.errorIcon}
-              />
+              <>
+                <Icon
+                  name={'exclamation-circle'}
+                  style={{
+                    backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : theme.colors.error.main,
+                  }}
+                  className={styles.errorIcon}
+                />
+                <span className={styles.errorBadge}>{t('explore.span-bar-row.error-badge', 'Error')}</span>
+              </>
             )}
             {showServiceName && (
               <span
