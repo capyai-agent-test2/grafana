@@ -141,13 +141,26 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
         },
   });
 
+  // assumes BucketMax is [1]
+  let countField = frame.fields[2];
+  let dispY = countField.display;
+  const countCustomConfig: FieldConfig = { ...defaultFieldConfig, ...countField.config.custom };
+  const yScaleDistribution = countCustomConfig.scaleDistribution;
+
   builder.addScale({
     scaleKey: 'y', // counts
     isTime: false,
-    distribution: ScaleDistribution.Linear,
+    distribution: yScaleDistribution?.type,
+    log: yScaleDistribution?.log,
+    linearThreshold: yScaleDistribution?.linearThreshold,
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
-    softMin: 0,
+    min: countField.config.min,
+    max: countField.config.max,
+    softMin: yScaleDistribution?.type === ScaleDistribution.Log ? undefined : countCustomConfig.axisSoftMin ?? 0,
+    softMax: countCustomConfig.axisSoftMax,
+    centeredZero: countCustomConfig.axisCenteredZero,
+    decimals: countField.config.decimals,
   });
 
   const fmt = frame.fields[0].display!;
@@ -185,10 +198,6 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     //gap: 15,
     theme,
   });
-
-  // assumes BucketMax is [1]
-  let countField = frame.fields[2];
-  let dispY = countField.display;
 
   builder.addAxis({
     scaleKey: 'y',
