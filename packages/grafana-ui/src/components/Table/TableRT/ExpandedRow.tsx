@@ -17,9 +17,10 @@ export interface Props {
   rowIndex: number;
   width: number;
   cellHeight: TableCellHeight;
+  columnCount: number;
 }
 
-export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight }: Props) {
+export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight, columnCount }: Props) {
   const frames: DataFrame[][] = nestedData.values;
   const subTables: React.ReactNode[] = [];
   const theme = useTheme2();
@@ -55,7 +56,11 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
     );
   });
 
-  return <div className={styles.subTables}>{subTables}</div>;
+  return (
+    <div className={styles.subTables} role="cell" aria-colspan={columnCount}>
+      {subTables}
+    </div>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
