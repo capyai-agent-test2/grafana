@@ -26,6 +26,8 @@ interface Props {
 const ITEM_HEIGHT = 32;
 const MIN_HEIGHT = ITEM_HEIGHT * 4.5; // split an item in the middle to imply there are more items to scroll
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const comparableValue = (value: string): string | number | Date | boolean => {
   value = value.trim().replace(/\\/g, '');
 
@@ -52,7 +54,10 @@ const comparableValue = (value: string): string | number | Date | boolean => {
 };
 
 export const FilterList = ({ options, values, caseSensitive, onChange, searchFilter, operator }: Props) => {
-  const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
+  const regex = useMemo(
+    () => new RegExp(escapeRegExp(searchFilter), caseSensitive ? undefined : 'i'),
+    [searchFilter, caseSensitive]
+  );
   const items = useMemo(
     () =>
       options.filter((option) => {
