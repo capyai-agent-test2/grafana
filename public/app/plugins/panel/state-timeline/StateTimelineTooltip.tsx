@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 
-import { FieldType, type TimeRange, usePluginContext } from '@grafana/data';
+import { FieldType, formattedValueToString, type TimeRange, usePluginContext } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 import {
@@ -46,6 +46,35 @@ export const StateTimelineTooltip = ({
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
   const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+
+  if (mode === TooltipDisplayMode.Single && seriesIdx != null && dataIdx != null) {
+    for (let i = 0; i < series.fields.length; i++) {
+      const field = series.fields[i];
+
+      if (
+        i === seriesIdx ||
+        field === xField ||
+        field.type === FieldType.time ||
+        field.config.custom?.hideFrom?.tooltip ||
+        !field.config.custom?.hideFrom?.viz
+      ) {
+        continue;
+      }
+
+      const value = field.values[dataIdx];
+
+      if (value == null && field.config.noValue == null) {
+        continue;
+      }
+
+      contentItems.push({
+        label: field.state?.displayName ?? field.name,
+        value: formattedValueToString(field.display!(value)),
+        isHiddenFromViz: true,
+      });
+    }
+  }
+
   let endTime = null;
 
   // append duration in single mode

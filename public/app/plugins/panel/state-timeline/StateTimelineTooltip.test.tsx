@@ -23,6 +23,21 @@ describe('StateTimelineTooltip', () => {
   };
   const series = createDataFrame({ fields: [timeField, valueField] });
 
+  const metadataField: Field = {
+    name: 'Comment',
+    type: FieldType.string,
+    values: ['starting', 'resolved by restart', 'investigating'],
+    display: (v) => ({ text: String(v), numeric: NaN }),
+    config: {
+      custom: {
+        hideFrom: {
+          viz: true,
+          tooltip: false,
+        },
+      },
+    },
+  };
+
   describe('Duration display', () => {
     it('should include the duration in single mode when withDuration is true', () => {
       render(
@@ -103,6 +118,60 @@ describe('StateTimelineTooltip', () => {
       expect(screen.queryByText('60000')).toBeInTheDocument();
       expect(screen.queryByText('State')).not.toBeInTheDocument();
       expect(screen.queryByText('Duration')).not.toBeInTheDocument();
+    });
+
+    it('includes fields hidden from visualization in single mode tooltips', () => {
+      render(
+        <StateTimelineTooltip
+          series={createDataFrame({ fields: [timeField, valueField, metadataField] })}
+          seriesIdx={1}
+          dataIdxs={[null, 1, null]}
+          mode={TooltipDisplayMode.Single}
+          timeRange={timeRange}
+          withDuration={false}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      expect(screen.queryByText('State')).toBeInTheDocument();
+      expect(screen.queryByText('100')).toBeInTheDocument();
+      expect(screen.queryByText('Comment')).toBeInTheDocument();
+      expect(screen.queryByText('resolved by restart')).toBeInTheDocument();
+    });
+
+    it('does not include fields hidden from tooltips', () => {
+      render(
+        <StateTimelineTooltip
+          series={createDataFrame({
+            fields: [
+              timeField,
+              valueField,
+              {
+                ...metadataField,
+                config: {
+                  custom: {
+                    hideFrom: {
+                      viz: true,
+                      tooltip: true,
+                    },
+                  },
+                },
+              },
+            ],
+          })}
+          seriesIdx={1}
+          dataIdxs={[null, 1, null]}
+          mode={TooltipDisplayMode.Single}
+          timeRange={timeRange}
+          withDuration={false}
+          dataLinks={[]}
+          isPinned={false}
+        />
+      );
+
+      expect(screen.queryByText('Comment')).not.toBeInTheDocument();
+      expect(screen.queryByText('resolved by restart')).not.toBeInTheDocument();
     });
   });
 
